@@ -434,6 +434,19 @@ select {
 .m-toast.ok { background: var(--green); }
 @keyframes toastIn { from { opacity: 0; transform: transl(-50%, 10px); } to { opacity: 1; } }
 
+/* ---------- Scarfing / escalonamento ---------- */
+.scarf-svg { width: 100%; height: auto; display: block; background: #f8fafc; border-radius: var(--radius-sm); }
+#m-scarf-table { font-size: 0.8rem; }
+.sc-row { display: grid; grid-template-columns: 1.6fr 1fr 1fr 0.9fr 0.9fr 1fr; align-items: center; border-bottom: 1px solid var(--border); }
+.sc-row:last-child { border-bottom: none; }
+.sc-row.sc-head { background: var(--bg); font-weight: 700; color: var(--text-muted); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.3px; }
+.sc-row.bod { background: #fef2f2; font-weight: 600; }
+.sc-c { padding: 8px 6px; text-align: center; min-width: 0; overflow: hidden; }
+.sc-c.name { text-align: left; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.sc-c .sc-sub { font-size: 0.66rem; color: var(--text-muted); font-weight: 400; width: 100%; }
+.sc-c .sc-ord { width: 18px; height: 18px; border-radius: 50%; background: var(--vestas-blue); color: #fff; font-size: 0.66rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.sc-ov { width: 100%; padding: 6px 2px !important; text-align: center; font-size: 0.78rem !important; border: 1px solid var(--border-strong) !important; border-radius: 6px !important; }
+
 /* spinner */
 .m-spin { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }

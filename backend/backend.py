@@ -579,6 +579,131 @@ async def generate_excel(data: BOMPayload):
     )
 
 
+class ScarfPayload(BaseModel):
+    meta: Dict[str, Any] = {}
+    columns: list = []
+    rows: list = []
+
+
+@app.post("/api/scarf-export")
+async def scarf_export(data: ScarfPayload, fmt: str = "xlsx"):
+    """Export the layer staggering (scarfing / escalonamento) coordinate
+    table as .xlsx or .pdf. In-memory / stateless."""
+    meta = data.meta or {}
+    cols = data.columns or []
+    rows = data.rows or []
+
+    def _safe(s):
+        t = re.sub(r"\s+", "_", str(s or "").strip())
+        return re.sub(r"[^A-Za-z0-9_\-]", "", t) or "UNKNOWN"
+
+    fname_base = f"Escalonamento_{_safe(meta.get('blade'))}_{_safe(meta.get('service_order'))}"
+
+    info_pairs = [
+        ("Blade", meta.get("blade", "-"), "Region", meta.get("region", "-")),
+        ("Damage L x W", f"{meta.get('length','-')} x {meta.get('width','-')} mm",
+         "Z start", f"{meta.get('z0', 0)} mm"),
+        ("Service Order", meta.get("service_order", "-") or "-",
+         "Chord ref", meta.get("chord_ref", "-")),
+    ]
+
+    if fmt == "pdf":
+        pdf = FPDF(orientation="L")
+        pdf.set_auto_page_break(auto=True, margin=12)
+        pdf.add_page()
+        # header bar
+        pdf.set_fill_color(*HEADER_BLUE)
+        pdf.rect(0, 0, 297, 16, "F")
+        pdf.set_font("Arial", "B", 11)
+        pdf.set_text_color(*HEADER_TEXT)
+        pdf.set_xy(10, 5)
+        pdf.cell(0, 6, _s("VESTAS BLADES  |  Layer Staggering (Escalonamento)"), 0, 1, "L")
+        pdf.set_text_color(*DARK_TEXT)
+        pdf.ln(6)
+        # info block
+        pdf.set_font("Arial", "", 9)
+        for a, b, c, d in info_pairs:
+            pdf.cell(35, 6, _s(f"{a}:"), 0, 0)
+            pdf.set_font("Arial", "B", 9); pdf.cell(75, 6, _s(b), 0, 0); pdf.set_font("Arial", "", 9)
+            pdf.cell(30, 6, _s(f"{c}:"), 0, 0)
+            pdf.set_font("Arial", "B", 9); pdf.cell(60, 6, _s(d), 0, 1); pdf.set_font("Arial", "", 9)
+        pdf.ln(3)
+        # table
+        _set_fine_black_lines(pdf)
+        n = len(cols) or 1
+        total_w = 277
+        cw = total_w / n
+        pdf.set_fill_color(*COL_HDR_BG)
+        pdf.set_font("Arial", "B", 8)
+        for c in cols:
+            pdf.cell(cw, 7, _s(c), 1, 0, "C", fill=True)
+        pdf.ln()
+        pdf.set_font("Arial", "", 8)
+        for i, row in enumerate(rows):
+            pdf.set_fill_color(*(ROW_ALT if i % 2 else ROW_WHITE))
+            for v in row:
+                if isinstance(v, float) and v == int(v):
+                    v = int(v)
+                pdf.cell(cw, 6, _s(v), 1, 0, "C", fill=True)
+            pdf.ln()
+        out = bytes(pdf.output())
+        return Response(
+            content=out, media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{fname_base}.pdf"'},
+        )
+
+    # default: xlsx
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Escalonamento"
+    blue_fill = PatternFill("solid", fgColor="143A5F")
+    hdr_fill = PatternFill("solid", fgColor="EBEBEB")
+    white_font = Font(bold=True, color="FFFFFF", size=12)
+    bold = Font(bold=True, size=10)
+    normal = Font(size=10)
+    thin = Side(style="thin", color="000000")
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+    center = Alignment(horizontal="center", vertical="center")
+
+    ncols = max(len(cols), 4)
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=ncols)
+    c = ws.cell(1, 1, "VESTAS BLADES  |  Layer Staggering (Escalonamento)")
+    c.fill = blue_fill; c.font = white_font; c.alignment = center
+    ws.row_dimensions[1].height = 22
+
+    r = 3
+    for a, b, cc, d in info_pairs:
+        ws.cell(r, 1, a).font = bold
+        ws.cell(r, 2, str(b)).font = normal
+        if ncols >= 4:
+            ws.cell(r, 3, cc).font = bold
+            ws.cell(r, 4, str(d)).font = normal
+        r += 1
+    r += 1
+
+    for j, col in enumerate(cols, start=1):
+        cell = ws.cell(r, j, col)
+        cell.fill = hdr_fill; cell.font = bold; cell.alignment = center; cell.border = border
+    r += 1
+    for row in rows:
+        for j, v in enumerate(row, start=1):
+            if isinstance(v, float) and v == int(v):
+                v = int(v)
+            cell = ws.cell(r, j, v)
+            cell.font = normal; cell.alignment = center; cell.border = border
+        r += 1
+
+    for j in range(1, ncols + 1):
+        ws.column_dimensions[get_column_letter(j)].width = 13
+
+    buf = BytesIO(); wb.save(buf); buf.seek(0)
+    return Response(
+        content=buf.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{fname_base}.xlsx"'},
+    )
+
+
 def _group_items_by_phase(items: list) -> Dict[str, list]:
     """Group BOM items by their 'phase' field for the audit record."""
     grouped: Dict[str, list] = {}

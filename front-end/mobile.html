@@ -157,6 +157,36 @@
                 </div>
             </div>
             <div id="m-bom-groups"></div>
+
+            <button class="m-add-btn" style="margin-top:14px" onclick="openScarf()"><i class="bi bi-bounding-box"></i> Scarfing drawing (escalonamento)</button>
+        </div>
+
+        <!-- ===== STEP 5: SCARFING / ESCALONAMENTO ===== -->
+        <div id="s5" class="m-screen hidden">
+            <div class="m-section-title">Damage position (optional)</div>
+            <div class="m-card">
+                <div class="m-field" style="margin-bottom:0">
+                    <label>Z start <span class="hint">(radius in mm; leave 0 for relative)</span></label>
+                    <input type="number" id="m-scarf-z0" inputmode="numeric" placeholder="e.g. 46200" onchange="onScarfZ0(this.value)">
+                </div>
+            </div>
+
+            <div class="m-section-title">Staggering drawing (top view)</div>
+            <div class="m-card" style="padding:8px">
+                <div id="m-scarf-drawing"></div>
+            </div>
+
+            <div class="m-row-between" style="margin:18px 2px 8px">
+                <div class="m-section-title" style="margin:0">Staggering table</div>
+                <button class="btn btn-ghost" style="padding:6px 10px;font-size:0.78rem" onclick="resetScarfOverlaps()"><i class="bi bi-arrow-counterclockwise"></i> Std overlaps</button>
+            </div>
+            <div class="m-card" style="padding:0;overflow:hidden">
+                <div id="m-scarf-table"></div>
+            </div>
+            <div class="m-info-box" style="margin-top:12px">
+                <i class="bi bi-info-circle"></i>
+                <span>Overlaps auto-fill from the standard per-fabric table and match the BOM engine. Edit any cell to override. CAD exports an AutoCAD script (.scr) of polylines + labels.</span>
+            </div>
         </div>
 
     </div>
@@ -167,5 +197,6 @@
 <script src="static/data.js"></script>
 <script src="static/engine.js"></script>
 <script src="static/mobile.js"></script>
+<script src="static/scarf.js"></script>
 </body>
 </html>
