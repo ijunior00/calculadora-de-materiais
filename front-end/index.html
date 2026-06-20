@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blade Repair Materials Planner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!--                    LANDING / WELCOME PAGE                     -->
+<!-- ============================================================ -->
+<div id="landing-page" class="landing-page">
+    <div class="landing-overlay"></div>
+    <div class="landing-content">
+        
+        <div class="vestas-logo-container">
+            <img src="static/997050.png" alt="Vestas Logo" class="vestas-logo-top">
+        </div>
+        
+        <h1 class="landing-title">Blade Repair Materials Planner</h1>
+        
+        <div class="landing-logo">
+            <svg viewBox="0 0 100 100" width="85" height="85">
+                <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2"/>
+                
+                <g transform="translate(50, 50)">
+                    <path d="M -3,-6 C -6,-20 -4,-38 0,-42 C 4,-38 5,-20 3,-6 Z" fill="white"/>
+                    <path d="M -3,-6 C -6,-20 -4,-38 0,-42 C 4,-38 5,-20 3,-6 Z" fill="white" transform="rotate(120)"/>
+                    <path d="M -3,-6 C -6,-20 -4,-38 0,-42 C 4,-38 5,-20 3,-6 Z" fill="white" transform="rotate(240)"/>
+                    
+                    <circle cx="0" cy="0" r="6" fill="white"/>
+                    <circle cx="0" cy="0" r="2.5" fill="#0ea5e9"/>
+                </g>
+            </svg>
+        </div>
+        
+        <h2 class="landing-subtitle">Materials and Tools Estimate</h2>
+        
+        <button class="landing-btn" onclick="showApp()">
+            <span>Damage Data</span>
+            <i class="bi bi-arrow-right-circle"></i>
+        </button>
+
+        <div class="landing-info">
+            <h3>General Information</h3>
+            <ul>
+                <li>The main goal of this tool is to provide a better support for blade repair planning of material and tool estimate.</li>
+                <li>To estimate its quantity, it is necessary the damage information collected during the blade inspection. The user must follow the tabs sequence of required data.</li>
+                <li><strong>Important note:</strong> this tool covers materials and tools for <em>general blade shell laminate repairs</em>. Damages requiring repairs for other blades components (e.g. LPS cable repair) should have a consult from blades technical support, or engineering.</li>
+            </ul>
+        </div>
+
+        <div class="landing-footer">
+            <p>This tool was developed by <strong>Brazil Blades Service Team</strong></p>
+            <p>Support needed contact: <strong>JTELE, MLASU, JOVFN</strong></p>
+            <div class="landing-flag">
+                <img src="static/Flag_of_Brazil.svg.png" alt="Brazil Flag" style="width:48px;height:auto;border-radius:3px;box-shadow:0 2px 8px rgba(0,0,0,0.18)">
+            </div>
+        </div>
+    </div>
+    <div class="landing-version">v1.0</div>
+</div>
+<!-- ============================================================ -->
+<!--                       MAIN APPLICATION                        -->
+<!-- ============================================================ -->
+<div id="app-container" class="app-container hidden">
+    
+    <!-- Top Navigation Bar -->
+    <nav class="top-nav">
+        <div class="nav-brand" onclick="resetApp()" style="cursor:pointer">
+            <i class="bi bi-wind"></i>
+            <span>Blade Repair Materials Planner</span>
+            <span class="nav-version">v1.0</span>
+        </div>
+        <div class="nav-steps">
+            <div class="nav-step active" data-step="1" onclick="goToStep(1)">
+                <span class="step-num">1</span>
+                <span class="step-label">Damage Data</span>
+            </div>
+            <div class="nav-step-divider"></div>
+            <div class="nav-step" data-step="2" onclick="goToStep(2)">
+                <span class="step-num">2</span>
+                <span class="step-label">Layer Data</span>
+            </div>
+            <div class="nav-step-divider"></div>
+            <div class="nav-step" data-step="3" onclick="goToStep(3)">
+                <span class="step-num">3</span>
+                <span class="step-label">Repair Steps</span>
+            </div>
+            <div class="nav-step-divider"></div>
+            <div class="nav-step" data-step="4" onclick="goToStep(4)">
+                <span class="step-num">4</span>
+                <span class="step-label">Results</span>
+            </div>
+        </div>
+        <button class="nav-reset" onclick="resetApp()"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+    </nav>
+
+    <!-- ==================== STEP 1: DAMAGE DATA INPUT ==================== -->
+    <section id="step-1" class="step-section">
+        <div class="section-container">
+            <div class="section-header">
+                <h2><i class="bi bi-crosshair"></i> Damage Data Input</h2>
+                <p class="section-desc">Define the blade model and damage location (spanwise and chordwise coordinates).</p>
+            </div>
+
+            <div class="form-grid four-col">
+                <div class="form-card">
+                    <label class="form-label">Blade Model</label>
+                    <select id="bladeModel" class="form-input" onchange="onBladeModelChange()">
+                        <option value="">-- Select --</option>
+                        <option value="V82">V82</option>
+                        <option value="V90">V90</option>
+                        <option value="V100">V100</option>
+                        <option value="V110">V110</option>
+                        <option value="V112">V112</option>
+                        <option value="V136">V136</option>
+                        <option value="V150">V150</option>
+                    </select>
+                </div>
+                <div class="form-card">
+                    <label class="form-label">Blade SN</label>
+                    <input type="text" id="bladeSN" class="form-input" placeholder="e.g. 29181330WHBV2041311">
+                </div>
+                <div class="form-card">
+                    <label class="form-label">SO (Service Order)</label>
+                    <input type="text" id="serviceOrder" class="form-input" placeholder="e.g. SO-2025-001">
+                </div>
+                <div class="form-card">
+                    <label class="form-label">CIR Number</label>
+                    <input type="text" id="cirNumber" class="form-input" placeholder="e.g. 2030119">
+                </div>
+            </div>
+
+            <!-- BLADE MODEL CONFIRM BANNER -->
+            <div id="bladeConfirmBanner" class="confirm-banner unlocked">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span class="banner-text">Select and confirm blade model to proceed.</span>
+                <button class="btn-confirm confirm" onclick="confirmBladeModel()"><i class="bi bi-check-lg"></i> Confirm</button>
+            </div>
+
+            <div class="form-grid one-col" style="margin-top:16px">
+                <div class="form-card">
+                    <label class="form-label">Damage Description</label>
+                    <textarea id="damageDescription" class="form-input" rows="2" placeholder="Describe the damage observed during inspection..." style="resize:vertical;font-family:Inter,sans-serif;font-size:0.88rem"></textarea>
+                </div>
+            </div>
+
+            <!-- SPANWISE -->
+            <div class="form-section-label"><i class="bi bi-arrow-left-right"></i> SPANWISE</div>
+            <div class="form-grid three-col">
+                <div class="form-card">
+                    <label class="form-label">Rstart (mm)</label>
+                    <input type="number" id="rstart" class="form-input" placeholder="e.g. 48500" step="1" oninput="onDamageDataChange()">
+                </div>
+                <div class="form-card">
+                    <label class="form-label">Rend (mm)</label>
+                    <input type="number" id="rend" class="form-input" placeholder="e.g. 48750" step="1" oninput="onDamageDataChange()">
+                </div>
+                <div class="form-card computed">
+                    <label class="form-label">Length (mm)</label>
+                    <div class="computed-value" id="spanLength">--</div>
+                </div>
+            </div>
+
+            <!-- CHORDWISE -->
+            <div class="form-section-label"><i class="bi bi-arrow-down-up"></i> CHORDWISE</div>
+            <div class="form-grid four-col">
+                <div class="form-card">
+                    <label class="form-label">Reference</label>
+                    <select id="chordRef" class="form-input" onchange="onDamageDataChange()">
+                        <option value="LE">LE</option>
+                        <option value="TE">TE</option>
+                        <option value="M.Web">M.Web</option>
+                        <option value="TE.Web">TE.Web</option>
+                    </select>
+                </div>
+                <div class="form-card">
+                    <label class="form-label">X1 (mm) - lesser dist.</label>
+                    <input type="number" id="x1" class="form-input" placeholder="e.g. 50" step="1" oninput="onDamageDataChange()">
+                </div>
+                <div class="form-card">
+                    <label class="form-label">X2 (mm) - bigger dist.</label>
+                    <input type="number" id="x2" class="form-input" placeholder="e.g. 10" step="1" oninput="onDamageDataChange()">
+                </div>
+                <div class="form-card computed">
+                    <label class="form-label">Width (mm)</label>
+                    <div class="computed-value" id="chordWidth">--</div>
+                </div>
+            </div>
+
+            <!-- BLADE VISUALIZATION - SPANWISE -->
+            <div class="viz-container" id="bladeVizContainer">
+                <div class="viz-title"><i class="bi bi-wind"></i> Blade Spanwise - Damage Location</div>
+                <div class="viz-svg-wrapper">
+                    <svg id="bladeSvgSpan" viewBox="0 0 920 160" class="blade-svg">
+                        <defs>
+                            <linearGradient id="bladeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#e8ecf1"/>
+                                <stop offset="100%" style="stop-color:#cdd5de"/>
+                            </linearGradient>
+                            <filter id="bladeShadow">
+                                <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#000" flood-opacity="0.12"/>
+                            </filter>
+                            <clipPath id="bladeClipSpan">
+                                <path d="M 50 80 Q 50 45, 95 40 L 830 62 Q 870 80, 830 98 L 95 120 Q 50 115, 50 80 Z"/>
+                            </clipPath>
+                            <pattern id="damageHatch" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+                                <rect width="6" height="6" fill="rgba(239, 68, 68, 0.3)"/>
+                                <line x1="0" y1="0" x2="0" y2="6" stroke="#dc2626" stroke-width="1.5"/>
+                            </pattern>
+                        </defs>
+                        <rect x="50" y="25" width="270" height="110" fill="rgba(254, 243, 199, 0.5)" rx="4"/>
+                        <rect x="320" y="25" width="250" height="110" fill="rgba(209, 250, 229, 0.5)" rx="4"/>
+                        <rect x="570" y="25" width="300" height="110" fill="rgba(219, 234, 254, 0.5)" rx="4"/>
+                        <text x="185" y="20" fill="#92400e" font-size="10" font-weight="700" text-anchor="middle" font-family="Inter">ROOT</text>
+                        <text x="445" y="20" fill="#065f46" font-size="10" font-weight="700" text-anchor="middle" font-family="Inter">MIDDLE</text>
+                        <text x="720" y="20" fill="#1e40af" font-size="10" font-weight="700" text-anchor="middle" font-family="Inter">TIP</text>
+                        <line x1="320" y1="25" x2="320" y2="135" stroke="#64748b" stroke-width="1" stroke-dasharray="4,3" opacity="0.4"/>
+                        <line x1="570" y1="25" x2="570" y2="135" stroke="#64748b" stroke-width="1" stroke-dasharray="4,3" opacity="0.4"/>
+                        <path d="M 50 80 Q 50 45, 95 40 L 830 62 Q 870 80, 830 98 L 95 120 Q 50 115, 50 80 Z" 
+                              fill="url(#bladeGrad)" stroke="#475569" stroke-width="1.5" filter="url(#bladeShadow)"/>
+                        <g id="damageZoneSpan" clip-path="url(#bladeClipSpan)"></g>
+                        <g transform="translate(50, 80)">
+                            <circle r="14" fill="#f8fafc" stroke="#475569" stroke-width="1.5"/>
+                            <text y="4" text-anchor="middle" fill="#334155" font-size="7" font-weight="700" font-family="Inter">ROOT</text>
+                        </g>
+                        <g transform="translate(870, 80)">
+                            <polygon points="0,-10 14,0 0,10" fill="#f8fafc" stroke="#475569" stroke-width="1.5"/>
+                        </g>
+                        <text x="858" y="84" text-anchor="middle" fill="#334155" font-size="7" font-weight="700" font-family="Inter">TIP</text>
+                    </svg>
+                </div>
+                <div class="viz-scale">
+                    <span>0 m</span>
+                    <span id="bladeLengthLabel">-- m</span>
+                </div>
+            </div>
+
+            <div class="step-actions">
+                <button id="step1NextBtn" class="btn-primary" onclick="goToStep(2)" disabled>Next: Layer Data <i class="bi bi-arrow-right"></i></button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== STEP 2: LAYER DATA INPUT ==================== -->
+    <section id="step-2" class="step-section hidden">
+        <div class="section-container">
+            <div class="section-header">
+                <h2><i class="bi bi-layers"></i> Layer Data Input</h2>
+                <p class="section-desc">Define the layers laminating pattern for the repair. Use arrows to reorder layers.</p>
+                <div class="info-callout">
+                    <i class="bi bi-info-circle"></i>
+                    <span>Material types available below are filtered by the selected <strong>blade model</strong> per the REV05 <em>Blades_Fabrics</em> matrix. <strong>SPL, Core, BALSA and CFM</strong> only appear in the BOM if the blade supports them <em>and</em> you actually add them as a layer here. Layer order matters &mdash; it drives spanwise/chordwise overlap accumulation.</span>
+                </div>
+            </div>
+
+            <div class="layer-table-container">
+                <table class="layer-table" id="layerTable">
+                    <thead>
+                        <tr>
+                            <th style="width:40px">#</th>
+                            <th>Layer Name<br><span class="th-sub">Camada</span></th>
+                            <th>Material Type<br><span class="th-sub">Tipo + GSM</span></th>
+                            <th style="width:90px">GSM<br><span class="th-sub">Auto</span></th>
+                            <th>Scarffing Order<br><span class="th-sub">Orden de lijado</span></th>
+                            <th style="width:60px">Move</th>
+                            <th style="width:40px"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="layerTableBody">
+                    </tbody>
+                </table>
+                <button id="addLayerBtn" class="btn-secondary" onclick="addLayerRow()"><i class="bi bi-plus-circle"></i> Add Layer</button>
+            </div>
+
+            <!-- Reference-only fabrics from REV05 Blades_Fabrics (no SAP / not calculable yet) -->
+            <div id="referenceFabricsPanel"></div>
+
+            <!-- LAYER DATA CONFIRM BANNER -->
+            <div id="layerConfirmBanner" class="confirm-banner unlocked">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span class="banner-text">Add and reorder layers, then confirm to lock before proceeding.</span>
+                <button class="btn-confirm confirm" onclick="confirmLayerData()"><i class="bi bi-check-lg"></i> Confirm Layers</button>
+            </div>
+
+            <div class="step-actions">
+                <button class="btn-outline" onclick="goToStep(1)"><i class="bi bi-arrow-left"></i> Back</button>
+                <button class="btn-primary" onclick="goToStep(3)">Next: Repair Steps <i class="bi bi-arrow-right"></i></button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== STEP 3: REPAIR STEPS INPUT ==================== -->
+    <section id="step-3" class="step-section hidden">
+        <div class="section-container">
+            <div class="section-header">
+                <h2><i class="bi bi-tools"></i> Repair Steps Input</h2>
+                <p class="section-desc">Set the quantity of each repair step and blade region info.</p>
+                <div class="info-callout">
+                    <i class="bi bi-info-circle"></i>
+                    <span>Hover the <strong>i</strong> icon beside each repair step to read notes for that step. Each step quantity drives consumable, chemical and tool calculations downstream &mdash; underestimating a step understates its materials.</span>
+                </div>
+            </div>
+
+            <div class="form-grid two-col">
+                <div class="repair-steps-card">
+                    <h3><i class="bi bi-list-check"></i> Repair Steps</h3>
+                    <div class="repair-step-row">
+                        <label>Cleaning <span class="step-info" tabindex="0" data-note="No comments."><i class="bi bi-info-circle"></i></span></label>
+                        <input type="number" id="stepCleaning" class="form-input-sm" value="0" min="0" oninput="onRepairStepsChange()">
+                    </div>
+                    <div class="repair-step-row">
+                        <label>Grinding <span class="step-info" tabindex="0" data-note="No comments."><i class="bi bi-info-circle"></i></span></label>
+                        <input type="number" id="stepGrinding" class="form-input-sm" value="1" min="0" oninput="onRepairStepsChange()">
+                    </div>
+                    <div class="repair-step-row">
+                        <label>Bonding <span class="step-info" tabindex="0" data-note="No comments."><i class="bi bi-info-circle"></i></span></label>
+                        <input type="number" id="stepBonding" class="form-input-sm" value="1" min="0" oninput="onRepairStepsChange()">
+                    </div>
+                    <div class="repair-step-row">
+                        <label>Lamination <span class="step-info" tabindex="0" data-note="Consider fabrics preparation and/or fabrics lay down for infusion process."><i class="bi bi-info-circle"></i></span></label>
+                        <input type="number" id="stepLamination" class="form-input-sm" value="0" min="0" oninput="onRepairStepsChange()">
+                    </div>
+                    <div class="repair-step-row">
+                        <label>HLU <span class="step-info" tabindex="0" data-note="No comments."><i class="bi bi-info-circle"></i></span></label>
+                        <input type="number" id="stepHLU" class="form-input-sm" value="1" min="0" oninput="onRepairStepsChange()">
+                    </div>
+                    <div class="repair-step-row">
+                        <label>Infusion <span class="step-info" tabindex="0" data-note="No comments."><i class="bi bi-info-circle"></i></span></label>
+                        <input type="number" id="stepInfusion" class="form-input-sm" value="1" min="0" oninput="onRepairStepsChange()">
+                    </div>
+                    <div class="repair-step-row">
+                        <label>Weighing <span class="step-info" tabindex="0" data-note="Consider each resin mixing as one weighing."><i class="bi bi-info-circle"></i></span></label>
+                        <input type="number" id="stepWeighing" class="form-input-sm" value="0" min="0" oninput="onRepairStepsChange()">
+                    </div>
+                    <div class="repair-step-row computed-row">
+                        <label>Vacuum <span class="step-info" tabindex="0" data-note="Count vacuum for HLU and Infusion."><i class="bi bi-info-circle"></i></span><span class="badge-auto">auto = HLU + Infusion</span></label>
+                        <div class="computed-value-sm" id="stepVacuum">2</div>
+                    </div>
+                    <div class="repair-step-row">
+                        <label>Painting <span class="step-info" tabindex="0" data-note="Consider one step for one filler application and two wet layers painting."><i class="bi bi-info-circle"></i></span></label>
+                        <input type="number" id="stepPainting" class="form-input-sm" value="1" min="0" oninput="onRepairStepsChange()">
+                    </div>
+                    <div class="repair-step-row">
+                        <label>LEP <span class="step-info" tabindex="0" data-note="Consider 3 LEP colors application as 1 step."><i class="bi bi-info-circle"></i></span></label>
+                        <input type="number" id="stepLEP" class="form-input-sm" value="0" min="0" oninput="onRepairStepsChange()">
+                    </div>
+                </div>
+
+                <div class="repair-steps-card">
+                    <h3><i class="bi bi-geo-alt"></i> Blade Info</h3>
+                    <div class="repair-step-row">
+                        <label>Blade Region</label>
+                        <select id="bladeRegion" class="form-input" onchange="onRepairStepsChange()">
+                            <option value="Root">Root</option>
+                            <option value="Middle">Middle</option>
+                            <option value="Tip" selected>Tip</option>
+                        </select>
+                    </div>
+                    <div class="repair-step-row">
+                        <label>Days of Repair</label>
+                        <input type="number" id="daysRepair" class="form-input-sm" value="5" min="1" oninput="onRepairStepsChange()">
+                    </div>
+                    <div class="info-card" style="margin-top:20px">
+                        <div class="info-label"><i class="bi bi-exclamation-triangle"></i> Note</div>
+                        <div class="info-text">This tool is designed for a single repair estimate. Always review and check if quantities make sense, mainly if you use it to aggregate materials for more repairs.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-actions">
+                <button class="btn-outline" onclick="goToStep(2)"><i class="bi bi-arrow-left"></i> Back</button>
+                <button class="btn-primary" onclick="calculateAndShow()"><i class="bi bi-calculator"></i> Calculate BOM</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== STEP 4: RESULTS ==================== -->
+    <section id="step-4" class="step-section hidden">
+        <div class="section-container">
+            <div class="section-header">
+                <h2><i class="bi bi-clipboard-data"></i> Blade Repair Materials Planner — Estimate</h2>
+            </div>
+
+            <div class="summary-cards" id="summaryCards" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center"></div>
+
+            <div class="results-tabs">
+                <button class="results-tab active" data-tab="consumable_protection" onclick="showResultTab('consumable_protection', this)">Consumable Protection Equipment</button>
+                <button class="results-tab" data-tab="consumables_tools" onclick="showResultTab('consumables_tools', this)">Consumable Tools</button>
+                <button class="results-tab" data-tab="chemicals" onclick="showResultTab('chemicals', this)">Chemicals</button>
+                <button class="results-tab" data-tab="consumables" onclick="showResultTab('consumables', this)">Consumables</button>
+                <button class="results-tab" data-tab="fabrics" onclick="showResultTab('fabrics', this)">Fabrics</button>
+                <button class="results-tab" data-tab="tools" onclick="showResultTab('tools', this)">Tools</button>
+            </div>
+            <div class="results-table-container">
+                <table class="results-table" id="resultsTable">
+                    <thead id="resultsHead"></thead>
+                    <tbody id="resultsBody"></tbody>
+                </table>
+            </div>
+
+            <div class="step-actions" style="justify-content:space-between">
+                <div style="display:flex;gap:12px;align-items:center">
+                    <button class="btn-outline" onclick="goToStep(3)"><i class="bi bi-arrow-left"></i> Back</button>
+                </div>
+                <div style="display:flex;gap:12px;align-items:center">
+                    <button id="btnEditMode" class="btn-outline" onclick="toggleEditMode()" title="Edit quantities and units before generating the PDF" style="border-color:#8b5cf6;color:#7c3aed"><i class="bi bi-pencil-square"></i> EDIT MODE</button>
+                    <button id="btnLockEdit" class="btn-outline" onclick="lockEditMode()" style="display:none;border-color:#f59e0b;color:#d97706" title="Lock edits and enable PDF generation"><i class="bi bi-lock"></i> Lock</button>
+                    <button id="btnResetEdit" class="btn-outline" onclick="resetEditMode()" style="display:none;border-color:#ef4444;color:#dc2626" title="Discard all edits and return to calculated values"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+                    <button id="btnGeneratePDF" class="btn-primary" onclick="downloadPDF()"><i class="bi bi-file-earmark-pdf"></i> Generate PDF Report</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</div>
+
+<script src="static/data.js"></script>
+<script src="static/engine.js"></script>
+<script src="static/app_new.js"></script>
+<script src="static/test.js"></script>
+</body>
+</html>

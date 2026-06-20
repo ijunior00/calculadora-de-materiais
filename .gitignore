@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Generated reports / audit trail (never commit)
+BOM_Reports_Generated/
+*.log
+
+# Local input spreadsheets (source data, not for the web app)
+input-data/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.tmp

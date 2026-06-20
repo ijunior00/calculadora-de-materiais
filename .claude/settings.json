@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import openpyxl; wb = openpyxl.load_workbook\\('input-data/Blade_Repair_Materials_Estimate - REV05.xlsx'\\); print\\('Sheets:', wb.sheetnames[:10]\\)\")",
+      "Bash(\"/c/Espressif/tools/idf-python/3.11.2/python\" -m pip list)",
+      "Bash(\"/c/Espressif/tools/idf-python/3.11.2/python\" -m pip install openpyxl --quiet)",
+      "Read(//c/temp/**)",
+      "Bash(cd /tmp)",
+      "Bash(unzip -q \"c:/Users/joaov/Music/calculadora_materiais/input-data/Blade_Repair_Materials_Estimate - REV04.xlsx\" -d rev04_extracted)",
+      "Read(//tmp/rev04_extracted/xl/**)",
+      "Bash(python -c ' *)",
+      "Bash(pip install *)"
+    ]
+  }
+}

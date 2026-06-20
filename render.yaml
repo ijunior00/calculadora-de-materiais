@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: brmp-calculadora
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python run_server.py
+    envVars:
+      # Locks the app behind HTTP Basic Auth. Set the password value in the
+      # Render dashboard (Environment) — do NOT commit it to git.
+      - key: APP_PASSWORD
+        sync: false
+      - key: APP_USERNAME
+        value: vestas
+      # Render's disk is ephemeral; skip writing PDF/audit copies to disk.
+      - key: BOM_PERSIST
+        value: "0"

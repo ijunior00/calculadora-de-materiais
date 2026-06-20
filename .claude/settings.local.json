@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c ' *)",
+      "Bash(python -m pip install openpyxl)",
+      "Bash(where python *)",
+      "Bash(py --version)",
+      "Bash(py -m pip install openpyxl)",
+      "Bash(py -c \"import ast; ast.parse\\(open\\('backend/backend.py', encoding='utf-8'\\).read\\(\\)\\); print\\('backend.py: OK'\\)\")",
+      "Bash(node --check static/engine.js)",
+      "Bash(node --check static/data.js)",
+      "Bash(node --check static/test.js)",
+      "Bash(node --check static/app_new.js)",
+      "Bash(py -c ' *)",
+      "Bash(py -c \"import ast; ast.parse\\(open\\('backend/backend.py', encoding='utf-8'\\).read\\(\\)\\); print\\('All syntax OK'\\)\")"
+    ]
+  }
+}

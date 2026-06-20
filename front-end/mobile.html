@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#143a5f">
+    <title>BRMP Mobile — Blade Repair Materials Planner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="static/mobile.css">
+</head>
+<body>
+
+<!-- ============================ LANDING ============================ -->
+<div id="m-landing" class="m-landing">
+    <img src="static/997050.png" alt="Vestas" class="logo">
+    <div class="turbine">
+        <svg viewBox="0 0 100 100" width="70" height="70">
+            <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2"/>
+            <g transform="translate(50, 50)">
+                <path d="M -3,-6 C -6,-20 -4,-38 0,-42 C 4,-38 5,-20 3,-6 Z" fill="white"/>
+                <path d="M -3,-6 C -6,-20 -4,-38 0,-42 C 4,-38 5,-20 3,-6 Z" fill="white" transform="rotate(120)"/>
+                <path d="M -3,-6 C -6,-20 -4,-38 0,-42 C 4,-38 5,-20 3,-6 Z" fill="white" transform="rotate(240)"/>
+                <circle cx="0" cy="0" r="6" fill="white"/>
+                <circle cx="0" cy="0" r="2.5" fill="#0ea5e9"/>
+            </g>
+        </svg>
+    </div>
+    <h1>Blade Repair<br>Materials Planner</h1>
+    <div class="subtitle">VESTAS BLADES · Materials &amp; Tools Estimate</div>
+    <button class="start-btn" onclick="startApp()">
+        <i class="bi bi-play-fill"></i> Start estimate
+    </button>
+    <div class="info">
+        Covers materials and tools for <strong>general blade shell laminate repairs</strong>.
+        Damages on other components (e.g. LPS cable) require blades technical support / engineering.
+    </div>
+    <div class="footer">Developed by Brazil Blades Service Team</div>
+    <div class="ver">v2.0 mobile</div>
+</div>
+
+<!-- ============================ APP ============================ -->
+<div id="m-app" class="m-app hidden">
+
+    <div class="m-topbar">
+        <div class="brand">
+            <img src="static/997050.png" alt="Vestas">
+            <div class="brand-text">
+                <span class="t1">VESTAS BLADES</span>
+                <span class="t2">Blade Repair Materials Planner</span>
+            </div>
+        </div>
+        <button class="home-btn" onclick="goHome()" aria-label="Restart"><i class="bi bi-house"></i></button>
+    </div>
+
+    <div class="m-progress">
+        <div class="m-progress-bars">
+            <div class="pbar active"></div>
+            <div class="pbar"></div>
+            <div class="pbar"></div>
+            <div class="pbar"></div>
+        </div>
+        <div class="m-progress-label">
+            <span id="m-step-name">Damage</span>
+            <span class="step-count" id="m-step-count">Step 1 of 4</span>
+        </div>
+    </div>
+
+    <div class="m-body">
+
+        <!-- ===== STEP 1: DAMAGE ===== -->
+        <div id="s1" class="m-screen">
+            <div class="m-section-title">Blade</div>
+            <div class="m-card">
+                <div class="m-field">
+                    <label>Blade model</label>
+                    <select id="m-blade" onchange="onBladeChange(this.value)"></select>
+                </div>
+                <div class="m-field">
+                    <label>Region of the blade</label>
+                    <div class="m-segmented" id="m-region"></div>
+                </div>
+            </div>
+
+            <div class="m-section-title">Damage size</div>
+            <div class="m-card">
+                <div class="m-two-col">
+                    <div class="m-field" style="margin-bottom:0">
+                        <label>Length <span class="hint">(mm, spanwise)</span></label>
+                        <input type="number" id="m-length" inputmode="numeric" placeholder="e.g. 250" min="0">
+                    </div>
+                    <div class="m-field" style="margin-bottom:0">
+                        <label>Width <span class="hint">(mm, chordwise)</span></label>
+                        <input type="number" id="m-width" inputmode="numeric" placeholder="e.g. 80" min="0">
+                    </div>
+                </div>
+            </div>
+
+            <div class="m-section-title">Repair duration</div>
+            <div class="m-card">
+                <div class="m-row-between">
+                    <label style="margin:0;font-size:0.9rem;font-weight:600;color:var(--text)">Days of repair</label>
+                    <div class="m-stepper">
+                        <button class="s-btn" onclick="changeDays(-1)" aria-label="decrease">−</button>
+                        <span class="s-val" id="m-days-val">5</span>
+                        <button class="s-btn" onclick="changeDays(1)" aria-label="increase">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="m-section-title">Reference (optional)</div>
+            <div class="m-card">
+                <div class="m-two-col">
+                    <div class="m-field" style="margin-bottom:0">
+                        <label>SO <span class="hint">(service order)</span></label>
+                        <input type="text" id="m-so" placeholder="SO-2025-001">
+                    </div>
+                    <div class="m-field" style="margin-bottom:0">
+                        <label>CIR <span class="hint">(number)</span></label>
+                        <input type="text" id="m-cir" placeholder="2030119">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== STEP 2: LAYERS ===== -->
+        <div id="s2" class="m-screen hidden">
+            <div class="m-section-title">Lamination stack (order matters)</div>
+            <div id="m-layers-list"></div>
+            <button class="m-add-btn" onclick="openLayerSheet()"><i class="bi bi-plus-circle"></i> Add layer</button>
+            <div id="m-ref-fabrics"></div>
+            <div class="m-info-box">
+                <i class="bi bi-info-circle"></i>
+                <span>Layer order drives the spanwise/chordwise overlap accumulation. SPL, Core, BALSA and CFM only enter the BOM if this blade supports them and you add them here.</span>
+            </div>
+        </div>
+
+        <!-- ===== STEP 3: REPAIR STEPS ===== -->
+        <div id="s3" class="m-screen hidden">
+            <div class="m-section-title">Active repair steps</div>
+            <div id="m-steps-list"></div>
+            <div class="m-info-box">
+                <i class="bi bi-info-circle"></i>
+                <span id="m-vacuum-info">Vacuum is calculated automatically: HLU + Infusion</span>
+            </div>
+        </div>
+
+        <!-- ===== STEP 4: RESULTS ===== -->
+        <div id="s4" class="m-screen hidden">
+            <div class="m-chips" id="m-result-chips"></div>
+            <div class="m-result-summary" id="m-result-stats"></div>
+            <div class="m-row-between" style="margin-bottom:12px">
+                <div class="m-section-title" style="margin:0">Bill of materials</div>
+                <div style="display:flex;gap:6px">
+                    <button class="btn btn-ghost" style="padding:8px 12px;font-size:0.8rem" onclick="toggleEdit()" id="m-edit-btn"><i class="bi bi-pencil"></i> Edit</button>
+                    <button class="btn btn-ghost" style="padding:8px 12px;font-size:0.8rem;display:none" onclick="resetEdits()" id="m-reset-btn"><i class="bi bi-arrow-counterclockwise"></i></button>
+                </div>
+            </div>
+            <div id="m-bom-groups"></div>
+        </div>
+
+    </div>
+
+    <div class="m-actionbar" id="m-actionbar"></div>
+</div>
+
+<script src="static/data.js"></script>
+<script src="static/engine.js"></script>
+<script src="static/mobile.js"></script>
+</body>
+</html>

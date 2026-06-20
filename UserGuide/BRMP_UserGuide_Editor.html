@@ -1,0 +1,2080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BRMP User Guide — Editor</title>
+<style>
+/* ═══════════════════════════════════════════════════
+   BASE
+═══════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #1a1a2e; color: #e0e0e0; }
+
+/* ═══════════════════════════════════════════════════
+   TOOLBAR
+═══════════════════════════════════════════════════ */
+#toolbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+  background: #002a5c; border-bottom: 2px solid #0ea5e9;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+}
+.tb-row { display: flex; align-items: center; gap: 10px; padding: 6px 16px; flex-wrap: wrap; }
+.tb-row:nth-child(2) { background: rgba(0,0,0,0.18); border-top: 1px solid rgba(255,255,255,0.08); padding: 5px 16px; }
+.tb-logo { font-size: 0.95rem; font-weight: 700; color: #fff; letter-spacing: 0.4px; white-space: nowrap; }
+.tb-logo span { color: #0ea5e9; }
+.tb-divider { width: 1px; height: 24px; background: rgba(255,255,255,0.15); }
+.tb-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 14px; border: none; border-radius: 5px;
+  font-size: 0.78rem; font-weight: 600; cursor: pointer;
+  font-family: inherit; transition: all 0.15s;
+}
+.tb-btn.edit   { background: #0ea5e9; color: #fff; }
+.tb-btn.edit:hover { background: #0284c7; }
+.tb-btn.print  { background: #10b981; color: #fff; }
+.tb-btn.print:hover { background: #059669; }
+.tb-btn.reset  { background: rgba(255,255,255,0.1); color: #fff; }
+.tb-btn.reset:hover { background: rgba(255,255,255,0.18); }
+.tb-btn.add    { background: #8b5cf6; color: #fff; }
+.tb-btn.add:hover { background: #7c3aed; }
+#mode-badge {
+  font-size: 0.68rem; font-weight: 700; padding: 3px 10px;
+  border-radius: 20px; letter-spacing: 0.4px;
+}
+#mode-badge.editing { background: #fbbf24; color: #1a1a00; }
+#mode-badge.preview { background: #10b981; color: #fff; }
+.tb-hint { font-size: 0.7rem; color: rgba(255,255,255,0.4); font-style: italic; margin-left: auto; }
+
+/* ── Tool buttons ── */
+.tool-group { display: inline-flex; gap: 2px; background: rgba(0,0,0,0.2); border-radius: 6px; padding: 2px; }
+.tool-btn {
+  padding: 5px 12px; border: 1.5px solid transparent; border-radius: 4px;
+  background: transparent; color: rgba(255,255,255,0.7);
+  font-size: 0.74rem; font-weight: 600; cursor: pointer;
+  font-family: inherit; transition: all 0.15s;
+}
+.tool-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.tool-btn.active { background: #0ea5e9; color: #fff; border-color: #38bdf8; }
+.tb-label { font-size: 0.72rem; color: rgba(255,255,255,0.5); font-weight: 600; }
+#colorPicker { width: 28px; height: 28px; border: 2px solid rgba(255,255,255,0.3); border-radius: 4px; cursor: pointer; background: none; padding: 0; }
+.fmt-btn {
+  padding: 4px 10px; border: 1.5px solid rgba(255,255,255,0.2); border-radius: 4px;
+  background: transparent; color: rgba(255,255,255,0.8);
+  font-size: 0.8rem; cursor: pointer; font-family: inherit;
+  transition: all 0.15s; min-width: 28px; text-align: center;
+}
+.fmt-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+.fmt-btn b { font-weight: 800; }
+.fmt-btn i { font-style: italic; }
+.fmt-btn u { text-decoration: underline; }
+.tb-btn.save { background: #f59e0b; color: #1a1a00; }
+.tb-btn.save:hover { background: #d97706; }
+#save-toast {
+  position: fixed; top: 70px; right: 20px; z-index: 99999;
+  background: #10b981; color: #fff; padding: 10px 20px;
+  border-radius: 8px; font-size: 0.82rem; font-weight: 700;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  opacity: 0; transition: opacity 0.3s; pointer-events: none;
+}
+#save-toast.show { opacity: 1; }
+
+/* ═══════════════════════════════════════════════════
+   PAGES
+═══════════════════════════════════════════════════ */
+#pages-container {
+  margin-top: 90px; padding: 30px 20px 60px;
+  display: flex; flex-direction: column; align-items: center; gap: 32px;
+}
+.page {
+  width: 297mm; min-height: 210mm; background: #fff; color: #111;
+  position: relative; box-shadow: 0 4px 32px rgba(0,0,0,0.5);
+  overflow: visible; page-break-after: always;
+}
+.page-num-label {
+  position: absolute; top: -22px; left: 0;
+  font-size: 0.66rem; color: rgba(255,255,255,0.4);
+  font-weight: 600; letter-spacing: 0.4px;
+}
+.page-header {
+  background: #002a5c; height: 14mm;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 8mm;
+}
+.page-header .ph-left  { font-size: 7.5pt; color: rgba(255,255,255,0.55); }
+.page-header .ph-center { font-size: 9pt; color: #fff; font-weight: 700; letter-spacing: 0.4px; }
+.page-header .ph-right  { font-size: 7.5pt; color: rgba(255,255,255,0.55); }
+.page-footer {
+  background: #f1f5f9; border-top: 1.5px solid #cbd5e1;
+  height: 9mm; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 8mm; font-size: 7pt; color: #64748b;
+  position: absolute; bottom: 0; left: 0; right: 0;
+}
+.page-body {
+  padding: 6mm 8mm 14mm 8mm;
+  min-height: calc(210mm - 14mm - 9mm);
+  position: relative;
+}
+
+/* ── Page controls ── */
+.page-controls {
+  position: absolute; top: -24px; right: 0; z-index: 100;
+  display: none;
+}
+body.editing-mode .page-controls { display: flex; gap: 4px; }
+.del-page-btn {
+  background: #ef4444; color: #fff; border: none; border-radius: 4px;
+  padding: 2px 10px; font-size: 0.66rem; font-weight: 700;
+  cursor: pointer; font-family: inherit; opacity: 0.7;
+}
+.del-page-btn:hover { opacity: 1; }
+.move-page-btn {
+  background: #0ea5e9; color: #fff; border: none; border-radius: 4px;
+  padding: 2px 8px; font-size: 0.75rem; font-weight: 700;
+  cursor: pointer; font-family: inherit; opacity: 0.7; line-height: 1;
+}
+.move-page-btn:hover { opacity: 1; background: #0284c7; }
+
+/* ═══════════════════════════════════════════════════
+   CONTENT TYPOGRAPHY
+═══════════════════════════════════════════════════ */
+.sec-title {
+  font-size: 15pt; font-weight: 800; color: #002a5c;
+  border-bottom: 2.5px solid #0ea5e9; padding-bottom: 2mm; margin-bottom: 4mm;
+}
+.sub-title { font-size: 11pt; font-weight: 700; color: #0284c7; margin: 3mm 0 1.5mm 0; }
+.text-block { font-size: 8.5pt; line-height: 1.55; color: #1e293b; }
+.callout {
+  border-left: 3px solid #0ea5e9; background: #eff6ff;
+  padding: 2.5mm 4mm; border-radius: 0 4px 4px 0;
+  font-size: 8pt; color: #1e3a5f; margin: 2.5mm 0;
+}
+.callout.warn  { border-color: #f59e0b; background: #fffbeb; color: #78350f; }
+.callout.danger { border-color: #ef4444; background: #fef2f2; color: #7f1d1d; }
+.bullet-list { list-style: none; margin: 1.5mm 0 2.5mm 4mm; }
+.bullet-list li {
+  font-size: 8.5pt; color: #1e293b; margin-bottom: 1.5mm; line-height: 1.45;
+  padding-left: 3.5mm; position: relative;
+}
+.bullet-list li::before { content: '\25B8'; position: absolute; left: 0; color: #0ea5e9; font-size: 7pt; }
+.step-list { list-style: none; margin: 2mm 0 3mm 0; }
+.step-list li { display: flex; gap: 3mm; font-size: 8.5pt; color: #1e293b; margin-bottom: 2mm; line-height: 1.45; }
+.step-list li .step-num {
+  min-width: 5.5mm; height: 5.5mm; background: #002a5c; color: #fff;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 7pt; font-weight: 700; flex-shrink: 0; margin-top: 0.5mm;
+}
+.info-table { width: 100%; border-collapse: collapse; font-size: 7.5pt; margin: 2mm 0; }
+.info-table th { background: #002a5c; color: #fff; padding: 2mm 3mm; text-align: left; font-weight: 600; font-size: 7pt; }
+.info-table td { padding: 1.8mm 3mm; border-bottom: 1px solid #e2e8f0; color: #1e293b; vertical-align: top; }
+.info-table tr:nth-child(even) td { background: #f8fafc; }
+.badge { display: inline-block; font-size: 7pt; font-weight: 700; padding: 1px 6px; border-radius: 10px; white-space: nowrap; }
+.badge.blue  { background: #dbeafe; color: #1d4ed8; }
+.badge.green { background: #d1fae5; color: #065f46; }
+.badge.amber { background: #fef3c7; color: #92400e; }
+.badge.red   { background: #fde8e8; color: #991b1b; }
+.two-col { display: flex; gap: 6mm; }
+.two-col > * { flex: 1; }
+
+/* ═══════════════════════════════════════════════════
+   COVER PAGE
+═══════════════════════════════════════════════════ */
+.cover-page { background: linear-gradient(135deg, #001d3d 0%, #002a5c 40%, #0a4a8a 100%); }
+.cover-page .page-body {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: calc(210mm - 14mm - 9mm); text-align: center; gap: 5mm;
+}
+.cover-vestas { font-size: 11pt; color: rgba(255,255,255,0.5); letter-spacing: 3px; text-transform: uppercase; }
+.cover-title  { font-size: 24pt; font-weight: 800; color: #fff; line-height: 1.2; }
+.cover-subtitle { font-size: 11pt; color: #7dd3fc; font-weight: 500; }
+.cover-divider { width: 60mm; height: 2px; background: #0ea5e9; border-radius: 2px; }
+.cover-meta { font-size: 8.5pt; color: rgba(255,255,255,0.5); line-height: 1.8; }
+.cover-meta strong { color: rgba(255,255,255,0.8); }
+.cover-badge { background: rgba(14,165,233,0.15); border: 1.5px solid #0ea5e9; border-radius: 8px; padding: 5mm 12mm; font-size: 9pt; color: #7dd3fc; font-weight: 600; }
+.cover-warning { background: rgba(245,158,11,0.1); border: 1.5px solid #f59e0b; border-radius: 6px; padding: 3mm 8mm; font-size: 7.5pt; color: #fcd34d; max-width: 180mm; }
+
+/* ═══════════════════════════════════════════════════
+   IMAGES — ALL ABSOLUTE + DRAGGABLE
+═══════════════════════════════════════════════════ */
+.img-wrapper {
+  position: absolute; cursor: move; user-select: none;
+}
+.img-wrapper img {
+  display: block; width: 100%; height: 100%;
+  object-fit: contain; border-radius: 4px; pointer-events: none;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+.drag-overlay {
+  position: absolute; inset: 0; border: 2px dashed #0ea5e9;
+  border-radius: 4px; display: none;
+  align-items: flex-start; justify-content: flex-end;
+}
+.drag-label {
+  background: #0ea5e9; color: #fff; font-size: 7pt; font-weight: 700;
+  padding: 2px 6px; border-radius: 0 4px 0 4px;
+}
+.resize-handle {
+  position: absolute; bottom: 0; right: 0;
+  width: 14px; height: 14px; background: #0ea5e9;
+  cursor: se-resize; border-radius: 2px 0 4px 0; display: none;
+}
+body.editing-mode .img-wrapper .drag-overlay { display: flex; }
+body.editing-mode .img-wrapper .resize-handle { display: block; }
+
+/* Image-page specific: large title above image */
+.img-page-title {
+  font-size: 13pt; font-weight: 700; color: #002a5c;
+  margin-bottom: 2mm;
+  border-bottom: 2px solid #0ea5e9;
+  padding-bottom: 1.5mm;
+}
+
+/* ═══════════════════════════════════════════════════
+   DRAW OVERLAY (for arrow / rect / textbox tools)
+═══════════════════════════════════════════════════ */
+.draw-overlay {
+  position: absolute; inset: 0; z-index: 200;
+  display: none;
+}
+body.editing-mode.tool-textbox .draw-overlay { display: block; cursor: text; }
+body.editing-mode.tool-arrow   .draw-overlay { display: block; cursor: crosshair; }
+body.editing-mode.tool-rect    .draw-overlay { display: block; cursor: crosshair; }
+
+/* ═══════════════════════════════════════════════════
+   ARROW LAYER (SVG)
+═══════════════════════════════════════════════════ */
+.arrow-layer {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 60; overflow: visible;
+}
+.arrow-layer line {
+  pointer-events: stroke; cursor: pointer; stroke-linecap: round;
+}
+.arrow-layer line.hit-area {
+  stroke: transparent; stroke-width: 16; pointer-events: stroke; cursor: pointer;
+}
+.arrow-layer line.ann-selected { filter: drop-shadow(0 0 4px #0ea5e9); }
+
+/* ═══════════════════════════════════════════════════
+   ANNOTATIONS — TEXT BOX
+═══════════════════════════════════════════════════ */
+.ann-textbox {
+  position: absolute; z-index: 70;
+  min-width: 80px; min-height: 28px;
+  cursor: move; user-select: none;
+  overflow: visible;
+  border: 2px solid #ffffff;
+  border-radius: 3px;
+  box-sizing: border-box;
+}
+.ann-textbox .tb-content {
+  display: block;
+  width: 100%;
+  padding: 4px 8px;
+  font-size: 9pt; font-weight: 600; line-height: 1.4;
+  white-space: pre-wrap; word-wrap: break-word;
+  text-align: left; direction: ltr;
+  color: #ffffff;
+  background: transparent;
+  outline: none;
+  pointer-events: none;
+  box-sizing: border-box;
+  overflow: visible;
+}
+.ann-textbox.tb-editing .tb-content {
+  pointer-events: auto;
+  cursor: text;
+}
+.ann-textbox.ann-selected { outline: 3px solid rgba(14,165,233,0.5); }
+.ann-textbox .tb-resize {
+  position: absolute; bottom: -6px; right: -6px;
+  width: 12px; height: 12px; background: #0ea5e9;
+  cursor: ew-resize; border-radius: 2px;
+  display: none; z-index: 80;
+}
+.ann-textbox.ann-selected .tb-resize { display: block; }
+.ann-textbox .tb-delete {
+  position: absolute; top: -10px; right: -10px;
+  width: 20px; height: 20px; background: #ef4444; color: #fff;
+  border: none; border-radius: 50%; cursor: pointer;
+  font-size: 12px; line-height: 20px; text-align: center;
+  display: none; z-index: 90; padding: 0;
+}
+.ann-textbox.ann-selected .tb-delete { display: block; }
+
+/* ═══════════════════════════════════════════════════
+   ANNOTATIONS — RECTANGLE
+═══════════════════════════════════════════════════ */
+.ann-rect {
+  position: absolute; z-index: 65;
+  border: 3px solid #ef4444; border-radius: 3px;
+  background: transparent; cursor: move; user-select: none;
+}
+.ann-rect.ann-selected { box-shadow: 0 0 0 3px rgba(14,165,233,0.5); }
+.ann-rect .resize-handle {
+  position: absolute; bottom: -6px; right: -6px;
+  width: 12px; height: 12px; background: #0ea5e9;
+  cursor: nwse-resize; border-radius: 2px;
+  display: none; z-index: 80;
+}
+.ann-rect.ann-selected .resize-handle { display: block; }
+.ann-rect .rect-delete {
+  position: absolute; top: -10px; right: -10px;
+  width: 20px; height: 20px; background: #ef4444; color: #fff;
+  border: none; border-radius: 50%; cursor: pointer;
+  font-size: 12px; line-height: 20px; text-align: center;
+  display: none; z-index: 90; padding: 0;
+}
+.ann-rect.ann-selected .rect-delete { display: block; }
+/* Preview mode: disable all annotation interactions */
+body:not(.editing-mode) .ann-textbox { cursor: default; pointer-events: none; }
+body:not(.editing-mode) .ann-rect { cursor: default; pointer-events: none; }
+body:not(.editing-mode) .arrow-layer line { pointer-events: none; cursor: default; }
+body:not(.editing-mode) .ann-textbox .tb-delete,
+body:not(.editing-mode) .ann-textbox .tb-resize,
+body:not(.editing-mode) .ann-rect .resize-handle,
+body:not(.editing-mode) .ann-rect .rect-delete { display: none !important; }
+
+/* ═══════════════════════════════════════════════════
+   EDITING MODE
+═══════════════════════════════════════════════════ */
+body.editing-mode [contenteditable="true"] {
+  outline: 1px dashed rgba(14,165,233,0.35); min-height: 1em; border-radius: 2px;
+}
+body.editing-mode [contenteditable="true"]:focus {
+  outline: 1.5px solid #0ea5e9; background: rgba(14,165,233,0.04);
+}
+/* Exclude textbox content from generic editing outlines */
+body.editing-mode .ann-textbox .tb-content {
+  outline: none !important; background: transparent !important;
+}
+
+/* ═══════════════════════════════════════════════════
+   PRINT
+═══════════════════════════════════════════════════ */
+@media print {
+  @page { size: 297mm 210mm; margin: 0mm; }
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 297mm !important;
+    height: 210mm !important;
+    background: #fff !important;
+  }
+  #toolbar, .page-num-label, .page-controls { display: none !important; }
+  #save-toast { display: none !important; }
+  #pages-container { margin: 0 !important; padding: 0 !important; gap: 0 !important; }
+  .page {
+    box-shadow: none !important;
+    page-break-after: always;
+    page-break-inside: avoid;
+    transform: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 297mm !important;
+    height: 210mm !important;
+    min-height: 210mm !important;
+    max-height: 210mm !important;
+    overflow: hidden !important;
+    position: relative !important;
+  }
+  .cover-page {
+    background: linear-gradient(135deg, #001d3d 0%, #002a5c 40%, #0a4a8a 100%) !important;
+  }
+  .page-header {
+    background: #002a5c !important;
+  }
+  .page-footer {
+    background: #f1f5f9 !important;
+  }
+  .callout { background: #eff6ff !important; }
+  .callout.warn { background: #fffbeb !important; }
+  .callout.danger { background: #fef2f2 !important; }
+  .info-table th { background: #002a5c !important; color: #fff !important; }
+  .info-table tr:nth-child(even) td { background: #f8fafc !important; }
+  .badge.blue  { background: #dbeafe !important; }
+  .badge.green { background: #d1fae5 !important; }
+  .badge.amber { background: #fef3c7 !important; }
+  .badge.red   { background: #fde8e8 !important; }
+  .cover-badge { background: rgba(14,165,233,0.15) !important; }
+  .cover-warning { background: rgba(245,158,11,0.1) !important; }
+  .step-list li .step-num { background: #002a5c !important; color: #fff !important; }
+  [contenteditable] { outline: none !important; }
+  .drag-overlay, .draw-overlay { display: none !important; }
+  .ann-textbox { cursor: default; }
+  .ann-textbox .tb-delete, .ann-textbox .tb-resize { display: none !important; }
+  .ann-rect .resize-handle, .ann-rect .rect-delete { display: none !important; }
+  .resize-handle { display: none !important; }
+}
+</style>
+</head>
+<body class="editing-mode tool-select">
+
+<!-- ═══════════ TOOLBAR ═══════════ -->
+<div id="toolbar">
+  <div class="tb-row">
+    <div class="tb-logo">BRMP <span>User Guide</span> — Editor</div>
+    <div class="tb-divider"></div>
+    <span id="mode-badge" class="editing">&nbsp;EDIT MODE</span>
+    <div class="tb-divider"></div>
+    <button class="tb-btn edit" onclick="toggleMode()">Toggle Preview / Edit</button>
+    <button class="tb-btn save" onclick="saveState()">&#128190; Save</button>
+    <button class="tb-btn print" onclick="window.print()">Print / PDF</button>
+    <button class="tb-btn reset" onclick="if(confirm('Reset all saved edits and reload from scratch?')){localStorage.removeItem('brmp_ug_state');location.reload()}">Reset</button>
+    <span class="tb-hint">Click text to edit &bull; Drag &amp; resize images &bull; Use tools below for annotations</span>
+  </div>
+  <div class="tb-row">
+    <span class="tb-label">TOOL:</span>
+    <div class="tool-group">
+      <button class="tool-btn active" data-tool="select" onclick="setTool('select')">&#9754; Select</button>
+      <button class="tool-btn" data-tool="textbox" onclick="setTool('textbox')">T Text Box</button>
+      <button class="tool-btn" data-tool="arrow" onclick="setTool('arrow')">&#10132; Arrow</button>
+      <button class="tool-btn" data-tool="rect" onclick="setTool('rect')">&#9633; Rectangle</button>
+    </div>
+    <div class="tb-divider"></div>
+    <span class="tb-label">FORMAT:</span>
+    <button class="fmt-btn" onclick="fmtCmd('bold')" title="Bold (Ctrl+B)"><b>B</b></button>
+    <button class="fmt-btn" onclick="fmtCmd('italic')" title="Italic (Ctrl+I)"><i>I</i></button>
+    <button class="fmt-btn" onclick="fmtCmd('underline')" title="Underline (Ctrl+U)"><u>U</u></button>
+    <span class="tb-label" style="margin-left:6px;">TEXT COLOR:</span>
+    <input type="color" id="textColorPicker" value="#002a5c" title="Text colour" style="width:28px;height:28px;border:2px solid rgba(255,255,255,0.3);border-radius:4px;cursor:pointer;background:none;padding:0;">
+    <button class="fmt-btn" onclick="applyTextColor()" title="Apply colour to selected text">A</button>
+    <div class="tb-divider"></div>
+    <span class="tb-label">ANNOTATION COLOR:</span>
+    <input type="color" id="colorPicker" value="#ef4444" title="Annotation colour">
+    <div class="tb-divider"></div>
+    <span class="tb-label">PAGES:</span>
+    <button class="tb-btn add" onclick="addPage('text')">+ Text Page</button>
+    <button class="tb-btn add" onclick="addPage('image')">+ Image Page</button>
+  </div>
+</div>
+
+<!-- ═══════════ PAGES ═══════════ -->
+<div id="pages-container">
+
+<!-- ══════════════════════════════════════════════════════
+     PAGE 1 — COVER
+══════════════════════════════════════════════════════ -->
+<div class="page cover-page">
+  <div class="page-controls"><button class="del-page-btn" onclick="deletePage(this)">× Delete</button></div>
+  <div class="page-num-label">Page 1 — Cover</div>
+  <div class="page-header">
+    <span class="ph-left">Vestas Wind Systems A/S</span>
+    <span class="ph-center" contenteditable="true">BLADE REPAIR MATERIALS PLANNER</span>
+    <span class="ph-right">Confidential | April 2026</span>
+  </div>
+  <div class="page-body">
+    <div class="draw-overlay"></div>
+    <svg class="arrow-layer" xmlns="http://www.w3.org/2000/svg"><defs></defs></svg>
+    <div class="cover-vestas" contenteditable="true">VESTAS WIND SYSTEMS A/S</div>
+    <div class="cover-title" contenteditable="true">Blade Repair Materials Planner</div>
+    <div class="cover-subtitle" contenteditable="true">User Guide &amp; Tutorial — v1.0</div>
+    <div class="cover-divider"></div>
+    <div class="cover-meta" contenteditable="true">
+      <strong>Developed by:</strong> Brazil Blades Service Team<br>
+      <strong>Support:</strong> JTELE &middot; MLASU &middot; JOVFN<br>
+      <strong>Version:</strong> 1.0 &middot; <strong>Date:</strong> April 2026<br>
+      <strong>Application:</strong> http://localhost:8010 &middot; <strong>Launcher:</strong> INICIAR_CALCULADORA.bat
+    </div>
+    <div class="cover-badge" contenteditable="true">Materials &amp; Tools Estimate for General Shell Laminate Repairs</div>
+    <div class="cover-warning" contenteditable="true">CONFIDENTIAL — Vestas Internal Use Only. Do not distribute outside Vestas.</div>
+  </div>
+  <div class="page-footer">
+    <span>Vestas Brazil Blades Service Team</span>
+    <span>BRMP v1.0 User Guide — Cover</span>
+    <span class="pg-num">Page 1</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     PAGE 2 — INTRODUCTION (TEXT)
+══════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-controls"><button class="del-page-btn" onclick="deletePage(this)">× Delete</button></div>
+  <div class="page-num-label">Page 2 — Introduction</div>
+  <div class="page-header">
+    <span class="ph-left">Vestas — Blade Repair Materials Planner</span>
+    <span class="ph-center">BLADE REPAIR MATERIALS PLANNER</span>
+    <span class="ph-right">Confidential | April 2026</span>
+  </div>
+  <div class="page-body">
+    <div class="draw-overlay"></div>
+    <svg class="arrow-layer" xmlns="http://www.w3.org/2000/svg"><defs></defs></svg>
+    <div class="sec-title" contenteditable="true">1. Introduction</div>
+    <div class="two-col">
+      <div>
+        <div class="sub-title" contenteditable="true">1.1 What is the BRMP?</div>
+        <div class="text-block" contenteditable="true">
+          The <strong>Blade Repair Materials Planner (BRMP)</strong> is an internal web application developed by the Brazil Blades Service Team to streamline the planning and material estimation process for wind turbine blade shell laminate repairs.<br><br>
+          Before BRMP, technicians manually calculated fabric quantities, chemical amounts, and consumable counts using Excel spreadsheets — a time-consuming and error-prone process. BRMP automates all these calculations from a simple 4-step data input flow, producing a complete Bill of Materials (BOM) in seconds.
+        </div>
+        <div class="sub-title" contenteditable="true">1.2 What does it cover?</div>
+        <ul class="bullet-list" contenteditable="true">
+          <li>Fabrics (BIAX, UD, TRIAX, CORE, BALSA, SPL, CFM)</li>
+          <li>Chemicals (epoxy resins, adhesives, top coat, alcohol, cleaning cloth)</li>
+          <li>Consumable Tools (grinding discs, putty knives, spatulas)</li>
+          <li>Consumables (peel ply, release film, infusion mesh, vacuum tape, breather)</li>
+          <li>Tools (vacuum pump, scales, mixing machine)</li>
+          <li>PPE (dust loops, gloves, suit, cream)</li>
+        </ul>
+        <div class="sub-title" contenteditable="true">1.3 Limitations</div>
+        <div class="callout danger" contenteditable="true">
+          BRMP is designed exclusively for general shell laminate repairs. LPS, spar cap, shear web, root, insert, or engineering sign-off repairs are NOT covered.
+        </div>
+      </div>
+      <div>
+        <div class="sub-title" contenteditable="true">1.4 Support &amp; Contact</div>
+        <table class="info-table">
+          <tr><th>Name</th><th>Role</th></tr>
+          <tr><td contenteditable="true">JTELE</td><td contenteditable="true">Technical Lead</td></tr>
+          <tr><td contenteditable="true">MLASU</td><td contenteditable="true">Developer / Technical</td></tr>
+          <tr><td contenteditable="true">JOVFN</td><td contenteditable="true">Developer / Technical</td></tr>
+        </table>
+        <div class="sub-title" contenteditable="true">1.5 How to Launch</div>
+        <ol class="step-list" contenteditable="true">
+          <li><span class="step-num">1</span><span>Navigate to the application folder.</span></li>
+          <li><span class="step-num">2</span><span>Double-click <strong>INICIAR_CALCULADORA.bat</strong>. A CMD window opens.</span></li>
+          <li><span class="step-num">3</span><span>After ~3 s your browser opens at <strong>http://localhost:8010</strong>.</span></li>
+          <li><span class="step-num">4</span><span>Click the blue <strong>"Damage Data"</strong> button to begin.</span></li>
+        </ol>
+        <div class="callout warn" contenteditable="true">Prerequisites: Python 3.10+ (Anaconda3 recommended). First run installs packages automatically (internet required).</div>
+        <div class="callout danger" contenteditable="true">Keep the CMD server window open while using the tool. Closing it stops the server.</div>
+        <div class="sub-title" contenteditable="true">1.6 Navigation Bar</div>
+        <div class="text-block" contenteditable="true">The dark-blue top bar shows 4 numbered steps: <strong>Damage Data → Layer Data → Repair Steps → Results</strong>. A Reset button (top-right) clears everything. The v1.0 badge confirms the running version.</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>Vestas Brazil Blades Service Team</span>
+    <span>BRMP v1.0 User Guide — Introduction</span>
+    <span class="pg-num">Page 2</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     PAGE 3 — PRNTSCR1 — Welcome Page
+══════════════════════════════════════════════════════ -->
+<div class="page img-page">
+  <div class="page-controls"><button class="del-page-btn" onclick="deletePage(this)">× Delete</button></div>
+  <div class="page-num-label">Page 3 — PRNTSCR1</div>
+  <div class="page-header">
+    <span class="ph-left">Vestas — Blade Repair Materials Planner</span>
+    <span class="ph-center">BLADE REPAIR MATERIALS PLANNER</span>
+    <span class="ph-right">Confidential | April 2026</span>
+  </div>
+  <div class="page-body">
+    <div class="draw-overlay"></div>
+    <svg class="arrow-layer" xmlns="http://www.w3.org/2000/svg"><defs></defs></svg>
+    <div class="img-page-title" contenteditable="true">1.5 Welcome Page — Overview</div>
+    <div class="img-wrapper" style="left:4mm; top:16mm; width:273mm; height:152mm;">
+      <img src="images/PRNTSCR1.png" alt="Welcome Page">
+      <div class="drag-overlay"><span class="drag-label">PRNTSCR1 — Welcome Page</span></div>
+      <div class="resize-handle"></div>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>Vestas Brazil Blades Service Team</span>
+    <span contenteditable="true">The Welcome Page shows general info, scope, limitations, and the "Damage Data" entry button.</span>
+    <span class="pg-num">Page 3</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     PAGE 4 — STEP 1 OVERVIEW (TEXT)
+══════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-controls"><button class="del-page-btn" onclick="deletePage(this)">× Delete</button></div>
+  <div class="page-num-label">Page 4 — Step 1 Overview</div>
+  <div class="page-header">
+    <span class="ph-left">Vestas — Blade Repair Materials Planner</span>
+    <span class="ph-center">BLADE REPAIR MATERIALS PLANNER</span>
+    <span class="ph-right">Confidential | April 2026</span>
+  </div>
+  <div class="page-body">
+    <div class="draw-overlay"></div>
+    <svg class="arrow-layer" xmlns="http://www.w3.org/2000/svg"><defs></defs></svg>
+    <div class="sec-title" contenteditable="true">2. Step 1 — Damage Data Input</div>
+    <div class="two-col">
+      <div>
+        <div class="sub-title" contenteditable="true">2.1 Identification Fields</div>
+        <table class="info-table">
+          <tr><th>Field</th><th>Description</th><th>Example</th></tr>
+          <tr><td contenteditable="true"><strong>Blade Model</strong></td><td contenteditable="true">WTG rotor model. Drives material catalog. <strong>Must be confirmed.</strong></td><td>V150</td></tr>
+          <tr><td contenteditable="true"><strong>Blade SN</strong></td><td contenteditable="true">Blade serial number</td><td>29181330WHBV2041311</td></tr>
+          <tr><td contenteditable="true"><strong>SO</strong></td><td contenteditable="true">SAP Service Order — used in PDF filename</td><td>SO-2025-001</td></tr>
+          <tr><td contenteditable="true"><strong>CIR Number</strong></td><td contenteditable="true">Condition Inspection Report number</td><td>2030119</td></tr>
+        </table>
+        <div class="sub-title" contenteditable="true">2.2 Confirming the Blade Model</div>
+        <div class="text-block" contenteditable="true">After selecting the model, click <strong>CONFIRM</strong> to lock it. This is critical: the fabric dropdown in Step 2 is filtered by blade model. A green banner confirms the lock. To change: click <strong>EDIT</strong> (resets Layer Data).</div>
+        <div class="callout warn" contenteditable="true">Always confirm the blade model before filling coordinates.</div>
+      </div>
+      <div>
+        <div class="sub-title" contenteditable="true">2.3 SPANWISE Coordinates</div>
+        <table class="info-table">
+          <tr><th>Field</th><th>Description</th></tr>
+          <tr><td contenteditable="true"><strong>Rstart (mm)</strong></td><td contenteditable="true">Distance from root to start of damage</td></tr>
+          <tr><td contenteditable="true"><strong>Rend (mm)</strong></td><td contenteditable="true">Distance from root to end of damage</td></tr>
+          <tr><td contenteditable="true"><strong>Length</strong> <span class="badge green">AUTO</span></td><td contenteditable="true">|Rend - Rstart| — read-only</td></tr>
+        </table>
+        <div class="sub-title" contenteditable="true">2.4 CHORDWISE Coordinates</div>
+        <table class="info-table">
+          <tr><th>Field</th><th>Description</th></tr>
+          <tr><td contenteditable="true"><strong>Reference</strong></td><td contenteditable="true">LE, TE, M.Web, or TE.Web</td></tr>
+          <tr><td contenteditable="true"><strong>X1</strong></td><td contenteditable="true">Smaller chordwise distance (mm)</td></tr>
+          <tr><td contenteditable="true"><strong>X2</strong></td><td contenteditable="true">Larger chordwise distance (mm)</td></tr>
+          <tr><td contenteditable="true"><strong>Width</strong> <span class="badge green">AUTO</span></td><td contenteditable="true">|X2 - X1| — read-only</td></tr>
+        </table>
+        <div class="sub-title" contenteditable="true">2.5 Blade Visualization</div>
+        <div class="text-block" contenteditable="true">Once all 4 coordinates are filled, a live blade silhouette diagram shows a <strong>pulsing red dot</strong> at the damage location. The blade length scale is shown in metres.</div>
+        <div class="sub-title" contenteditable="true">2.6 Damage Description</div>
+        <div class="text-block" contenteditable="true">Optional free-text field for damage type, surface condition, inspection notes. Printed verbatim in the PDF report.</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>Vestas Brazil Blades Service Team</span>
+    <span>BRMP v1.0 User Guide — Step 1 Overview</span>
+    <span class="pg-num">Page 4</span>
+  </div>
+</div>
+
+<!-- PAGE 5 — PRNTSCR2 — Step 1 Initial -->
+<div class="page img-page">
+  <div class="page-controls"><button class="del-page-btn" onclick="deletePage(this)">× Delete</button></div>
+  <div class="page-num-label">Page 5 — PRNTSCR2</div>
+  <div class="page-header">
+    <span class="ph-left">Vestas — Blade Repair Materials Planner</span>
+    <span class="ph-center">BLADE REPAIR MATERIALS PLANNER</span>
+    <span class="ph-right">Confidential | April 2026</span>
+  </div>
+  <div class="page-body">
+    <div class="draw-overlay"></div>
+    <svg class="arrow-layer" xmlns="http://www.w3.org/2000/svg"><defs></defs></svg>
+    <div class="img-page-title" contenteditable="true">2.1 Step 1 — Initial State (no blade selected)</div>
+    <div class="img-wrapper" style="left:4mm; top:16mm; width:273mm; height:152mm;">
+      <img src="images/PRNTSCR2.png" alt="Step 1 Initial">
+      <div class="drag-overlay"><span class="drag-label">PRNTSCR2 — Step 1 Initial</span></div>
+      <div class="resize-handle"></div>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>Vestas Brazil Blades Service Team</span>
+    <span contenteditable="true">Step 1 with empty fields — select the blade model from the dropdown and click CONFIRM.</span>
+    <span class="pg-num">Page 5</span>
+  </div>
+</div>
+
+<!-- PAGE 6 — PRNTSCR3 — Blade Confirmed -->
+<div class="page img-page">
+  <div class="page-controls"><button class="del-page-btn" onclick="deletePage(this)">× Delete</button></div>
+  <div class="page-num-label">Page 6 — PRNTSCR3</div>
+  <div class="page-header">
+    <span class="ph-left">Vestas — Blade Repair Materials Planner</span>
+    <span class="ph-center">BLADE REPAIR MATERIALS PLANNER</span>
+    <span class="ph-right">Confidential | April 2026</span>
+  </div>
+  <div class="page-body">
+    <div class="draw-overlay"></div>
+    <svg class="arrow-layer" xmlns="http://www.w3.org/2000/svg"><defs></defs></svg>
+    <div class="img-page-title" contenteditable="true">2.2 Blade Model Confirmed — Green Lock Banner</div>
+    <div class="img-wrapper" style="left:4mm; top:16mm; width:273mm; height:152mm;">
+      <img src="images/PRNTSCR3.png" alt="Blade Confirmed">
+      <div class="drag-overlay"><span class="drag-label">PRNTSCR3 — Blade Confirmed</span></div>
+      <div class="resize-handle"></div>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>Vestas Brazil Blades Service Team</span>
+    <span contenteditable="true">After clicking CONFIRM, the green banner locks the blade model. Click EDIT to change (resets layers).</span>
+    <span class="pg-num">Page 6</span>
+  </div>
+</div>
+
+<!-- PAGE 7 — PRNTSCR4 — Coordinates Filled -->
+<div class="page img-page">
+  <div class="page-controls"><button class="del-page-btn" onclick="deletePage(this)">× Delete</button></div>
+  <div class="page-num-label">Page 7 — PRNTSCR4</div>
+  <div class="page-header">
+    <span class="ph-left">Vestas — Blade Repair Materials Planner</span>
+    <span class="ph-center">BLADE REPAIR MATERIALS PLANNER</span>
+    <span class="ph-right">Confidential | April 2026</span>
+  </div>
+  <div class="page-body">
+    <div class="draw-overlay"></div>
+    <svg class="arrow-layer" xmlns="http://www.w3.org/2000/svg"><defs></defs></svg>
+    <div class="img-page-title" contenteditable="true">2.5 Coordinates Filled — Red Dot Visualization</div>
+    <div class="img-wrapper" style="left:4mm; top:16mm; width:273mm; height:152mm;">
+      <img src="images/PRNTSCR4.png" alt="Coordinates Filled">
+      <div class="drag-overlay"><span class="drag-label">PRNTSCR4 — Red Dot Confirmed</span></div>
+      <div class="resize-handle"></div>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>Vestas Brazil Blades Service Team</span>
+    <span contenteditable="true">All coordinates filled. The red pulsing dot shows the damage location on the blade silhouette. Click "Next: Layer Data" to proceed.</span>
+    <span class="pg-num">Page 7</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     PAGE 8 — STEP 2 OVERVIEW (TEXT)
+══════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-controls"><button class="del-page-btn" onclick="deletePage(this)">× Delete</button></div>
+  <div class="page-num-label">Page 8 — Step 2 Overview</div>
+  <div class="page-header">
+    <span class="ph-left">Vestas — Blade Repair Materials Planner</span>
+    <span class="ph-center">BLADE REPAIR MATERIALS PLANNER</span>
+    <span class="ph-right">Confidential | April 2026</span>
+  </div>
+  <div class="page-body">
+    <div class="draw-overlay"></div>
+    <svg class="arrow-layer" xmlns="http://www.w3.org/2000/svg"><defs></defs></svg>
+    <div class="sec-title" contenteditable="true">3. Step 2 — Layer Data Input</div>
+    <div class="two-col">
+      <div>
+        <div class="sub-title" contenteditable="true">3.1 What are Layers?</div>
+        <div class="text-block" contenteditable="true">Layers represent the <strong>repair laminating stack</strong> — the sequence of fabric plies applied during repair, from innermost (closest to blade surface) to outermost. This stack drives fabric quantity calculations.</div>
+        <div class="sub-title" contenteditable="true">3.2 The Layer Table</div>
+        <table class="info-table">
+          <tr><th>Column</th><th>Description</th></tr>
+          <tr><td contenteditable="true"><strong>#</strong></td><td contenteditable="true">Layer number (order in stack)</td></tr>
+          <tr><td contenteditable="true"><strong>Layer Name</strong></td><td contenteditable="true">Free text — repair drawing layer ID (e.g. "270A", "150B")</td></tr>
+          <tr><td contenteditable="true"><strong>Material Type</strong></td><td contenteditable="true">Dropdown filtered by blade model (BIAX 1000, UD 1200, TRIAX, CORE, SPL, BALSA, CFM)</td></tr>
+          <tr><td contenteditable="true"><strong>GSM</strong> <span class="badge green">AUTO</span></td><td contenteditable="true">Auto-filled from material selection</td></tr>
+          <tr><td contenteditable="true"><strong>Scarffing Order</strong></td><td contenteditable="true">Optional grinding/scarffing reference</td></tr>
+          <tr><td contenteditable="true"><strong>Move / Delete</strong></td><td contenteditable="true">Reorder or remove layers</td></tr>
+        </table>
+        <div class="callout warn" contenteditable="true">SPL, CORE, BALSA and CFM must be explicitly added as layers if the repair requires them.</div>
+      </div>
+      <div>
+        <div class="sub-title" contenteditable="true">3.3 Material Type Dropdown</div>
+        <div class="text-block" contenteditable="true">Only shows fabrics valid for the confirmed blade model, based on the REV05 Blades_Fabrics matrix. e.g. V150 shows BIAX 600/1000/1200 (HM catalog) while V82 shows BIAX 936.</div>
+        <div class="sub-title" contenteditable="true">3.4 Layer Order Matters</div>
+        <div class="text-block" contenteditable="true">The sequence determines cumulative <strong>spanwise and chordwise overlap accumulation</strong>. Enter from Layer 1 (innermost/smallest) to last layer (outermost/largest scarffing). Use arrows to reorder.</div>
+        <div class="sub-title" contenteditable="true">3.5 Confirming Layers</div>
+        <div class="text-block" contenteditable="true">Once configured, click <strong>"CONFIRM LAYERS"</strong>. A green lock banner appears. To modify: click <strong>"UNLOCK"</strong>.</div>
+        <div class="callout" contenteditable="true">After locking layers, click <strong>"Next: Repair Steps"</strong> to proceed to Step 3.</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>Vestas Brazil Blades Service Team</span>
+    <span>BRMP v1.0 User Guide — Step 2 Overview</span>
+    <span class="pg-num">Page 8</span>
+  </div>
+</div>
+
+<!-- PAGE 9 — PRNTSCR5 — Layer Table -->
+<div class="page img-page">
+  <div class="page-controls"><button class="del-page-btn" onclick="deletePage(this)">× Delete</button></div>
+  <div class="page-num-label">Page 9 — PRNTSCR5</div>
+  <div class="page-header">
+    <span class="ph-left">Vestas — Blade Repair Materials Planner</span>
+    <span class="ph-center">BLADE REPAIR MATERIALS PLANNER</span>
+    <span class="ph-right">Confidential | April 2026</span>
+  </div>
+  <div class="page-body">
+    <div class="draw-overlay"></div>
+    <svg class="arrow-layer" xmlns="http://www.w3.org/2000/svg"><defs></defs></svg>
+    <div class="img-page-title" contenteditable="true">3.2 Layer Table — Adding Layers</div>
+    <div class="img-wrapper" style="left:4mm; top:16mm; width:273mm; height:152mm;">
+      <img src="images/PRNTSCR5.png" alt="Layer Table">
+      <div class="drag-overlay"><span class="drag-label">PRNTSCR5 — Layer Table</span></div>
+      <div class="resize-handle"></div>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>Vestas Brazil Blades Service Team</span>
+    <span contenteditable="true">The layer table with numbered rows. Use "Add Layer" to add plies and the arrows to reorder.</span>
+    <span class="pg-num">Page 9</span>
+  </div>
+</div>
+
+<!-- PAGE 10 — PRNTSCR6 — Material Dropdown -->
+<div class="page img-page">
+  <div class="page-controls"><button class="del-page-btn" onclick="deletePage(this)">× Delete</button></div>
+  <div class="page-num-label">Page 10 — PRNTSCR6</div>
+  <div class="page-header">
+    <span class="ph-left">Vestas — Blade Repair Materials Planner</span>
+    <span class="ph-center">BLADE REPAIR MATERIALS PLANNER</span>
+    <span class="ph-right">Confidential | April 2026</span>
+  </div>
+  <div class="page-body">
+    <div class="draw-overlay"></div>
+    <svg class="arrow-layer" xmlns="http://www.w3.org/2000/svg"><defs></defs></svg>
+    <div class="img-page-title" contenteditable="true">3.3 Material Type Dropdown — Filtered by Blade Model</div>
+    <div class="img-wrapper" style="left:4mm; top:16mm; width:273mm; height:152mm;">
+      <img src="images/PRNTSCR6.png" alt="Material Dropdown">
+      <div class="drag-overlay"><span class="drag-label">PRNTSCR6 — Material Dropdown</span></div>
+      <div class="resize-handle"></div>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>Vestas Brazil Blades Service Team</span>
+    <span contenteditable="true">The dropdown shows only fabrics valid for the confirmed blade model (REV05 Blades_Fabrics matrix).</span>
+    <span class="pg-num">Page 10</span>
+  </div>
+</div>
+
+<!-- PAGE 11 — PRNTSCR7 — Layers Locked -->
+<div class="page img-page">
+  <div class="page-controls"><button class="del-page-btn" onclick="deletePage(this)">× Delete</button></div>
+  <div class="page-num-label">Page 11 — PRNTSCR7</div>
+  <div class="page-header">
+    <span class="ph-left">Vestas — Blade Repair Materials Planner</span>
+    <span class="ph-center">BLADE REPAIR MATERIALS PLANNER</span>
+    <span class="ph-right">Confidential | April 2026</span>
+  </div>
+  <div class="page-body">
+    <div class="draw-overlay"></div>
+    <svg class="arrow-layer" xmlns="http://www.w3.org/2000/svg"><defs></defs></svg>
+    <div class="img-page-title" contenteditable="true">3.5 Layers Confirmed — Ready for Step 3</div>
+    <div class="img-wrapper" style="left:4mm; top:16mm; width:273mm; height:152mm;">
+      <img src="images/PRNTSCR7.png" alt="Layers Locked">
+      <div class="drag-overlay"><span class="drag-label">PRNTSCR7 — Layers Locked</span></div>
+      <div class="resize-handle"></div>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>Vestas Brazil Blades Service Team</span>
+    <span contenteditable="true">All layers locked with green banner. Click "Next: Repair Steps" to proceed.</span>
+    <span class="pg-num">Page 11</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     PAGE 12 — STEP 3 OVERVIEW (TEXT)
+══════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-controls"><button class="del-page-btn" onclick="deletePage(this)">× Delete</button></div>
+  <div class="page-num-label">Page 12 — Step 3 Overview</div>
+  <div class="page-header">
+    <span class="ph-left">Vestas — Blade Repair Materials Planner</span>
+    <span class="ph-center">BLADE REPAIR MATERIALS PLANNER</span>
+    <span class="ph-right">Confidential | April 2026</span>
+  </div>
+  <div class="page-body">
+    <div class="draw-overlay"></div>
+    <svg class="arrow-layer" xmlns="http://www.w3.org/2000/svg"><defs></defs></svg>
+    <div class="sec-title" contenteditable="true">4. Step 3 — Repair Steps Input</div>
+    <div class="two-col">
+      <div>
+        <div class="sub-title" contenteditable="true">4.1 Repair Steps — Left Panel</div>
+        <div class="text-block" contenteditable="true">Enter the number of times each repair activity will be performed. Each quantity drives consumable, chemical, and tool calculations. Hover the (i) icon for guidance.</div>
+        <table class="info-table">
+          <tr><th>Step</th><th>Drives</th></tr>
+          <tr><td contenteditable="true"><strong>Cleaning</strong></td><td contenteditable="true">Surface preparation cycles</td></tr>
+          <tr><td contenteditable="true"><strong>Grinding</strong></td><td contenteditable="true">Grinding disc consumption</td></tr>
+          <tr><td contenteditable="true"><strong>Bonding</strong></td><td contenteditable="true">Adhesive (SikaForce) qty</td></tr>
+          <tr><td contenteditable="true"><strong>Lamination</strong></td><td contenteditable="true">Dry lay-up cycles</td></tr>
+          <tr><td contenteditable="true"><strong>HLU</strong></td><td contenteditable="true">Hand Lay-Up cycles</td></tr>
+          <tr><td contenteditable="true"><strong>Infusion</strong></td><td contenteditable="true">Infusion process cycles</td></tr>
+          <tr><td contenteditable="true"><strong>Weighing</strong></td><td contenteditable="true">Mix weighing steps</td></tr>
+          <tr><td contenteditable="true"><strong>Vacuum</strong> <span class="badge green">AUTO</span></td><td contenteditable="true">= HLU + Infusion (not editable)</td></tr>
+          <tr><td contenteditable="true"><strong>Painting</strong></td><td contenteditable="true">Top coat application</td></tr>
+          <tr><td contenteditable="true"><strong>LEP</strong></td><td contenteditable="true">Leading Edge Protection</td></tr>
+        </table>
+      </div>
+      <div>
+        <div class="sub-title" contenteditable="true">4.2 Blade Info — Right Panel</div>
+        <table class="info-table">
+          <tr><th>Field</th><th>Description</th></tr>
+          <tr><td contenteditable="true"><strong>Blade Region</strong></td><td contenteditable="true">Root / Middle / Tip. Root uses different CORE kit SAP (29217723).</td></tr>
+          <tr><td contenteditable="true"><strong>Days of Repair</strong></td><td contenteditable="true">Working days. Drives dust loop (3M mask) qty per technician per day.</td></tr>
+        </table>
+        <div class="callout warn" contenteditable="true">After all steps and blade info are set, click <strong>"Calculate BOM"</strong> to generate results instantly.</div>
+        <div class="sub-title" contenteditable="true">4.3 Tooltip Hints</div>
+        <div class="text-block" contenteditable="true">Each repair step has an (i) icon. Hover it to read specific guidance notes about that step — e.g. Bonding step explains when to use SikaForce vs. SikaPower, and notes about infusion prep fabric lay-down.</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>Vestas Brazil Blades Service Team</span>
+    <span>BRMP v1.0 User Guide — Step 3 Overview</span>
+    <span class="pg-num">Page 12</span>
+  </div>
+</div>
+
+<!-- PAGE 13 — PRNTSCR8 — Repair Steps -->
+<div class="page img-page">
+  <div class="page-controls"><button class="del-page-btn" onclick="deletePage(this)">× Delete</button></div>
+  <div class="page-num-label">Page 13 — PRNTSCR8</div>
+  <div class="page-header">
+    <span class="ph-left">Vestas — Blade Repair Materials Planner</span>
+    <span class="ph-center">BLADE REPAIR MATERIALS PLANNER</span>
+    <span class="ph-right">Confidential | April 2026</span>
+  </div>
+  <div class="page-body">
+    <div class="draw-overlay"></div>
+    <svg class="arrow-layer" xmlns="http://www.w3.org/2000/svg"><defs></defs></svg>
+    <div class="img-page-title" contenteditable="true">4.1 Repair Steps — Filled Example</div>
+    <div class="img-wrapper" style="left:4mm; top:16mm; width:273mm; height:152mm;">
+      <img src="images/PRNTSCR8.png" alt="Repair Steps">
+      <div class="drag-overlay"><span class="drag-label">PRNTSCR8 — Repair Steps</span></div>
+      <div class="resize-handle"></div>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>Vestas Brazil Blades Service Team</span>
+    <span contenteditable="true">Left panel: repair step quantities. Right panel: Blade Region and Days of Repair.</span>
+    <span class="pg-num">Page 13</span>
+  </div>
+</div>
+
+<!-- PAGE 14 — PRNTSCR9 — Tooltip -->
+<div class="page img-page">
+  <div class="page-controls"><button class="del-page-btn" onclick="deletePage(this)">× Delete</button></div>
+  <div class="page-num-label">Page 14 — PRNTSCR9</div>
+  <div class="page-header">
+    <span class="ph-left">Vestas — Blade Repair Materials Planner</span>
+    <span class="ph-center">BLADE REPAIR MATERIALS PLANNER</span>
+    <span class="ph-right">Confidential | April 2026</span>
+  </div>
+  <div class="page-body">
+    <div class="draw-overlay"></div>
+    <svg class="arrow-layer" xmlns="http://www.w3.org/2000/svg"><defs></defs></svg>
+    <div class="img-page-title" contenteditable="true">4.3 Hover Tooltip — Guidance Notes on (i) Icons</div>
+    <div class="img-wrapper" style="left:4mm; top:16mm; width:273mm; height:152mm;">
+      <img src="images/PRNTSCR9.png" alt="Tooltip">
+      <div class="drag-overlay"><span class="drag-label">PRNTSCR9 — Tooltip</span></div>
+      <div class="resize-handle"></div>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>Vestas Brazil Blades Service Team</span>
+    <span contenteditable="true">Hovering the (i) icon shows specific instructions for each repair step.</span>
+    <span class="pg-num">Page 14</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     PAGE 15 — STEP 4 OVERVIEW (TEXT)
+══════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-controls"><button class="del-page-btn" onclick="deletePage(this)">× Delete</button></div>
+  <div class="page-num-label">Page 15 — Step 4 Overview</div>
+  <div class="page-header">
+    <span class="ph-left">Vestas — Blade Repair Materials Planner</span>
+    <span class="ph-center">BLADE REPAIR MATERIALS PLANNER</span>
+    <span class="ph-right">Confidential | April 2026</span>
+  </div>
+  <div class="page-body">
+    <div class="draw-overlay"></div>
+    <svg class="arrow-layer" xmlns="http://www.w3.org/2000/svg"><defs></defs></svg>
+    <div class="sec-title" contenteditable="true">5. Step 4 — Results &amp; BOM Review</div>
+    <div class="two-col">
+      <div>
+        <div class="sub-title" contenteditable="true">5.1 Summary Cards</div>
+        <table class="info-table">
+          <tr><th>Card</th><th>Meaning</th></tr>
+          <tr><td contenteditable="true"><strong>Total BOM Items</strong></td><td contenteditable="true">All material lines across categories</td></tr>
+          <tr><td contenteditable="true"><strong>Fabric Items</strong></td><td contenteditable="true">Distinct fabric lines</td></tr>
+          <tr><td contenteditable="true"><strong>Max Layup Length</strong></td><td contenteditable="true">Outermost layer spanwise dim (mm)</td></tr>
+          <tr><td contenteditable="true"><strong>Max Layup Width</strong></td><td contenteditable="true">Outermost layer chordwise dim (mm)</td></tr>
+          <tr><td contenteditable="true"><strong>Max Area</strong></td><td contenteditable="true">Outermost layer area (m2)</td></tr>
+          <tr><td contenteditable="true"><strong>Total Fabric Weight</strong></td><td contenteditable="true">All fabric plies combined (kg)</td></tr>
+        </table>
+        <div class="sub-title" contenteditable="true">5.2 BOM Category Tabs</div>
+        <ul class="bullet-list" contenteditable="true">
+          <li><strong>Consumable Protection Equipment</strong> — PPE</li>
+          <li><strong>Consumable Tools</strong> — grinding discs, spatulas, knives</li>
+          <li><strong>Chemicals</strong> — epoxy, adhesive, top coat, alcohol, satwipes</li>
+          <li><strong>Consumables</strong> — peel ply, release film, vacuum bag, tape, breather</li>
+          <li><strong>Fabrics</strong> — all fabric plies with SAP, desc, qty, unit</li>
+          <li><strong>Tools</strong> — vacuum pump, scales, mixer</li>
+        </ul>
+      </div>
+      <div>
+        <div class="sub-title" contenteditable="true">5.3 Reading the BOM Table</div>
+        <table class="info-table">
+          <tr><th>Column</th><th>Meaning</th></tr>
+          <tr><td contenteditable="true"><strong>SAP IN</strong></td><td contenteditable="true">Vestas SAP material number for ordering</td></tr>
+          <tr><td contenteditable="true"><strong>Description</strong></td><td contenteditable="true">Full Vestas material description</td></tr>
+          <tr><td contenteditable="true"><strong>QTY</strong></td><td contenteditable="true">Quantity (always rounded up)</td></tr>
+          <tr><td contenteditable="true"><strong>UNIT</strong></td><td contenteditable="true">KG, EA, M2, BTL, PAA, TUB, KIT</td></tr>
+        </table>
+        <div class="callout" contenteditable="true">After reviewing all 6 tabs, click <strong>"Generate PDF Report"</strong> at the bottom-right.</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>Vestas Brazil Blades Service Team</span>
+    <span>BRMP v1.0 User Guide — Step 4 Overview</span>
+    <span class="pg-num">Page 15</span>
+  </div>
+</div>
+
+<!-- PAGE 16 — PRNTSCR10 — Results PPE -->
+<div class="page img-page">
+  <div class="page-controls"><button class="del-page-btn" onclick="deletePage(this)">× Delete</button></div>
+  <div class="page-num-label">Page 16 — PRNTSCR10</div>
+  <div class="page-header">
+    <span class="ph-left">Vestas — Blade Repair Materials Planner</span>
+    <span class="ph-center">BLADE REPAIR MATERIALS PLANNER</span>
+    <span class="ph-right">Confidential | April 2026</span>
+  </div>
+  <div class="page-body">
+    <div class="draw-overlay"></div>
+    <svg class="arrow-layer" xmlns="http://www.w3.org/2000/svg"><defs></defs></svg>
+    <div class="img-page-title" contenteditable="true">5.1 Results — PPE Tab &amp; Summary Cards</div>
+    <div class="img-wrapper" style="left:4mm; top:16mm; width:273mm; height:152mm;">
+      <img src="images/PRNTSCR10.png" alt="Results PPE">
+      <div class="drag-overlay"><span class="drag-label">PRNTSCR10 — Results PPE</span></div>
+      <div class="resize-handle"></div>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>Vestas Brazil Blades Service Team</span>
+    <span contenteditable="true">Summary cards at the top, PPE tab selected showing SAP numbers, descriptions, quantities, and units.</span>
+    <span class="pg-num">Page 16</span>
+  </div>
+</div>
+
+<!-- PAGE 17 — PRNTSCR11 — Results Fabrics -->
+<div class="page img-page">
+  <div class="page-controls"><button class="del-page-btn" onclick="deletePage(this)">× Delete</button></div>
+  <div class="page-num-label">Page 17 — PRNTSCR11</div>
+  <div class="page-header">
+    <span class="ph-left">Vestas — Blade Repair Materials Planner</span>
+    <span class="ph-center">BLADE REPAIR MATERIALS PLANNER</span>
+    <span class="ph-right">Confidential | April 2026</span>
+  </div>
+  <div class="page-body">
+    <div class="draw-overlay"></div>
+    <svg class="arrow-layer" xmlns="http://www.w3.org/2000/svg"><defs></defs></svg>
+    <div class="img-page-title" contenteditable="true">5.2 Results — Fabrics Tab</div>
+    <div class="img-wrapper" style="left:4mm; top:16mm; width:273mm; height:152mm;">
+      <img src="images/PRNTSCR11.png" alt="Results Fabrics">
+      <div class="drag-overlay"><span class="drag-label">PRNTSCR11 — Results Fabrics</span></div>
+      <div class="resize-handle"></div>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>Vestas Brazil Blades Service Team</span>
+    <span contenteditable="true">Fabrics tab showing all calculated fabric plies with SAP IN, description, quantity (KG or M2), and unit.</span>
+    <span class="pg-num">Page 17</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     PAGE 18 — PDF REPORT OVERVIEW (TEXT)
+══════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-controls"><button class="del-page-btn" onclick="deletePage(this)">× Delete</button></div>
+  <div class="page-num-label">Page 18 — PDF Report</div>
+  <div class="page-header">
+    <span class="ph-left">Vestas — Blade Repair Materials Planner</span>
+    <span class="ph-center">BLADE REPAIR MATERIALS PLANNER</span>
+    <span class="ph-right">Confidential | April 2026</span>
+  </div>
+  <div class="page-body">
+    <div class="draw-overlay"></div>
+    <svg class="arrow-layer" xmlns="http://www.w3.org/2000/svg"><defs></defs></svg>
+    <div class="sec-title" contenteditable="true">6. PDF Report — Generation &amp; Location</div>
+    <div class="two-col">
+      <div>
+        <div class="sub-title" contenteditable="true">6.1 Generating the Report</div>
+        <div class="text-block" contenteditable="true">At the bottom of Step 4, click <strong>"Generate PDF Report"</strong>. The server creates the PDF and triggers a browser download. A copy is also saved server-side.</div>
+        <div class="sub-title" contenteditable="true">6.2 Output Folder</div>
+        <div class="callout" contenteditable="true">All PDFs are saved in: <strong>BOM_Reports_Generated\</strong><br>Located in the same directory as INICIAR_CALCULADORA.bat.</div>
+        <div class="sub-title" contenteditable="true">6.3 Filename Logic</div>
+        <div class="callout" style="font-family:monospace;font-size:8pt;" contenteditable="true">BOM_Report_[BladeModel]_[SO_or_CIR]_[YYYYMMDD].pdf</div>
+        <table class="info-table">
+          <tr><th>Part</th><th>Source</th><th>Example</th></tr>
+          <tr><td contenteditable="true">BladeModel</td><td contenteditable="true">From Step 1</td><td>V150</td></tr>
+          <tr><td contenteditable="true">SO_or_CIR</td><td contenteditable="true">SO field (fallback: CIR)</td><td>SO-2025-001</td></tr>
+          <tr><td contenteditable="true">YYYYMMDD</td><td contenteditable="true">Generation date</td><td>20260428</td></tr>
+        </table>
+        <div class="callout warn" contenteditable="true">If SO and CIR are blank, filename shows UNKNOWN. Always fill at least the SO.</div>
+      </div>
+      <div>
+        <div class="sub-title" contenteditable="true">6.4 PDF Content</div>
+        <ul class="bullet-list" contenteditable="true">
+          <li><strong>Header</strong>: "VESTAS | BRMP" + date + "Confidential"</li>
+          <li><strong>Info block</strong>: turbine, zone, SN, SO, CIR, dimensions, days, description</li>
+          <li><strong>BOM tables</strong>: one section per category with SAP, Description, QTY, UNIT</li>
+          <li><strong>Footer</strong>: page number + timestamp + "Vestas Internal Use"</li>
+        </ul>
+        <div class="callout danger" contenteditable="true">CONFIDENTIAL — Vestas Internal Use Only.</div>
+        <div class="sub-title" contenteditable="true">6.5 Version History</div>
+        <table class="info-table">
+          <tr><th>Version</th><th>Date</th><th>Changes</th></tr>
+          <tr><td>v1.0</td><td>Apr 2026</td><td contenteditable="true">Initial release. V82, V90, V100, V110, V112, V136, V150. REV05 aligned.</td></tr>
+          <tr><td>v1.x</td><td>TBD</td><td contenteditable="true">REV06: Quadrax 850/566, Biax 450/200, Biax 1200 pending SAP/overlap data.</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>Vestas Brazil Blades Service Team</span>
+    <span>BRMP v1.0 User Guide — PDF Report</span>
+    <span class="pg-num">Page 18</span>
+  </div>
+</div>
+
+<!-- PAGE 19 — PRNTSCR12 — BOM Folder -->
+<div class="page img-page">
+  <div class="page-controls"><button class="del-page-btn" onclick="deletePage(this)">× Delete</button></div>
+  <div class="page-num-label">Page 19 — PRNTSCR12</div>
+  <div class="page-header">
+    <span class="ph-left">Vestas — Blade Repair Materials Planner</span>
+    <span class="ph-center">BLADE REPAIR MATERIALS PLANNER</span>
+    <span class="ph-right">Confidential | April 2026</span>
+  </div>
+  <div class="page-body">
+    <div class="draw-overlay"></div>
+    <svg class="arrow-layer" xmlns="http://www.w3.org/2000/svg"><defs></defs></svg>
+    <div class="img-page-title" contenteditable="true">6.2 BOM_Reports_Generated — Output Folder Location</div>
+    <div class="img-wrapper" style="left:4mm; top:16mm; width:273mm; height:152mm;">
+      <img src="images/PRNTSCR12.png" alt="BOM Folder">
+      <div class="drag-overlay"><span class="drag-label">PRNTSCR12 — Folder Location</span></div>
+      <div class="resize-handle"></div>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>Vestas Brazil Blades Service Team</span>
+    <span contenteditable="true">The BOM_Reports_Generated folder in the application directory where all PDFs are saved.</span>
+    <span class="pg-num">Page 19</span>
+  </div>
+</div>
+
+<!-- PAGE 20 — PRNTSCR13 — PDF Files -->
+<div class="page img-page">
+  <div class="page-controls"><button class="del-page-btn" onclick="deletePage(this)">× Delete</button></div>
+  <div class="page-num-label">Page 20 — PRNTSCR13</div>
+  <div class="page-header">
+    <span class="ph-left">Vestas — Blade Repair Materials Planner</span>
+    <span class="ph-center">BLADE REPAIR MATERIALS PLANNER</span>
+    <span class="ph-right">Confidential | April 2026</span>
+  </div>
+  <div class="page-body">
+    <div class="draw-overlay"></div>
+    <svg class="arrow-layer" xmlns="http://www.w3.org/2000/svg"><defs></defs></svg>
+    <div class="img-page-title" contenteditable="true">6.3 Generated PDF Reports — File Listing</div>
+    <div class="img-wrapper" style="left:4mm; top:16mm; width:273mm; height:152mm;">
+      <img src="images/PRNTSCR13.png" alt="PDF Files">
+      <div class="drag-overlay"><span class="drag-label">PRNTSCR13 — PDF Listing</span></div>
+      <div class="resize-handle"></div>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>Vestas Brazil Blades Service Team</span>
+    <span contenteditable="true">Filename format: BOM_Report_[BladeModel]_[SO]_[date].pdf — note the auto-generated names.</span>
+    <span class="pg-num">Page 20</span>
+  </div>
+</div>
+
+<!-- PAGE 21 — PRNTSCR14 — PDF Content -->
+<div class="page img-page">
+  <div class="page-controls"><button class="del-page-btn" onclick="deletePage(this)">× Delete</button></div>
+  <div class="page-num-label">Page 21 — PRNTSCR14</div>
+  <div class="page-header">
+    <span class="ph-left">Vestas — Blade Repair Materials Planner</span>
+    <span class="ph-center">BLADE REPAIR MATERIALS PLANNER</span>
+    <span class="ph-right">Confidential | April 2026</span>
+  </div>
+  <div class="page-body">
+    <div class="draw-overlay"></div>
+    <svg class="arrow-layer" xmlns="http://www.w3.org/2000/svg"><defs></defs></svg>
+    <div class="img-page-title" contenteditable="true">6.4 PDF Report — First Page Content Preview</div>
+    <div class="img-wrapper" style="left:4mm; top:16mm; width:273mm; height:152mm;">
+      <img src="images/PRNTSCR14.png" alt="PDF Content">
+      <div class="drag-overlay"><span class="drag-label">PRNTSCR14 — PDF Content</span></div>
+      <div class="resize-handle"></div>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>Vestas Brazil Blades Service Team</span>
+    <span contenteditable="true">The generated PDF with header, info block, and BOM tables by category.</span>
+    <span class="pg-num">Page 21</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     PAGE 22 — TROUBLESHOOTING (TEXT)
+══════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-controls"><button class="del-page-btn" onclick="deletePage(this)">× Delete</button></div>
+  <div class="page-num-label">Page 22 — Troubleshooting</div>
+  <div class="page-header">
+    <span class="ph-left">Vestas — Blade Repair Materials Planner</span>
+    <span class="ph-center">BLADE REPAIR MATERIALS PLANNER</span>
+    <span class="ph-right">Confidential | April 2026</span>
+  </div>
+  <div class="page-body">
+    <div class="draw-overlay"></div>
+    <svg class="arrow-layer" xmlns="http://www.w3.org/2000/svg"><defs></defs></svg>
+    <div class="sec-title" contenteditable="true">7. Troubleshooting &amp; Best Practices</div>
+    <div class="two-col">
+      <div>
+        <div class="sub-title" contenteditable="true">Common Issues</div>
+        <table class="info-table">
+          <tr><th style="width:40%">Problem</th><th>Solution</th></tr>
+          <tr><td contenteditable="true"><span class="badge red">Error generating PDF</span></td><td contenteditable="true">Server not running. Re-run INICIAR_CALCULADORA.bat and wait for CMD startup message.</td></tr>
+          <tr><td contenteditable="true">PDF shows UNKNOWN</td><td contenteditable="true">SO and CIR fields were blank in Step 1. Go back, fill SO, regenerate.</td></tr>
+          <tr><td contenteditable="true">Blank page / cannot connect</td><td contenteditable="true">Server needs ~3s to start. Refresh (F5). Check CMD for Python errors.</td></tr>
+          <tr><td contenteditable="true">Wrong materials in dropdown</td><td contenteditable="true">Blade model not confirmed. Go to Step 1 and click CONFIRM.</td></tr>
+          <tr><td contenteditable="true">Need to change blade model</td><td contenteditable="true">Click EDIT in the confirmation banner. Note: layers are reset.</td></tr>
+          <tr><td contenteditable="true">Vacuum count wrong</td><td contenteditable="true">Vacuum = HLU + Infusion (auto). Adjust those values in Step 3.</td></tr>
+          <tr><td contenteditable="true">Fresh start needed</td><td contenteditable="true">Click Reset in the top-right nav bar to clear everything.</td></tr>
+        </table>
+      </div>
+      <div>
+        <div class="sub-title" contenteditable="true">Best Practices</div>
+        <ul class="bullet-list" contenteditable="true">
+          <li>Always confirm blade model before entering coordinates</li>
+          <li>Fill SO or CIR for meaningful PDF filenames</li>
+          <li>Enter layers innermost → outermost (drives overlap calc)</li>
+          <li>Hover all (i) icons in Step 3 before first use</li>
+          <li>Root region: select "Root" for correct CORE kit SAP</li>
+          <li>Single repair estimate only — multiply manually for batch</li>
+          <li>Keep the CMD server window open at all times</li>
+        </ul>
+        <div class="sub-title" contenteditable="true">Quick Reference Flow</div>
+        <ol class="step-list" contenteditable="true">
+          <li><span class="step-num">1</span><span>Launch BAT → browser opens</span></li>
+          <li><span class="step-num">2</span><span>Click "Damage Data" on Welcome Page</span></li>
+          <li><span class="step-num">3</span><span>Step 1: select + confirm model → fill coords → Next</span></li>
+          <li><span class="step-num">4</span><span>Step 2: add layers → confirm → Next</span></li>
+          <li><span class="step-num">5</span><span>Step 3: set repair steps + blade info → Calculate BOM</span></li>
+          <li><span class="step-num">6</span><span>Step 4: review tabs → Generate PDF Report</span></li>
+          <li><span class="step-num">7</span><span>Find PDF in BOM_Reports_Generated\</span></li>
+        </ol>
+        <div class="callout" contenteditable="true">For bugs, data errors, or requests: contact <strong>JTELE, MLASU, JOVFN</strong> via email or Teams.</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>Vestas Brazil Blades Service Team</span>
+    <span>BRMP v1.0 User Guide — Troubleshooting</span>
+    <span class="pg-num">Page 22</span>
+  </div>
+</div>
+
+</div><!-- /pages-container -->
+
+<!-- ═══════════════════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════════════════ -->
+<script>
+/* ═══════════════════════════════════════════════════
+   GLOBAL STATE
+═══════════════════════════════════════════════════ */
+let activeTool = 'select';
+let currentScale = 1;
+let selectedAnnotation = null;
+// Drawing state (arrow / rect)
+let drawState = null; // { type, pageBody, startX, startY, el }
+
+/* ═══════════════════════════════════════════════════
+   MODE TOGGLE
+═══════════════════════════════════════════════════ */
+function fmtCmd(cmd) {
+  document.execCommand(cmd, false, null);
+}
+function applyTextColor() {
+  var color = document.getElementById('textColorPicker').value;
+  document.execCommand('foreColor', false, color);
+}
+
+function toggleMode() {
+  const body = document.body;
+  const badge = document.getElementById('mode-badge');
+  if (body.classList.contains('editing-mode')) {
+    body.classList.remove('editing-mode');
+    badge.textContent = '  PREVIEW MODE';
+    badge.className = 'preview';
+    document.querySelectorAll('[contenteditable]').forEach(el => el.setAttribute('contenteditable', 'false'));
+    // Exit any textbox editing
+    document.querySelectorAll('.ann-textbox.tb-editing').forEach(function(tb) { tb.classList.remove('tb-editing'); });
+    deselectAll();
+    setTool('select');
+  } else {
+    body.classList.add('editing-mode');
+    badge.textContent = '  EDIT MODE';
+    badge.className = 'editing';
+    document.querySelectorAll('[contenteditable="false"]').forEach(el => el.setAttribute('contenteditable', 'true'));
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   TOOL SELECTION
+═══════════════════════════════════════════════════ */
+function setTool(tool) {
+  activeTool = tool;
+  document.body.classList.remove('tool-select', 'tool-textbox', 'tool-arrow', 'tool-rect');
+  document.body.classList.add('tool-' + tool);
+  document.querySelectorAll('.tool-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tool === tool);
+  });
+  deselectAll();
+}
+
+/* ═══════════════════════════════════════════════════
+   ANNOTATION SELECTION
+═══════════════════════════════════════════════════ */
+function selectAnnotation(el) {
+  deselectAll();
+  selectedAnnotation = el;
+  el.classList.add('ann-selected');
+}
+function deselectAll() {
+  if (selectedAnnotation) {
+    selectedAnnotation.classList.remove('ann-selected');
+    selectedAnnotation = null;
+  }
+}
+
+/* Delete selected annotation on Del key */
+document.addEventListener('keydown', function (e) {
+  if (!selectedAnnotation) return;
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    // Don't delete if currently in text editing mode
+    if (selectedAnnotation.classList && selectedAnnotation.classList.contains('tb-editing')) return;
+    e.preventDefault();
+    // If it's an arrow line, also remove the invisible hit-area line
+    if (selectedAnnotation._hitLine) selectedAnnotation._hitLine.remove();
+    if (selectedAnnotation._arrowLine) selectedAnnotation._arrowLine.remove();
+    selectedAnnotation.remove();
+    selectedAnnotation = null;
+  }
+});
+/* Escape key — exit edit mode or deselect */
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') {
+    const editing = document.querySelector('.ann-textbox.tb-editing');
+    if (editing) {
+      exitTextBoxEdit(editing);
+      return;
+    }
+    if (selectedAnnotation) {
+      deselectAll();
+    }
+  }
+});
+
+/* ═══════════════════════════════════════════════════
+   COORDINATE HELPER
+═══════════════════════════════════════════════════ */
+function getLocalCoords(e, pageBody) {
+  const rect = pageBody.getBoundingClientRect();
+  return {
+    x: (e.clientX - rect.left) / currentScale,
+    y: (e.clientY - rect.top) / currentScale
+  };
+}
+
+/* ═══════════════════════════════════════════════════
+   DRAW OVERLAY — TOOL INTERACTIONS
+═══════════════════════════════════════════════════ */
+document.addEventListener('mousedown', function (e) {
+  const overlay = e.target.closest('.draw-overlay');
+  if (!overlay) return;
+  if (!document.body.classList.contains('editing-mode')) return;
+  const pageBody = overlay.parentElement;
+  const coords = getLocalCoords(e, pageBody);
+  const color = document.getElementById('colorPicker').value;
+
+  if (activeTool === 'textbox') {
+    e.preventDefault();
+    createTextBox(pageBody, coords.x, coords.y, '#ffffff');
+    setTool('select');
+    return;
+  }
+
+  if (activeTool === 'arrow') {
+    e.preventDefault();
+    const svg = pageBody.querySelector('.arrow-layer');
+    const ns = 'http://www.w3.org/2000/svg';
+    const markerId = getOrCreateMarker(svg, color);
+    const line = document.createElementNS(ns, 'line');
+    line.setAttribute('x1', coords.x);
+    line.setAttribute('y1', coords.y);
+    line.setAttribute('x2', coords.x);
+    line.setAttribute('y2', coords.y);
+    line.setAttribute('stroke', color);
+    line.setAttribute('stroke-width', '3');
+    line.setAttribute('marker-end', 'url(#' + markerId + ')');
+    line.style.pointerEvents = 'stroke';
+    svg.appendChild(line);
+    drawState = { type: 'arrow', pageBody: pageBody, el: line };
+    return;
+  }
+
+  if (activeTool === 'rect') {
+    e.preventDefault();
+    const div = document.createElement('div');
+    div.className = 'ann-rect';
+    div.style.left = coords.x + 'px';
+    div.style.top = coords.y + 'px';
+    div.style.width = '0px';
+    div.style.height = '0px';
+    div.style.borderColor = color;
+    const rh = document.createElement('div');
+    rh.className = 'resize-handle';
+    div.appendChild(rh);
+    const del = document.createElement('button');
+    del.className = 'rect-delete';
+    del.textContent = '\u00d7';
+    del.title = 'Delete annotation';
+    div.appendChild(del);
+    pageBody.appendChild(div);
+    drawState = { type: 'rect', pageBody: pageBody, startX: coords.x, startY: coords.y, el: div };
+    return;
+  }
+});
+
+document.addEventListener('mousemove', function (e) {
+  if (!drawState) return;
+  const coords = getLocalCoords(e, drawState.pageBody);
+
+  if (drawState.type === 'arrow') {
+    drawState.el.setAttribute('x2', coords.x);
+    drawState.el.setAttribute('y2', coords.y);
+  }
+
+  if (drawState.type === 'rect') {
+    const x = Math.min(drawState.startX, coords.x);
+    const y = Math.min(drawState.startY, coords.y);
+    const w = Math.abs(coords.x - drawState.startX);
+    const h = Math.abs(coords.y - drawState.startY);
+    drawState.el.style.left = x + 'px';
+    drawState.el.style.top = y + 'px';
+    drawState.el.style.width = w + 'px';
+    drawState.el.style.height = h + 'px';
+  }
+});
+
+document.addEventListener('mouseup', function () {
+  if (!drawState) return;
+  const el = drawState.el;
+
+  // If arrow is too small, remove it
+  if (drawState.type === 'arrow') {
+    const dx = parseFloat(el.getAttribute('x2')) - parseFloat(el.getAttribute('x1'));
+    const dy = parseFloat(el.getAttribute('y2')) - parseFloat(el.getAttribute('y1'));
+    if (Math.sqrt(dx * dx + dy * dy) < 8) { el.remove(); }
+    else { attachArrowClick(el); }
+  }
+  // If rect too small, remove
+  if (drawState.type === 'rect') {
+    if (el.offsetWidth < 6 && el.offsetHeight < 6) { el.remove(); }
+    else { attachRectEvents(el); }
+  }
+  drawState = null;
+});
+
+/* ═══════════════════════════════════════════════════
+   CREATE TEXT BOX
+═══════════════════════════════════════════════════ */
+function createTextBox(pageBody, x, y, color) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'ann-textbox';
+  wrapper.style.left = x + 'px';
+  wrapper.style.top = y + 'px';
+  wrapper.style.width = '150px';
+  wrapper.style.borderColor = color;
+  // Editable content div
+  const content = document.createElement('div');
+  content.className = 'tb-content';
+  content.contentEditable = 'true';
+  content.style.color = color;
+  wrapper.appendChild(content);
+  // Delete button
+  const del = document.createElement('button');
+  del.className = 'tb-delete';
+  del.textContent = '×';
+  del.title = 'Delete annotation';
+  wrapper.appendChild(del);
+  // Resize handle (width only)
+  const rh = document.createElement('div');
+  rh.className = 'tb-resize';
+  wrapper.appendChild(rh);
+  pageBody.appendChild(wrapper);
+  attachTextBoxEvents(wrapper);
+  // Select and enter edit mode immediately on creation
+  selectAnnotation(wrapper);
+  enterTextBoxEdit(wrapper);
+}
+
+function enterTextBoxEdit(div) {
+  div.classList.add('tb-editing');
+  const content = div.querySelector('.tb-content');
+  if (content) content.focus();
+}
+function exitTextBoxEdit(div) {
+  div.classList.remove('tb-editing');
+  const content = div.querySelector('.tb-content');
+  if (content) content.blur();
+}
+
+function attachTextBoxEvents(div) {
+  // Single click — select (move mode)
+  div.addEventListener('mousedown', function (e) {
+    if (activeTool !== 'select') return;
+    // Resize handle
+    if (e.target.classList.contains('tb-resize')) return;
+    // Delete button
+    if (e.target.classList.contains('tb-delete')) return;
+    // If in edit mode and clicking content, allow text selection
+    if (div.classList.contains('tb-editing') && e.target.closest('.tb-content')) return;
+    e.preventDefault();
+    // Exit edit mode of any other textbox
+    document.querySelectorAll('.ann-textbox.tb-editing').forEach(function(tb) {
+      if (tb !== div) exitTextBoxEdit(tb);
+    });
+    selectAnnotation(div);
+    // Start drag
+    const pageBody = div.parentElement;
+    const coords = getLocalCoords(e, pageBody);
+    const ox = parseInt(div.style.left) || 0;
+    const oy = parseInt(div.style.top) || 0;
+    let moved = false;
+    function onMove(ev) {
+      moved = true;
+      const c = getLocalCoords(ev, pageBody);
+      div.style.left = (ox + c.x - coords.x) + 'px';
+      div.style.top  = (oy + c.y - coords.y) + 'px';
+    }
+    function onUp() {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+
+  // Double click — enter edit mode
+  div.addEventListener('dblclick', function (e) {
+    if (activeTool !== 'select') return;
+    if (e.target.classList.contains('tb-resize') || e.target.classList.contains('tb-delete')) return;
+    e.preventDefault();
+    selectAnnotation(div);
+    enterTextBoxEdit(div);
+  });
+
+  // Delete button click
+  const delBtn = div.querySelector('.tb-delete');
+  if (delBtn) {
+    delBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      div.remove();
+      if (selectedAnnotation === div) selectedAnnotation = null;
+    });
+  }
+
+  // Resize handle (width only — height auto-expands with content)
+  const rh = div.querySelector('.tb-resize');
+  if (rh) {
+    rh.addEventListener('mousedown', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      const pageBody = div.parentElement;
+      const startCoords = getLocalCoords(e, pageBody);
+      const origW = div.offsetWidth;
+      function onMove(ev) {
+        const c = getLocalCoords(ev, pageBody);
+        const newW = Math.max(60, origW + c.x - startCoords.x);
+        div.style.width = newW + 'px';
+      }
+      function onUp() {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      }
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   ARROW HELPERS
+═══════════════════════════════════════════════════ */
+function getOrCreateMarker(svg, color) {
+  const id = 'ah-' + color.replace('#', '');
+  if (svg.querySelector('#' + id)) return id;
+  const ns = 'http://www.w3.org/2000/svg';
+  const defs = svg.querySelector('defs');
+  const marker = document.createElementNS(ns, 'marker');
+  marker.setAttribute('id', id);
+  marker.setAttribute('markerWidth', '12');
+  marker.setAttribute('markerHeight', '8');
+  marker.setAttribute('refX', '0');
+  marker.setAttribute('refY', '4');
+  marker.setAttribute('orient', 'auto');
+  marker.setAttribute('markerUnits', 'userSpaceOnUse');
+  marker.setAttribute('overflow', 'visible');
+  const path = document.createElementNS(ns, 'path');
+  path.setAttribute('d', 'M0,0 L12,4 L0,8 Z');
+  path.setAttribute('fill', color);
+  path.setAttribute('stroke', 'none');
+  marker.appendChild(path);
+  defs.appendChild(marker);
+  return id;
+}
+
+function attachArrowClick(line) {
+  // Create invisible wider hit-area line behind the visible arrow
+  const ns = 'http://www.w3.org/2000/svg';
+  const hitLine = document.createElementNS(ns, 'line');
+  hitLine.classList.add('hit-area');
+  hitLine.setAttribute('x1', line.getAttribute('x1'));
+  hitLine.setAttribute('y1', line.getAttribute('y1'));
+  hitLine.setAttribute('x2', line.getAttribute('x2'));
+  hitLine.setAttribute('y2', line.getAttribute('y2'));
+  line.parentElement.insertBefore(hitLine, line);
+  // Store reference so we can remove both
+  line._hitLine = hitLine;
+  hitLine._arrowLine = line;
+
+  function onClickArrow(e) {
+    if (activeTool !== 'select') return;
+    e.stopPropagation();
+    selectAnnotation(line);
+  }
+  line.addEventListener('click', onClickArrow);
+  hitLine.addEventListener('click', onClickArrow);
+}
+
+/* ═══════════════════════════════════════════════════
+   RECTANGLE HELPERS
+═══════════════════════════════════════════════════ */
+function attachRectEvents(div) {
+  // Ensure resize handle exists
+  if (!div.querySelector('.resize-handle')) {
+    const rh = document.createElement('div');
+    rh.className = 'resize-handle';
+    div.appendChild(rh);
+  }
+  // Ensure delete button exists
+  if (!div.querySelector('.rect-delete')) {
+    const del = document.createElement('button');
+    del.className = 'rect-delete';
+    del.textContent = '\u00d7';
+    del.title = 'Delete annotation';
+    div.appendChild(del);
+  }
+
+  // Click to select
+  div.addEventListener('mousedown', function (e) {
+    if (activeTool !== 'select') return;
+    if (e.target.classList.contains('resize-handle')) return;
+    if (e.target.classList.contains('rect-delete')) return;
+    e.stopPropagation();
+    selectAnnotation(div);
+    // Start drag
+    const pageBody = div.parentElement;
+    const coords = getLocalCoords(e, pageBody);
+    const ox = parseInt(div.style.left) || 0;
+    const oy = parseInt(div.style.top) || 0;
+    function onMove(ev) {
+      const c = getLocalCoords(ev, pageBody);
+      div.style.left = (ox + c.x - coords.x) + 'px';
+      div.style.top  = (oy + c.y - coords.y) + 'px';
+    }
+    function onUp() {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+
+  // Delete button click
+  const delBtn = div.querySelector('.rect-delete');
+  if (delBtn) {
+    delBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      div.remove();
+      if (selectedAnnotation === div) selectedAnnotation = null;
+    });
+  }
+
+  // Resize from handle
+  const rh = div.querySelector('.resize-handle');
+  if (rh) {
+    rh.addEventListener('mousedown', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      const pageBody = div.parentElement;
+      const startCoords = getLocalCoords(e, pageBody);
+      const origW = div.offsetWidth;
+      const origH = div.offsetHeight;
+      function onMove(ev) {
+        const c = getLocalCoords(ev, pageBody);
+        div.style.width  = Math.max(10, origW + c.x - startCoords.x) + 'px';
+        div.style.height = Math.max(10, origH + c.y - startCoords.y) + 'px';
+      }
+      function onUp() {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      }
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   COLOR PICKER — UPDATE SELECTED
+═══════════════════════════════════════════════════ */
+document.getElementById('colorPicker').addEventListener('input', function () {
+  if (!selectedAnnotation) return;
+  const color = this.value;
+  if (selectedAnnotation.classList.contains('ann-textbox')) {
+    selectedAnnotation.style.borderColor = color;
+    const tbContent = selectedAnnotation.querySelector('.tb-content');
+    if (tbContent) { tbContent.style.color = color; }
+    const delBtn = selectedAnnotation.querySelector('.tb-delete');
+    if (delBtn) { delBtn.style.background = color; }
+  } else if (selectedAnnotation.classList.contains('ann-rect')) {
+    selectedAnnotation.style.borderColor = color;
+    const delBtn = selectedAnnotation.querySelector('.rect-delete');
+    if (delBtn) delBtn.style.background = color;
+  } else if (selectedAnnotation.tagName === 'line') {
+    const svg = selectedAnnotation.closest('svg');
+    const markerId = getOrCreateMarker(svg, color);
+    selectedAnnotation.setAttribute('stroke', color);
+    selectedAnnotation.setAttribute('marker-end', 'url(#' + markerId + ')');
+  }
+});
+
+/* ═══════════════════════════════════════════════════
+   IMAGE DRAG + RESIZE
+═══════════════════════════════════════════════════ */
+(function () {
+  let dragging = null, startX, startY, origLeft, origTop;
+
+  document.addEventListener('mousedown', function (e) {
+    if (activeTool !== 'select') return;
+    const wrapper = e.target.closest('.img-wrapper');
+    if (!wrapper) return;
+    if (!document.body.classList.contains('editing-mode')) return;
+    if (e.target.classList.contains('resize-handle')) return;
+    e.preventDefault();
+    dragging = wrapper;
+    const pageBody = wrapper.closest('.page-body');
+    const coords = getLocalCoords(e, pageBody);
+    startX = coords.x;
+    startY = coords.y;
+    origLeft = parseInt(wrapper.style.left) || 0;
+    origTop  = parseInt(wrapper.style.top)  || 0;
+  });
+
+  document.addEventListener('mousemove', function (e) {
+    if (!dragging) return;
+    const pageBody = dragging.closest('.page-body');
+    const coords = getLocalCoords(e, pageBody);
+    dragging.style.left = (origLeft + coords.x - startX) + 'px';
+    dragging.style.top  = (origTop  + coords.y - startY) + 'px';
+  });
+
+  document.addEventListener('mouseup', function () { dragging = null; });
+})();
+
+/* Image resize */
+(function () {
+  let resizing = null, startX, startY, origW, origH;
+
+  document.addEventListener('mousedown', function (e) {
+    if (!e.target.classList.contains('resize-handle')) return;
+    // Only handle resize-handle inside img-wrapper (not ann-rect)
+    const wrapper = e.target.closest('.img-wrapper');
+    if (!wrapper) return;
+    if (!document.body.classList.contains('editing-mode')) return;
+    e.preventDefault(); e.stopPropagation();
+    resizing = wrapper;
+    const pageBody = wrapper.closest('.page-body');
+    const coords = getLocalCoords(e, pageBody);
+    startX = coords.x; startY = coords.y;
+    origW = resizing.offsetWidth;
+    origH = resizing.offsetHeight;
+  });
+
+  document.addEventListener('mousemove', function (e) {
+    if (!resizing) return;
+    const pageBody = resizing.closest('.page-body');
+    const coords = getLocalCoords(e, pageBody);
+    resizing.style.width  = Math.max(30, origW + coords.x - startX) + 'px';
+    resizing.style.height = Math.max(20, origH + coords.y - startY) + 'px';
+  });
+
+  document.addEventListener('mouseup', function () { resizing = null; });
+})();
+
+/* ═══════════════════════════════════════════════════
+   PAGE SCALING
+═══════════════════════════════════════════════════ */
+function scalePages() {
+  const pageW = 297 * (96 / 25.4); // ~1122px
+  const available = window.innerWidth - 60;
+  currentScale = Math.min(1, available / pageW);
+  document.querySelectorAll('.page').forEach(p => {
+    p.style.transform = 'scale(' + currentScale + ')';
+    p.style.transformOrigin = 'top center';
+    if (currentScale < 1) {
+      const pageH = 210 * (96 / 25.4); // ~793px
+      p.style.marginBottom = (pageH * (currentScale - 1)) + 'px';
+    } else {
+      p.style.marginBottom = '0';
+    }
+  });
+}
+scalePages();
+window.addEventListener('resize', scalePages);
+
+/* ═══════════════════════════════════════════════════
+   ADD PAGE
+═══════════════════════════════════════════════════ */
+function addPage(type) {
+  const container = document.getElementById('pages-container');
+  const total = container.querySelectorAll('.page').length + 1;
+  const page = document.createElement('div');
+  page.className = 'page' + (type === 'image' ? ' img-page' : '');
+
+  const headerHTML = '<div class="page-controls"><button class="move-page-btn move-up-btn" onclick="movePage(this,\'up\')" title="Move page up">\u2191</button><button class="move-page-btn move-down-btn" onclick="movePage(this,\'down\')" title="Move page down">\u2193</button><button class="del-page-btn" onclick="deletePage(this)">\u00d7 Delete</button></div>' +
+    '<div class="page-num-label">Page ' + total + ' \u2014 New</div>' +
+    '<div class="page-header">' +
+    '<span class="ph-left">Vestas \u2014 Blade Repair Materials Planner</span>' +
+    '<span class="ph-center">BLADE REPAIR MATERIALS PLANNER</span>' +
+    '<span class="ph-right">Confidential | April 2026</span></div>';
+
+  const footerHTML = '<div class="page-footer">' +
+    '<span>Vestas Brazil Blades Service Team</span>' +
+    '<span contenteditable="true">New Page</span>' +
+    '<span class="pg-num">Page ' + total + '</span></div>';
+
+  if (type === 'image') {
+    page.innerHTML = headerHTML +
+      '<div class="page-body">' +
+      '<div class="draw-overlay"></div>' +
+      '<svg class="arrow-layer" xmlns="http://www.w3.org/2000/svg"><defs></defs></svg>' +
+      '<div class="img-page-title" contenteditable="true">New Image Page — Edit Title</div>' +
+      '<div style="position:absolute; left:4mm; top:18mm; text-align:center; width:273mm; height:148mm; display:flex; align-items:center; justify-content:center; border:2px dashed #cbd5e1; border-radius:8px; background:#f8fafc;">' +
+      '<label style="cursor:pointer; color: #64748b; font-size:11pt;">' +
+      '<input type="file" accept="image/*" style="display:none" onchange="handleImageUpload(this)">' +
+      'Click to select an image file<br><span style="font-size:8pt;color:#94a3b8;">or drag an image from the images/ folder</span>' +
+      '</label></div></div>' + footerHTML;
+  } else {
+    page.innerHTML = headerHTML +
+      '<div class="page-body">' +
+      '<div class="draw-overlay"></div>' +
+      '<svg class="arrow-layer" xmlns="http://www.w3.org/2000/svg"><defs></defs></svg>' +
+      '<div class="sec-title" contenteditable="true">New Section Title</div>' +
+      '<div class="text-block" contenteditable="true">Click here to start typing your content. Use the annotation tools in the toolbar to add arrows, text boxes, and rectangles.</div>' +
+      '</div>' + footerHTML;
+  }
+
+  container.appendChild(page);
+  scalePages();
+  renumberPages();
+  page.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+/* Handle image upload for new image pages */
+function handleImageUpload(input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const placeholder = input.closest('div[style]');
+    const pageBody = placeholder.parentElement;
+    // Replace placeholder with img-wrapper
+    const wrapper = document.createElement('div');
+    wrapper.className = 'img-wrapper';
+    wrapper.style.cssText = 'left:4mm; top:16mm; width:273mm; height:152mm;';
+    wrapper.innerHTML = '<img src="' + e.target.result + '" alt="Uploaded Image">' +
+      '<div class="drag-overlay"><span class="drag-label">Uploaded</span></div>' +
+      '<div class="resize-handle"></div>';
+    pageBody.replaceChild(wrapper, placeholder);
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ═══════════════════════════════════════════════════
+   MOVE PAGE (reorder)
+═══════════════════════════════════════════════════ */
+function movePage(btn, direction) {
+  const page = btn.closest('.page');
+  const container = page.parentElement;
+  if (direction === 'up') {
+    const prev = page.previousElementSibling;
+    if (prev) container.insertBefore(page, prev);
+  } else {
+    const next = page.nextElementSibling;
+    if (next) container.insertBefore(next, page);
+  }
+  renumberPages();
+  page.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+/* ═══════════════════════════════════════════════════
+   INIT PAGE CONTROLS (add move buttons to all pages)
+═══════════════════════════════════════════════════ */
+function initPageControls() {
+  document.querySelectorAll('.page').forEach(function(page) {
+    var controls = page.querySelector('.page-controls');
+    if (!controls) {
+      controls = document.createElement('div');
+      controls.className = 'page-controls';
+      var delBtn = document.createElement('button');
+      delBtn.className = 'del-page-btn';
+      delBtn.textContent = '\u00d7 Delete';
+      delBtn.onclick = function() { deletePage(this); };
+      controls.appendChild(delBtn);
+      page.insertBefore(controls, page.firstChild);
+    }
+    if (controls.querySelector('.move-page-btn')) return; // already added
+    var upBtn = document.createElement('button');
+    upBtn.className = 'move-page-btn move-up-btn';
+    upBtn.title = 'Move page up';
+    upBtn.textContent = '\u2191';
+    upBtn.onclick = function() { movePage(this, 'up'); };
+    var downBtn = document.createElement('button');
+    downBtn.className = 'move-page-btn move-down-btn';
+    downBtn.title = 'Move page down';
+    downBtn.textContent = '\u2193';
+    downBtn.onclick = function() { movePage(this, 'down'); };
+    controls.insertBefore(downBtn, controls.firstChild);
+    controls.insertBefore(upBtn, controls.firstChild);
+  });
+}
+
+/* ═══════════════════════════════════════════════════
+   DELETE PAGE
+═══════════════════════════════════════════════════ */
+function deletePage(btn) {
+  const page = btn.closest('.page');
+  if (!confirm('Delete this page? This cannot be undone.')) return;
+  page.remove();
+  renumberPages();
+}
+
+/* ═══════════════════════════════════════════════════
+   RENUMBER PAGES
+═══════════════════════════════════════════════════ */
+function renumberPages() {
+  document.querySelectorAll('.page').forEach((page, i) => {
+    const n = i + 1;
+    const label = page.querySelector('.page-num-label');
+    if (label) {
+      // Keep the description part after the dash
+      const parts = label.textContent.split('\u2014');
+      label.textContent = 'Page ' + n + (parts[1] ? ' \u2014' + parts[1] : '');
+    }
+    const pgNum = page.querySelector('.pg-num');
+    if (pgNum) pgNum.textContent = 'Page ' + n;
+  });
+}
+
+/* ═══════════════════════════════════════════════════
+   DESELECT ON EMPTY CLICK
+═══════════════════════════════════════════════════ */
+document.addEventListener('click', function (e) {
+  if (activeTool !== 'select') return;
+  // Don't deselect if clicking toolbar controls (color picker, buttons, etc.)
+  if (e.target.closest('#toolbar')) return;
+  // If click is not on an annotation or img-wrapper, deselect and exit edit mode
+  if (!e.target.closest('.ann-textbox, .ann-rect, .img-wrapper') &&
+      e.target.tagName !== 'line') {
+    // Exit any active textbox editing
+    document.querySelectorAll('.ann-textbox.tb-editing').forEach(exitTextBoxEdit);
+    deselectAll();
+  }
+});
+
+/* ═══════════════════════════════════════════════════
+   SAVE / LOAD STATE (localStorage)
+═══════════════════════════════════════════════════ */
+const STORAGE_KEY = 'brmp_ug_state';
+
+function saveState() {
+  // Temporarily disable contenteditable outlines for clean save
+  const html = document.getElementById('pages-container').innerHTML;
+  localStorage.setItem(STORAGE_KEY, html);
+  // Show toast
+  const toast = document.getElementById('save-toast');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+function loadState() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (!saved) return;
+  document.getElementById('pages-container').innerHTML = saved;
+  // Re-attach interactive events to restored annotations
+  reattachAllEvents();
+  initPageControls();
+  scalePages();
+}
+
+function reattachAllEvents() {
+  // Re-attach textbox events; ensure delete button exists
+  document.querySelectorAll('.ann-textbox').forEach(function(tb) {
+    // Remove tb-editing class (should not persist)
+    tb.classList.remove('tb-editing');
+    // Remove any fixed height (auto-expand model)
+    tb.style.height = '';
+    // Ensure delete button exists
+    if (!tb.querySelector('.tb-delete')) {
+      const del = document.createElement('button');
+      del.className = 'tb-delete';
+      del.textContent = '\u00d7';
+      del.title = 'Delete annotation';
+      tb.appendChild(del);
+    }
+    // Ensure border color from old format: migrate from .tb-content borderColor
+    const tbContent = tb.querySelector('.tb-content');
+    if (tbContent && tbContent.style.borderColor && !tb.style.borderColor) {
+      tb.style.borderColor = tbContent.style.borderColor;
+      tbContent.style.borderColor = '';
+      tbContent.style.border = '';
+    }
+    // Remove overflow from old format
+    if (tbContent) tbContent.style.overflow = '';
+    attachTextBoxEvents(tb);
+  });
+  // Re-attach rect drag/resize events
+  document.querySelectorAll('.ann-rect').forEach(attachRectEvents);
+  // Rebuild all arrow markers (fix old format)
+  document.querySelectorAll('.arrow-layer').forEach(function(svg) {
+    const defs = svg.querySelector('defs');
+    if (defs) defs.innerHTML = '';
+    svg.querySelectorAll('line:not(.hit-area)').forEach(function(line) {
+      const color = line.getAttribute('stroke') || '#ef4444';
+      const markerId = getOrCreateMarker(svg, color);
+      line.setAttribute('marker-end', 'url(#' + markerId + ')');
+    });
+  });
+  // Re-attach arrow click events
+  document.querySelectorAll('.arrow-layer line:not(.hit-area)').forEach(function (line) {
+    // Find its hitLine sibling if exists
+    const hitLine = line.previousElementSibling;
+    if (hitLine && hitLine.classList.contains('hit-area')) {
+      line._hitLine = hitLine;
+      hitLine._arrowLine = line;
+      function onClickArrow(e) {
+        if (activeTool !== 'select') return;
+        e.stopPropagation();
+        selectAnnotation(line);
+      }
+      line.addEventListener('click', onClickArrow);
+      hitLine.addEventListener('click', onClickArrow);
+    } else {
+      attachArrowClick(line);
+    }
+  });
+}
+
+// Auto-load on page start
+loadState();
+initPageControls();
+</script>
+<div id="save-toast">Saved successfully!</div>
+</body>
+</html>
