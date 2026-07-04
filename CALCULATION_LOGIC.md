@@ -1,7 +1,9 @@
 # Blade Repair Materials Planner — Lógica de Cálculo
 
-**Fonte:** `Blade_Repair_Materials_Estimate - REV04.xlsx`  
+**Fonte:** `Blade_Repair_Materials_Estimate - REV05.xlsx`  
 **Código:** `static/engine.js` (cálculos) · `static/data.js` (itens e fórmulas)
+
+> **Fonte de verdade:** quando este documento divergir do código, **o código (alinhado a REV05) vence**. Alguns fatores de vácuo abaixo foram atualizados de 1,2 (REV04) para 1,4 (REV05) — ver a seção Consumables.
 
 ---
 
@@ -216,10 +218,10 @@ Baseado nos **dias de reparo**:
 | Baker's bag | 3 | Cleaning |
 | Copo plástico 1L | ROUNDUP(Weighing × 2,2) | Weighing |
 | Copo plástico 0,5L | ROUNDUP(Weighing × 2,2) | Weighing |
-| Release film 360mm | ROUNDUP((maxL+100)×(maxW+100)×10⁻⁶ × Vacuum×1,2 / 36) | Vacuum |
-| Breatex 150gsm | ROUNDUP(maxAreaM2 × Vacuum × 1,2 / 40) | Vacuum |
-| Bagging film 465B | ROUNDUP(splAreaM2 × Vacuum × 1,2 / 135) | Vacuum |
-| Peel ply A100 | ROUNDUP(maxAreaM2 × Vacuum × 1,2) m² | Vacuum |
+| Release film 1500mm | ROUNDUP((maxL+100)×(maxW+100)×10⁻⁶ × Vacuum×**1,4**) m² | Vacuum |
+| Breathing cloth 150gsm | ROUNDUP(maxAreaM2 × Vacuum × **1,4**) m² | Vacuum |
+| Bagging film 3000mm | ROUNDUP(splAreaM2 × Vacuum × **1,4**) m² | Vacuum |
+| Peel ply A100 | ROUNDUP(maxAreaM2 × Vacuum × **1,4**) m² | Vacuum |
 | Transport mesh | ROUNDUP(maxAreaM2 × 1,2 / 15,5) | Infusion |
 | Vacuum channel 50mm | ROUNDUP(perimeter × 1,4) metros | Infusion |
 | Glassfiber omega R8.5 | 1 | Infusion |
@@ -319,3 +321,29 @@ Com os dados do exemplo (Rstart=48500, Rend=48750, X1=50, X2=10, 8 camadas):
 | perimeter | 3,98 m |
 | totalFabricWeight | 0,892 kg |
 | coreWeightKg | 0,69 kg |
+
+---
+
+## Novidades (revisão 2026)
+
+### Estimador de prazo em dias — `computeRepairDays(layers, isExternal)`
+Estima a duração do reparo em dias inteiros a partir da pilha de laminação. Regra da **cura**: cada laminação leva algumas horas de cura, então é **1 laminação por dia**, no **máximo 6 telas** por laminação.
+
+```
+dias = 1 (lixamento + medidas)
+     + ceil(telasAntesDoCore / 6)     (1 laminação/dia)
+     + 1 se houver CORE               (core + lixar pra ajustar)
+     + ceil(telasDepoisDoCore / 6)    (1 laminação/dia)
+     + 1 se externo                   (pintura)
+     + 1 (folga pra problemas)
+```
+Constantes em `REPAIR_DAY_RULES` (data.js). Interno/externo vem de um toggle explícito na UI. Exemplo do sketch (2 telas antes / core / 2 depois): **interno = 5 dias, externo = 6 dias**.
+
+### Override manual de geometria por camada
+`computeLayup` respeita `ovR1/ovR2/ovX1/ovX2` por camada. O spanwise (R1/R2) é 100% automático e validado contra o Lamination Plan Sketch real; a corda (X1/X2) perto do bordo (TE/LE) pode exigir offsets do desenho — o override alimenta a acumulação, então camadas seguintes reconstroem sobre a geometria corrigida.
+
+### Nomenclatura de chão de fábrica (T-codes)
+`FABRIC_ALIASES` mapeia apelidos confirmados (**T80 = Biax ±80° 1200 g/m²**). Exibido ao lado do tecido nas duas UIs. Política zero-mock: só apelidos confirmados.
+
+### Referências de desenho por versão de pá
+`BLADE_DOCUMENT_REFERENCES` (22 versões) — consulta independente do modelo do BOM. Aparece opcionalmente no relatório PDF/Excel.

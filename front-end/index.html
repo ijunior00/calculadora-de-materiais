@@ -97,7 +97,10 @@
                 <span class="step-label">Results</span>
             </div>
         </div>
-        <button class="nav-reset" onclick="resetApp()"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+        <div style="display:flex;gap:10px;align-items:center">
+            <a href="/m" class="nav-reset" style="text-decoration:none" title="Open the mobile version"><i class="bi bi-phone"></i> Mobile</a>
+            <button class="nav-reset" onclick="resetApp()"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+        </div>
     </nav>
 
     <!-- ==================== STEP 1: DAMAGE DATA INPUT ==================== -->
@@ -473,6 +476,7 @@
                     <button id="btnEditMode" class="btn-outline" onclick="toggleEditMode()" title="Edit quantities and units before generating the PDF" style="border-color:#8b5cf6;color:#7c3aed"><i class="bi bi-pencil-square"></i> EDIT MODE</button>
                     <button id="btnLockEdit" class="btn-outline" onclick="lockEditMode()" style="display:none;border-color:#f59e0b;color:#d97706" title="Lock edits and enable PDF generation"><i class="bi bi-lock"></i> Lock</button>
                     <button id="btnResetEdit" class="btn-outline" onclick="resetEditMode()" style="display:none;border-color:#ef4444;color:#dc2626" title="Discard all edits and return to calculated values"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+                    <button id="btnGenerateExcel" class="btn-outline" onclick="downloadExcel()" style="border-color:#16a34a;color:#15803d"><i class="bi bi-file-earmark-spreadsheet"></i> Excel</button>
                     <button id="btnGeneratePDF" class="btn-primary" onclick="downloadPDF()"><i class="bi bi-file-earmark-pdf"></i> Generate PDF Report</button>
                 </div>
             </div>
@@ -484,6 +488,13 @@
 <script src="static/data.js"></script>
 <script src="static/engine.js"></script>
 <script src="static/app_new.js"></script>
-<script src="static/test.js"></script>
+<!-- Test harness loads only in debug mode: open the page with ?debug=1 then call runBOMTests() -->
+<script>
+    if (new URLSearchParams(location.search).has('debug')) {
+        var _t = document.createElement('script');
+        _t.src = 'static/test.js';
+        document.body.appendChild(_t);
+    }
+</script>
 </body>
 </html>

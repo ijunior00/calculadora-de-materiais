@@ -749,11 +749,8 @@ function showResultTab(tabName, btnEl) {
     }
 }
 
-// PDF generation
-async function downloadPDF() {
-    if (!lastBOM) { alert('Please calculate BOM first.'); return; }
-    if (editModeActive && !editModeLocked) { alert('Please Lock your edits before generating the PDF.'); return; }
-
+// Build the export payload shared by PDF and Excel generation.
+function buildDesktopPayload() {
     const bladeModel   = document.getElementById('bladeModel').value;
     const damageData   = getDamageData();
     const daysOfRepair = parseInt(document.getElementById('daysRepair').value) || 5;
@@ -830,9 +827,20 @@ async function downloadPDF() {
             totals: lastBOM.summary || {},
         },
     };
+    return payload;
+}
+
+// Shared download for PDF / Excel exports.
+async function _downloadBOM(endpoint, ext) {
+    if (!lastBOM) { alert('Please calculate BOM first.'); return; }
+    if (editModeActive && !editModeLocked) { alert('Please Lock your edits before exporting.'); return; }
+
+    const bladeModel = document.getElementById('bladeModel').value;
+    const so = (document.getElementById('serviceOrder').value || 'UNKNOWN');
+    const payload = buildDesktopPayload();
 
     try {
-        const response = await fetch('/api/generate-pdf', {
+        const response = await fetch(endpoint, {
             method:  'POST',
             headers: {'Content-Type':'application/json'},
             body:    JSON.stringify(payload)
@@ -842,16 +850,18 @@ async function downloadPDF() {
         const url  = URL.createObjectURL(blob);
         const a    = document.createElement('a');
         a.href = url;
-        const so = userInputs.serviceOrder || 'UNKNOWN';
         const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,'');
         const title = (document.getElementById('reportTitle')?.value || '').trim().replace(/[^\w\- ]+/g,'').replace(/\s+/g,'_');
-        a.download = title ? `${title}.pdf` : `BOM_Report_${bladeModel}_${so}_${dateStr}.pdf`;
+        a.download = title ? `${title}.${ext}` : `BOM_Report_${bladeModel}_${so}_${dateStr}.${ext}`;
         a.click();
     } catch (e) {
-        alert('Error generating PDF. Make sure the server is running (python run_server.py).');
+        alert('Error generating file. Make sure the server is running (python run_server.py).');
         console.error(e);
     }
 }
+
+function downloadPDF()   { return _downloadBOM('/api/generate-pdf', 'pdf'); }
+function downloadExcel() { return _downloadBOM('/api/generate-excel', 'xlsx'); }
 
 // ============================================================
 // EDIT MODE — temporary QTY/Unit adjustments before PDF
