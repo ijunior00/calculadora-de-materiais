@@ -91,6 +91,7 @@
             </div>
         </div>
         <div style="display:flex;gap:10px;align-items:center">
+            <button class="nav-reset" onclick="openRepairGuide()" title="Guia de reparo (árvore de decisão, substituições, regras de campo)"><i class="bi bi-clipboard2-pulse"></i> Guia</button>
             <a href="/m" class="nav-reset" style="text-decoration:none" title="Open the mobile version"><i class="bi bi-phone"></i> Mobile</a>
             <button class="nav-reset" onclick="resetApp()"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
         </div>
@@ -466,6 +467,9 @@
                     <button class="btn-outline" onclick="goToStep(3)"><i class="bi bi-arrow-left"></i> Back</button>
                 </div>
                 <div style="display:flex;gap:12px;align-items:center">
+                    <label style="display:flex;align-items:center;gap:6px;font-size:0.82rem;color:#475569;cursor:pointer" title="Anexa a checklist das 10 regras de campo ao PDF">
+                        <input type="checkbox" id="includeFieldRules"> Regras de campo no PDF
+                    </label>
                     <button id="btnEditMode" class="btn-outline" onclick="toggleEditMode()" title="Edit quantities and units before generating the PDF" style="border-color:#8b5cf6;color:#7c3aed"><i class="bi bi-pencil-square"></i> EDIT MODE</button>
                     <button id="btnLockEdit" class="btn-outline" onclick="lockEditMode()" style="display:none;border-color:#f59e0b;color:#d97706" title="Lock edits and enable PDF generation"><i class="bi bi-lock"></i> Lock</button>
                     <button id="btnResetEdit" class="btn-outline" onclick="resetEditMode()" style="display:none;border-color:#ef4444;color:#dc2626" title="Discard all edits and return to calculated values"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
@@ -480,6 +484,7 @@
 
 <script src="static/data.js"></script>
 <script src="static/engine.js"></script>
+<script src="static/guide.js"></script>
 <script src="static/app_new.js"></script>
 <!-- Test harness loads only in debug mode: open the page with ?debug=1 then call runBOMTests() -->
 <script>

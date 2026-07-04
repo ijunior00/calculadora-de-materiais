@@ -794,6 +794,7 @@ function buildDesktopPayload() {
         is_external:        isExternalRepair(),
         report_title:       (document.getElementById('reportTitle')?.value || '').trim(),
         doc_refs:           lastDocRef || null,
+        include_field_rules: !!document.getElementById('includeFieldRules')?.checked,
         total_brl:          0,
         total_eur:          0,
         blade_sn:           userInputs.bladeSN,

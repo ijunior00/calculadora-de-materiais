@@ -50,6 +50,7 @@
             </div>
         </div>
         <div style="display:flex;gap:6px">
+            <button class="home-btn" onclick="openRepairGuide()" aria-label="Guia de reparo" title="Guia de reparo"><i class="bi bi-clipboard2-pulse"></i></button>
             <a href="/" class="home-btn" aria-label="Desktop version" title="Desktop version" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center"><i class="bi bi-display"></i></a>
             <button class="home-btn" onclick="goHome()" aria-label="Restart"><i class="bi bi-house"></i></button>
         </div>
@@ -193,7 +194,10 @@
             </div>
             <div id="m-bom-groups"></div>
 
-            <button class="m-add-btn" style="margin-top:14px" onclick="openScarf()"><i class="bi bi-bounding-box"></i> Scarfing drawing (escalonamento)</button>
+            <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:0.85rem;color:var(--text)">
+                <input type="checkbox" id="m-field-rules"> Incluir regras de campo no PDF
+            </label>
+            <button class="m-add-btn" style="margin-top:10px" onclick="openScarf()"><i class="bi bi-bounding-box"></i> Scarfing drawing (escalonamento)</button>
         </div>
 
         <!-- ===== STEP 5: SCARFING / ESCALONAMENTO ===== -->
@@ -231,6 +235,7 @@
 
 <script src="static/data.js"></script>
 <script src="static/engine.js"></script>
+<script src="static/guide.js"></script>
 <script src="static/mobile.js"></script>
 <script src="static/scarf.js"></script>
 </body>

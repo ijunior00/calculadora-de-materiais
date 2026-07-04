@@ -560,6 +560,24 @@
         return tally(r);
     }
 
+    function testRepairGuideData() {
+        console.group('Test 19: Repair guide reference data (decision tree, subs, rules)');
+        const r = [
+            assertEq('FIELD_RULES has 10 rules', FIELD_RULES.length, 10, 0),
+            assertEq('FIBER_SUBSTITUTIONS has 4 rows', FIBER_SUBSTITUTIONS.length, 4, 0),
+            assertEq('CORE_SUBSTITUTIONS has 1 row', CORE_SUBSTITUTIONS.length, 1, 0),
+            assertEq('DAMAGE_DECISION_TREE has 19 rows', DAMAGE_DECISION_TREE.length, 19, 0),
+            DAMAGE_DECISION_TREE.every(d => d.damage && d.zone && d.severity && d.level && d.method)
+                ? pass('every decision-tree row has damage/zone/severity/level/method')
+                : fail('decision-tree row missing required field', ''),
+            DAMAGE_DECISION_TREE.some(d => d.level === '⛔' && /REPORTAR/i.test(d.method))
+                ? pass('non-repairable shell-spar case present (report immediately)')
+                : fail('missing non-repairable case', ''),
+        ];
+        console.groupEnd();
+        return tally(r);
+    }
+
     // ── Main runner ───────────────────────────────────────────────────────────
 
     window.runBOMTests = function () {
@@ -584,6 +602,7 @@
             testSketchChordOverride,
             testRepairDayEstimator,
             testFiberOverlapNorm,
+            testRepairGuideData,
         ];
         let total = { pass: 0, fail: 0 };
         for (const suite of suites) {
