@@ -583,6 +583,7 @@ function buildPayload() {
         is_external: M.isExternal,
         report_title: M.title || '',
         doc_refs: M.docRef || null,
+        include_field_rules: !!(document.getElementById('m-field-rules') && document.getElementById('m-field-rules').checked),
         total_brl: 0, total_eur: 0,
         blade_sn: '',
         service_order: M.so,

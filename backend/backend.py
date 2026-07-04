@@ -112,6 +112,7 @@ class BOMPayload(BaseModel):
     is_external: Optional[bool] = None
     report_title: Optional[str] = ""
     doc_refs: Optional[Dict[str, Any]] = None
+    include_field_rules: Optional[bool] = False
     total_brl: float = 0
     total_eur: float = 0
     blade_sn: Optional[str] = ""
@@ -313,6 +314,47 @@ def draw_doc_refs(pdf: FPDF, data: BOMPayload):
     pdf.ln(4)
 
 
+# 10 general field rules (945550 §9) — mirrors FIELD_RULES in static/data.js.
+_FIELD_RULES = [
+    (1,  "Surface clean before laminating",          "After peel-ply/abrasion: max 3h exposed"),
+    (2,  "Fibre aligned per drawing",                "Duplicate removed-material orientation, no bumps"),
+    (3,  "Minimum overlap",                          "5% of fabric weight (g/m2) in mm. Ex: 600gsm = 30mm"),
+    (4,  "First ply = smallest (multi-layer)",       "In multi-layer repair, start with the smallest"),
+    (5,  "Vacuum min. 0.8 bar",                      "Vacuum consolidation whenever possible"),
+    (6,  "Cure with heating blanket",                "Per 0042-5383. Thermal sensor under blanket advised"),
+    (7,  "Wet the surface with resin before fibre",  "Substrate wet-out mandatory"),
+    (8,  "Rounded corners on laminates",             "Cut fibre with round corners"),
+    (9,  "Material-surface temp diff <= 5C",         "Material and blade must be close in temperature"),
+    (10, "Grinding only after full cure (95%)",      "Safety: exposure to uncured chemicals"),
+]
+
+
+def draw_field_rules(pdf: FPDF):
+    """Optional field-rules checklist appendix (945550 §9)."""
+    pdf.add_page()
+    add_header(pdf)
+    pdf.set_y(24)
+    _set_fine_black_lines(pdf)
+    pdf.set_font("Arial", 'B', 8.5)
+    pdf.set_fill_color(*CAT_HDR_BG)
+    pdf.set_text_color(*DARK_TEXT)
+    pdf.cell(190, 6, "  FIELD RULES CHECKLIST (945550 par.9)", 1, 1, 'L', fill=True)
+    pdf.set_font("Arial", 'B', 7.5)
+    pdf.set_fill_color(*COL_HDR_BG)
+    pdf.cell(8,  5.5, "OK", 1, 0, 'C', fill=True)
+    pdf.cell(10, 5.5, "#",  1, 0, 'C', fill=True)
+    pdf.cell(80, 5.5, "RULE", 1, 0, 'L', fill=True)
+    pdf.cell(92, 5.5, "DETAIL", 1, 1, 'L', fill=True)
+    pdf.set_font("Arial", '', 7.5)
+    for idx, (n, rule, detail) in enumerate(_FIELD_RULES):
+        pdf.set_fill_color(*(ROW_ALT if idx % 2 else ROW_WHITE))
+        pdf.cell(8,  6, "", 1, 0, 'C', fill=True)  # empty checkbox
+        pdf.cell(10, 6, str(n), 1, 0, 'C', fill=True)
+        pdf.cell(80, 6, _s(rule)[:52], 1, 0, 'L', fill=True)
+        pdf.cell(92, 6, _s(detail)[:60], 1, 1, 'L', fill=True)
+    pdf.ln(4)
+
+
 def _cat_col_headers(pdf: FPDF):
     """Draw column headers for item tables — light grey background, black text, fine borders."""
     _set_fine_black_lines(pdf)
@@ -402,6 +444,10 @@ async def generate_pdf(data: BOMPayload):
     for phase, items in phases.items():
         if phase not in CATEGORY_ORDER:
             draw_category(pdf, phase, items)
+
+    # Optional field-rules checklist appendix
+    if data.include_field_rules:
+        draw_field_rules(pdf)
 
     # Add footer to all pages
     total_pages = pdf.page_no()

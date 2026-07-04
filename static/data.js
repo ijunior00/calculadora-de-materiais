@@ -38,6 +38,8 @@ function computeFiberOverlap(materialType, gsm) {
 // split, (b) for the special fabrics (SPL/CFM50/CORE/BALSA) outside the fiber
 // rule, and (c) so display/reference tables have a stable list.
 const STANDARD_OVERLAPS = {
+    'BIAX200':   { span: 10,  chord: 10 },   // 5% × 200  = 10   (V136, ex-pending)
+    'BIAX450':   { span: 23,  chord: 23 },   // 5% × 450  = 22.5 → 23 (V136, ex-pending)
     'BIAX600':   { span: 30,  chord: 30 },   // 5% × 600  = 30
     'BIAX936':   { span: 47,  chord: 47 },   // 5% × 936  = 46.8 → 47  (REV05 had 50)
     'BIAX1000':  { span: 50,  chord: 50 },   // 5% × 1000 = 50
@@ -58,7 +60,7 @@ const STANDARD_OVERLAPS = {
 // Source: REV05 Lists!E2:E7 (BIAX/UD/TRIAX/CORE/SPL/CFM50) and Lists!G2:G8 (GSM).
 // BALSA is intentionally tracked separately as a special fabric (no GSM, no overlap).
 const MATERIAL_TYPES = ['BIAX', 'UD', 'TRIAX', 'CORE', 'BALSA', 'SPL', 'CFM50'];
-const GSM_OPTIONS = [600, 900, 936, 1000, 1140, 1200, 1500];
+const GSM_OPTIONS = [200, 450, 600, 900, 936, 1000, 1140, 1200, 1500];
 
 // ============================================================
 // BLADE-SPECIFIC MATERIAL CONFIGURATION
@@ -115,10 +117,13 @@ const BLADE_MATERIAL_MAP = {
         { materialType: 'BALSA', gsm: '',     label: 'BALSA' },
         { materialType: 'SPL',   gsm: '',     label: 'SPL' },
         { materialType: 'CFM50', gsm: '',     label: 'CFM' },
-        // NOTE: REV05 Blades_Fabrics also lists "Biax ±45 450gsm", "Biax ±45 200gsm"
-        // and "Biax ±80 1200gsm" for V136 (cells F11, F12, F13) but the rest of REV05
-        // does not yet wire these into the calculation pipeline. Pending REV06 — see
-        // PENDING_REV06.md.
+        // Biax variants from REV05 Blades_Fabrics (F11/F12/F13). Now calculable:
+        // overlap comes from the norm rule (biax = 5% of gsm) via computeFiberOverlap,
+        // so no overlap value is invented. SAP is still 'TBD' (pending REV06) — the
+        // fabric computes weight/area/qty; only the order number is outstanding.
+        { materialType: 'BIAX',  gsm: '450',  label: 'BIAX ±45° 450 (SAP TBD)' },
+        { materialType: 'BIAX',  gsm: '200',  label: 'BIAX ±45° 200 (SAP TBD)' },
+        { materialType: 'BIAX',  gsm: '1200', label: 'BIAX ±80° 1200 / T80 (SAP TBD)' },
     ],
     'V150': [
         { materialType: 'BIAX',  gsm: '600',  label: 'BIAX 600' },
@@ -148,11 +153,10 @@ const BLADE_REFERENCE_FABRICS = {
         { label: 'Quadrax 850 g/m²', source: 'Blades_Fabrics!A7' },
         { label: 'Quadrax 566 g/m²', source: 'Blades_Fabrics!A8' },
     ],
-    'V136': [
-        { label: 'Biax \u00b145\u00b0 450 g/m\u00b2', source: 'Blades_Fabrics!F11' },
-        { label: 'Biax \u00b145\u00b0 200 g/m\u00b2', source: 'Blades_Fabrics!F12' },
-        { label: 'Biax \u00b180\u00b0 1200 g/m\u00b2', source: 'Blades_Fabrics!F13' },
-    ],
+    // V136 biax variants (F11/F12/F13) were MIGRATED into the calculation
+    // pipeline: overlap now comes from the norm's biax 5% rule, so no value is
+    // invented. SAP is still 'TBD' (pending REV06) but weight/area/qty compute.
+    // Only Quadrax stays reference-only \u2014 the norm gives no quadrax overlap rule.
 };
 
 const CHORD_REFERENCES = ['LE', 'TE', 'M.Web', 'TE.Web'];
@@ -241,10 +245,16 @@ const REPAIR_DAY_RULES = {
 // ============================================================
 const FABRICS_DB = {
     standard: {
+        // V136 ex-pending biax (REV05 Blades_Fabrics F11/F12/F13). Overlap comes
+        // from the norm formula (5% of gsm); SAP is TBD until REV06 provides it.
+        'BIAX200':   { sap: 'TBD',       desc: 'BIAX +/-45 200 g/m2 E-GLASS (SAP pending REV06)', unit: 'KG', kgPerUnit: 1 },
+        'BIAX450':   { sap: 'TBD',       desc: 'BIAX +/-45 450 g/m2 E-GLASS (SAP pending REV06)', unit: 'KG', kgPerUnit: 1 },
         'BIAX600':   { sap: 'S096476',   desc: 'BIAX 600G/M2 GLASS FABRIC',          unit: 'KG', kgPerUnit: 1 },
         'BIAX936':   { sap: '29009736',  desc: 'BIAX 936GSM 127CM STABILIZED',       unit: 'KG', kgPerUnit: 1 },
         'BIAX1000':  { sap: '29281859',  desc: 'FABRIC,E-GLASS,BIAX +/-45,1000 g/m2',unit: 'KG', kgPerUnit: 1 },
-        // BIAX1200 does not exist in standard (Vidro E) catalog — HM only
+        // BIAX1200 E-glass (V136, Biax ±80° / T80). Distinct from the V150 HM
+        // BIAX1200 (SAP 29110146). SAP TBD until REV06.
+        'BIAX1200':  { sap: 'TBD',       desc: 'BIAX +/-80 1200 g/m2 E-GLASS / T80 (SAP pending REV06)', unit: 'KG', kgPerUnit: 1 },
         'UD600':     { sap: '29007004',  desc: 'FABRIC,E,UD 0 DEG,576 g/m2,1265 mm', unit: 'KG', kgPerUnit: 1 },
         'UD900':     { sap: '29017516',  desc: 'UD 0 900g S',                        unit: 'KG', kgPerUnit: 1 },
         'UD1140':    { sap: '29017705',  desc: 'UD 0 1140g 1075mm C',                unit: 'KG', kgPerUnit: 1 },
@@ -480,4 +490,61 @@ const TOOLS = [
     { sap: '213507',      desc: 'HAND LAMP 230V ELECTRONIC',                   unit: 'EA', calcQty: (s) => s.Cleaning > 0 ? 2 : 0 },
     { sap: '29097941',    desc: 'BLOWER, 1000 m3/h, 1 kW, 400 V',             unit: 'EA', calcQty: (s) => s.Cleaning > 0 ? 1 : 0 },
     { sap: 'VT730288',    desc: 'GENERATOR SET, DIESEL ENGINE, 6.6 kW, 230 V', unit: 'EA', calcQty: (s) => s.Cleaning > 0 ? 1 : 0 },
+];
+
+// ============================================================
+// REPAIR GUIDE — reference data (read-only decision support)
+// Source: "REFERÊNCIAS DOS DOCUMENTOS DAS BLADES.xlsx" → sheet
+// "ÁRVORE DE DECISÃO" (Ref: 945550 V14 + CIM4271 / 0100-6810). Engineering
+// reference material, shown read-only in the Repair Guide.
+// ============================================================
+
+// 10 general field rules (945550 §9).
+const FIELD_RULES = [
+    { n: 1,  rule: 'Superfície limpa antes de laminar',          detail: 'Após remover peel-ply ou abrasão: máx 3h exposta ao ambiente', consequence: 'Contaminação → falha de adesão' },
+    { n: 2,  rule: 'Fibra alinhada conforme desenho',            detail: 'Duplicar a orientação do material removido, sem bumps',        consequence: 'Perda de resistência estrutural' },
+    { n: 3,  rule: 'Overlap mínimo',                              detail: '5% do peso da fibra (g/m²) em mm. Ex: 600gsm = 30mm',          consequence: 'Junta fraca' },
+    { n: 4,  rule: 'Primeira camada = a menor (multi-camada)',   detail: 'Em reparo multi-camada, começar pela menor',                  consequence: 'Perfil incorreto' },
+    { n: 5,  rule: 'Vácuo mín. 0.8 bar',                          detail: 'Vacuum consolidation sempre que possível',                    consequence: 'Porosidade, delaminação' },
+    { n: 6,  rule: 'Cura com manta térmica',                     detail: 'Seguir 0042-5383. Sensor térmico sob a manta recomendado',    consequence: 'Cura incompleta (<95%)' },
+    { n: 7,  rule: 'Molhar superfície com resina antes da fibra',detail: 'Wet-out do substrato obrigatório',                            consequence: 'Dry spots, delaminação' },
+    { n: 8,  rule: 'Cantos arredondados nos laminados',          detail: 'Cortar a fibra com round corners',                            consequence: 'Concentração de tensão' },
+    { n: 9,  rule: 'Diferença temp. material-superfície ≤5°C',   detail: 'Material e blade devem estar próximos em temperatura',        consequence: 'Cura irregular' },
+    { n: 10, rule: 'Grinding só após cura completa (95%)',       detail: 'Segurança: exposição a químicos não curados',                 consequence: 'Risco à saúde + dano ao reparo' },
+];
+
+// Fiber substitution (945550 §9 Table 9.1).
+const FIBER_SUBSTITUTIONS = [
+    { original: 'Biax 936 g/m²',   alternative: 'Biax 600 + Biax 300 g/m²',    notes: 'Soma = 900 g/m² (equivalente)' },
+    { original: 'UD 1140 g/m²',    alternative: '2 × UD 600 g/m²',             notes: 'Soma = 1200 g/m² (ligeiramente acima)' },
+    { original: 'Triax 1500 g/m²', alternative: 'Biax 936 + UD 600 g/m²',      notes: 'Alternativa 1' },
+    { original: 'Triax 1500 g/m²', alternative: 'Triax 1200 + Biax 300 g/m²',  notes: 'Alternativa 2' },
+];
+
+// Core substitution (945556 V12).
+const CORE_SUBSTITUTIONS = [
+    { original: 'PET core', alternative: 'PVC core', notes: 'Equivalente aprovado para substituição' },
+];
+
+// Decision tree by damage type (Ref: 945550 V14 + CIM4271).
+const DAMAGE_DECISION_TREE = [
+    { damage: 'Dano em coating/gelcoat', zone: 'Shell (qualquer)', severity: 'Cosmético',            level: 'C',  method: 'Reparo cosmético: lixar + filler + pintura',           ref: '945550',             kit: 'SikaForce 7800 + Topcoat 12',            accept: 'Superfície lisa, sem degraus',              notes: 'Não afeta estrutura' },
+    { damage: 'Dano em coating/gelcoat', zone: 'LE',               severity: 'Cosmético',            level: 'B',  method: 'Lixar + filler + LEP coating',                        ref: '945550 + LEP doc',   kit: 'SikaForce 7800 + ALEXIT LEP 9',          accept: 'LEP 3 camadas 100-125µm cada',              notes: 'LE sempre com LEP, nunca Topcoat' },
+    { damage: 'Crack/delaminação shell', zone: 'Shell SS/PS',      severity: 'Superficial (<1m²)',   level: 'B',  method: 'Remover dano + layup + cura + acabamento',            ref: '945550 / 0116-3896', kit: '899019(PPT) ou 29035992(SST) + Ampreg 30',accept: 'Sem porosidade, overlap correto, Barcol>25',notes: 'Vacuum 0.8bar, cura @70°C' },
+    { damage: 'Crack/delaminação shell', zone: 'Shell SS/PS',      severity: 'Profunda (>1m²)',      level: 'A',  method: 'Remover dano + layup multi-camada + vacuum + cura',   ref: '945550 / 0116-3896', kit: 'Fibra conforme drawing + Ampreg 30',     accept: 'Conforme drawing, Barcol>25',               notes: 'Seguir layup drawing específico' },
+    { damage: 'Erosão/dano LE',          zone: 'LE',               severity: 'Estrutural (≤150cm)',  level: 'B',  method: 'Remover dano + layup + LEP',                          ref: '945550',             kit: 'Fibra + Ampreg 30 + LEP 9',              accept: 'Perfil restaurado + LEP completo',          notes: 'Verificar bond line' },
+    { damage: 'Erosão/dano LE',          zone: 'LE',               severity: 'Estrutural (>150cm)',  level: 'A',  method: 'Remover dano + layup extenso + LEP',                  ref: '945550',             kit: 'Fibra + Ampreg 30 + LEP 9',              accept: 'Perfil restaurado + LEP completo',          notes: 'Contactar suporte técnico' },
+    { damage: 'Crack/debonding TE',      zone: 'TE',               severity: 'Até 150cm',            level: 'B',  method: 'Abrir bond + limpar + re-bond + reforço',             ref: '945550',             kit: 'SikaForce 7818 + fibra biax',            accept: 'Bond sem gaps, reforço conforme',           notes: 'Verificar extensão total antes' },
+    { damage: 'Crack/debonding TE',      zone: 'TE',               severity: 'Acima 150cm',          level: 'A',  method: 'Abrir bond + limpar + re-bond + reforço extenso',     ref: '945550 / TE SST doc',kit: 'SikaForce 7818 + fibra biax',            accept: 'Bond sem gaps, reforço conforme drawing',   notes: 'Pode requerer CIM específico' },
+    { damage: 'Lightning strike',        zone: 'Tip/Receptores',   severity: 'Receptor danificado',  level: 'B',  method: 'Medir continuidade + trocar receptor',               ref: '945550',             kit: 'Receptor novo + ferramentas LPS',        accept: 'Continuidade elétrica OK',                  notes: 'Medir antes e depois' },
+    { damage: 'Lightning strike',        zone: 'Shell (superficial)',severity: 'Dano shell por lightning',level: 'A',method: 'Remover dano + layup + restaurar LPS',              ref: '945550',             kit: 'Fibra + resina + componentes LPS',       accept: 'Estrutura + LPS restaurados',               notes: 'Verificar toda a extensão' },
+    { damage: 'Lightning strike',        zone: 'Carbon spar (PPT)', severity: 'Dano em spar',        level: 'A+', method: 'Reparo carbon spar especializado',                   ref: 'Lightning PPT doc',  kit: 'Carbon prepreg 250g',                    accept: 'Conforme procedimento específico',          notes: 'REPARO AVANÇADO — supervisão' },
+    { damage: 'Abertura bond line',      zone: 'LE/TE/Tip',        severity: '<5mm abertura',        level: 'A',  method: 'Injeção de adesivo + clamp',                          ref: '945550',             kit: 'SikaForce 7818',                         accept: 'Bond preenchido sem gaps',                  notes: 'Delimitar extensão total' },
+    { damage: 'Abertura bond line',      zone: 'LE/TE/Tip',        severity: '>5mm abertura',        level: 'A',  method: 'Abrir + limpar + re-bond + reforço fibra',            ref: '945550',             kit: 'SikaForce 7818 + fibra reforço',         accept: 'Bond + reforço conforme',                   notes: 'Pode requerer CIM' },
+    { damage: 'Dano bond shell-spar',    zone: 'Shell-Spar',       severity: 'Qualquer',             level: '⛔', method: 'NÃO REPARÁVEL — REPORTAR IMEDIATAMENTE',              ref: '945550 §13',         kit: '—',                                      accept: '—',                                         notes: 'RISCO ESTRUTURAL MAIOR — contactar engenharia' },
+    { damage: 'Crack root laminate',     zone: 'Root',             severity: 'Passante',             level: 'A',  method: 'Remover dano + layup UD + cura',                      ref: '945550',             kit: 'Fibra UD + Ampreg 30',                   accept: 'Conforme drawing, Barcol>25',               notes: 'Reparo crítico — documentar tudo' },
+    { damage: 'Dano tip / debonding tip',zone: 'Tip',              severity: 'Variável',             level: 'A',  method: 'Reparo ou troca de tip shell',                        ref: '945550',             kit: 'Adesivo + fibra ou tip shell novo',      accept: 'Perfil restaurado, LPS OK',                 notes: 'Verificar LPS após reparo' },
+    { damage: 'Dano SMT / Implant',      zone: 'Root (SMT)',       severity: 'Variável',             level: 'A',  method: 'Conforme procedimento específico',                    ref: '0073-8810',          kit: 'Conforme procedimento',                  accept: 'Conforme procedimento',                     notes: 'V110/V126/V136 apenas' },
+    { damage: 'Dano em core (sandwich)', zone: 'Shell',            severity: '<25×25cm',             level: 'B',  method: 'Remover core danificado + substituir + laminar',      ref: '945550',             kit: 'Core material + fibra + resina',         accept: 'Core substituído, laminado conforme',       notes: 'Manter espessura original' },
+    { damage: 'Dano em core (sandwich)', zone: 'Shell',            severity: '>25×25cm',             level: 'A',  method: 'Remover core + substituir + layup conforme drawing',  ref: '945550 / 0116-3896', kit: 'Core + fibra conforme drawing + resina', accept: 'Conforme drawing original',                 notes: 'Seguir layup drawing' },
 ];
