@@ -65,9 +65,11 @@ O overlap **não** é uma tabela fixa: é uma **porcentagem do peso da fibra (gs
 | Tipo de fibra | Span (long.) | Corda (transv.) |
 |---------------|--------------|-----------------|
 | **Biax** | 5% do gsm | 5% do gsm |
-| **UD** | 10% do gsm | 5% do gsm |
+| **UD** | 10% do gsm | 2% do gsm* |
 | **Triax** | Biax(5%) + UD(10%) das sub-camadas | 2,5% do total |
 | **Carbon UD** | 12% do gsm | 2% do gsm |
+
+> *A norma lista UD corda = 5%, mas na prática esse overlap ficou grande demais; o time de campo mantém **UD corda = 2%** (12/18/23/24). O app segue o time de campo.
 
 Valores resultantes por tecido:
 
@@ -77,17 +79,17 @@ Valores resultantes por tecido:
 | BIAX936 | 47 | 47 | 5%×936=46,8→47 *(REV05 tinha 50)* |
 | BIAX1000 | 50 | 50 | 5%×1000 |
 | BIAX1200 | 60 | 60 | 5%×1200 |
-| UD600 | 60 | **30** | span 10%×600 · corda 5%×600 *(REV05 corda era 12)* |
-| UD900 | 90 | **45** | span 10% · corda 5% *(REV05 corda era 18)* |
-| UD1140 | 114 | **57** | span 10% · corda 5% *(REV05 corda era 23)* |
-| UD1200 | 120 | **60** | span 10% · corda 5% *(REV05 corda era 24)* |
+| UD600 | 60 | 12 | span 10%×600 · corda 2%×600 |
+| UD900 | 90 | 18 | span 10% · corda 2% |
+| UD1140 | 114 | 23 | span 10% · corda 2% (22,8→23) |
+| UD1200 | 120 | 24 | span 10% · corda 2% |
 | TRIAX1200 | 90 | 30 | span 600biax(30)+600UD(60) · corda 2,5%×1200 |
 | TRIAX1500 | 125 | 38 | span ~33+94 · corda 2,5%×1500=37,5→38 *(REV05 tinha 35)* |
 | SPL | 75 | 75 | especial (patch) |
 | CFM50 | 30 | 30 | especial (véu de superfície) |
 | CORE / BALSA | 0 | 0 | — |
 
-> **Correção 2026:** o REV05 usava uma tabela fixa com **UD corda = 2%** e **BIAX936 = 50**. A norma de engenharia (0149-9754 §12) manda **UD corda = 5%** e **5%×936 = 47**. O app foi alinhado à norma. Isso aumenta a largura/área de reparos com UD. Tecidos fora do mapa (HM, pendentes REV06) passam a receber overlap correto automaticamente via `computeFiberOverlap()`.
+> **Correção 2026:** o REV05 usava tabela fixa com **BIAX936 = 50** (deveria ser 5%×936 = 47) — corrigido. O overlap agora é calculado por % do gsm. **UD corda:** a norma diz 5%, mas o time de campo mantém **2%** (grande demais na prática) — o app segue o time de campo. Tecidos fora do mapa (HM, pendentes REV06) passam a receber overlap automaticamente via `computeFiberOverlap()`.
 
 ### Exemplo numérico
 

@@ -8,9 +8,12 @@
 // fixed table. This is the engineering norm and supersedes the fixed REV05
 // LAYUP!H4:J16 values (which had UD chord at 2% and BIAX936 rounded to 50).
 //   Biax:      span 5%   chord 5%
-//   UD:        span 10%  chord 5%
+//   UD:        span 10%  chord 2%  (see note below)
 //   Triax:     span = Biax(5%) + UD(10%) of its sub-plies ; chord 2.5% of total
 //   Carbon UD: span 12%  chord 2%
+// NOTE (UD chord): the norm lists UD chord at 5%, but that overlap was too
+// large in practice — the field team keeps UD chord at 2% (the REV05 value:
+// 12/18/23/24 for 600/900/1140/1200). We follow the field team here.
 // computeFiberOverlap() is the single source for any gsm (incl. HM / pending
 // REV06 fabrics). Triax needs the biax/UD sub-ply split, which is only known
 // for the two catalogued triax — those stay explicit in STANDARD_OVERLAPS.
@@ -20,7 +23,7 @@ function computeFiberOverlap(materialType, gsm) {
     const mm = pct => Math.round(g * pct);
     switch ((materialType || '').toUpperCase()) {
         case 'BIAX':   return { span: mm(0.05), chord: mm(0.05) };
-        case 'UD':     return { span: mm(0.10), chord: mm(0.05) };
+        case 'UD':     return { span: mm(0.10), chord: mm(0.02) };  // chord 2% (field team), not the norm's 5%
         case 'CARBON': return { span: mm(0.12), chord: mm(0.02) };
         // Triax span depends on the biax/UD split (unknown from gsm alone);
         // the two real triax live in STANDARD_OVERLAPS. Chord is 2.5% of total.
@@ -39,10 +42,10 @@ const STANDARD_OVERLAPS = {
     'BIAX936':   { span: 47,  chord: 47 },   // 5% × 936  = 46.8 → 47  (REV05 had 50)
     'BIAX1000':  { span: 50,  chord: 50 },   // 5% × 1000 = 50
     'BIAX1200':  { span: 60,  chord: 60 },   // 5% × 1200 = 60
-    'UD600':     { span: 60,  chord: 30 },   // span 10%×600=60 ; chord 5%×600=30  (REV05 chord was 12)
-    'UD900':     { span: 90,  chord: 45 },   // span 10%×900=90 ; chord 5%×900=45  (REV05 chord was 18)
-    'UD1140':    { span: 114, chord: 57 },   // span 10%×1140=114 ; chord 5%×1140=57 (REV05 chord was 23)
-    'UD1200':    { span: 120, chord: 60 },   // span 10%×1200=120 ; chord 5%×1200=60 (REV05 chord was 24)
+    'UD600':     { span: 60,  chord: 12 },   // span 10%×600=60 ; chord 2%×600=12  (field team keeps 2%, not norm's 5%)
+    'UD900':     { span: 90,  chord: 18 },   // span 10%×900=90 ; chord 2%×900=18
+    'UD1140':    { span: 114, chord: 23 },   // span 10%×1140=114 ; chord 2%×1140=22.8→23
+    'UD1200':    { span: 120, chord: 24 },   // span 10%×1200=120 ; chord 2%×1200=24
     'TRIAX1200': { span: 90,  chord: 30 },   // span 600 biax(30)+600 UD(60)=90 ; chord 2.5%×1200=30
     'TRIAX1500': { span: 125, chord: 38 },   // span ~658 biax(33)+936 UD(94)=~125 ; chord 2.5%×1500=37.5 → 38 (REV05 had 35)
     'SPL':       { span: 75,  chord: 75 },   // special (patch), fixed
