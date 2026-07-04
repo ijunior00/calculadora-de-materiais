@@ -108,6 +108,9 @@ class BOMPayload(BaseModel):
     length: float
     width: float
     days: int
+    estimated_days: Optional[int] = None
+    is_external: Optional[bool] = None
+    report_title: Optional[str] = ""
     total_brl: float = 0
     total_eur: float = 0
     blade_sn: Optional[str] = ""
@@ -259,6 +262,11 @@ def draw_info_block(pdf: FPDF, data: BOMPayload):
 
     two_col(f"Days of Repair: {data.days}",
             f"Region: {data.blade_zone}", shade=True)
+
+    if data.estimated_days is not None:
+        repair_kind = "External" if data.is_external else "Internal"
+        two_col(f"Estimated Duration: {data.estimated_days} day(s)",
+                f"Repair Type: {repair_kind}", shade=False)
 
     # Damage description is ALWAYS rendered, even if empty — placeholder dash
     # keeps the report layout stable for downstream readers.
@@ -504,6 +512,11 @@ async def generate_excel(data: BOMPayload):
         ("Length (mm)", f"{span_length:.0f}", "Width (mm)", f"{data.width:.0f}"),
         ("Days of repair", str(data.days), "Generated", time.strftime("%d/%m/%Y")),
     ]
+    if data.estimated_days is not None:
+        info_rows.append((
+            "Estimated duration", f"{data.estimated_days} day(s)",
+            "Repair type", "External" if data.is_external else "Internal",
+        ))
     r = 3
     for k1, v1, k2, v2 in info_rows:
         ws.cell(r, 1, k1).font = bold

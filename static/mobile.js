@@ -14,6 +14,8 @@ const M = {
     length: null,     // mm  (spanwise, = |rend - rstart|)
     width: null,      // mm  (chordwise, = |x2 - x1|)
     days: 5,
+    isExternal: false, // internal repair by default; external adds a painting day
+    estimatedDays: null,
     so: '',
     cir: '',
     layers: [],       // [{ layerName, materialType, gsm }]
@@ -245,7 +247,43 @@ function moveLayer(i, dir) {
 // ============================================================
 // STEP 3 — REPAIR STEPS
 // ============================================================
+function renderRepairType() {
+    const wrap = document.getElementById('m-repair-type');
+    if (!wrap) return;
+    const types = [
+        { key: false, label: 'Internal' },
+        { key: true, label: 'External' },
+    ];
+    wrap.innerHTML = types.map(t =>
+        `<div class="seg${M.isExternal === t.key ? ' active' : ''}" onclick="setRepairType(${t.key})">${t.label}</div>`
+    ).join('');
+}
+function setRepairType(isExternal) {
+    M.isExternal = isExternal;
+    renderRepairType();
+    updateDaysEstimate();
+}
+
+// Compute + display the estimated repair schedule (total days only).
+function updateDaysEstimate() {
+    const el = document.getElementById('m-days-estimate');
+    if (!el) return;
+    const est = computeRepairDays(M.layers.filter(l => l.materialType), M.isExternal);
+    M.estimatedDays = est.totalDays;
+    el.textContent = `${est.totalDays} day${est.totalDays > 1 ? 's' : ''}`;
+}
+// Copy the estimate into the PPE-driving "days of repair" field.
+function applyEstimatedDays() {
+    if (!M.estimatedDays) updateDaysEstimate();
+    M.days = Math.max(1, Math.min(60, M.estimatedDays || M.days));
+    const dv = document.getElementById('m-days-val');
+    if (dv) dv.textContent = M.days;
+    toast(`Days of repair set to ${M.days}.`, 'ok');
+}
+
 function renderSteps() {
+    renderRepairType();
+    updateDaysEstimate();
     const wrap = document.getElementById('m-steps-list');
     wrap.innerHTML = STEP_ORDER.map(key => {
         const qty = M.steps[key];
@@ -326,11 +364,14 @@ function renderResults() {
     const s = bom.summary;
 
     // chips
+    const est = computeRepairDays(M.layers.filter(l => l.materialType), M.isExternal);
+    M.estimatedDays = est.totalDays;
     document.getElementById('m-result-chips').innerHTML = `
         <span class="m-chip primary">${M.blade}</span>
         <span class="m-chip">${M.region}</span>
         <span class="m-chip">${fmt(M.length)}×${fmt(M.width)} mm</span>
-        <span class="m-chip">${M.days} day${M.days > 1 ? 's' : ''}</span>`;
+        <span class="m-chip">${M.isExternal ? 'External' : 'Internal'}</span>
+        <span class="m-chip accent"><i class="bi bi-calendar-week"></i> ${est.totalDays} day${est.totalDays > 1 ? 's' : ''} estimated</span>`;
 
     // stats
     document.getElementById('m-result-stats').innerHTML = `
@@ -438,6 +479,8 @@ function buildPayload() {
         length: M.length,
         width: M.width,
         days: M.days,
+        estimated_days: (typeof M.estimatedDays === 'number') ? M.estimatedDays : null,
+        is_external: M.isExternal,
         total_brl: 0, total_eur: 0,
         blade_sn: '',
         service_order: M.so,

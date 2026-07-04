@@ -137,6 +137,25 @@
 
         <!-- ===== STEP 3: REPAIR STEPS ===== -->
         <div id="s3" class="m-screen hidden">
+            <div class="m-section-title">Repair type</div>
+            <div class="m-card">
+                <div class="m-field" style="margin-bottom:0">
+                    <label>Internal or external repair</label>
+                    <div class="m-segmented" id="m-repair-type"></div>
+                    <div class="hint" style="margin-top:6px">External repairs add a painting day to the schedule.</div>
+                </div>
+            </div>
+
+            <div class="m-section-title">Estimated schedule</div>
+            <div class="m-card">
+                <div class="m-row-between">
+                    <label style="margin:0;font-size:0.9rem;font-weight:600;color:var(--text)">Estimated duration</label>
+                    <div class="m-days-estimate" id="m-days-estimate">— days</div>
+                </div>
+                <div class="hint" style="margin-top:6px">Max 6 plies per lamination (one lamination/day due to cure). Includes 1 contingency day.</div>
+                <button class="btn btn-ghost" style="margin-top:10px;padding:8px 12px;font-size:0.8rem" onclick="applyEstimatedDays()"><i class="bi bi-arrow-down-circle"></i> Use as days of repair</button>
+            </div>
+
             <div class="m-section-title">Active repair steps</div>
             <div id="m-steps-list"></div>
             <div class="m-info-box">

@@ -6,6 +6,7 @@ let currentStep = 1;
 let layerRows = [];
 let lastBOM = null;
 let currentResultTab = 'consumable_protection';
+let lastEstimatedDays = null;
 
 // Edit Mode state
 let editModeActive = false;
@@ -541,6 +542,32 @@ function getRepairSteps() {
 function onRepairStepsChange() {
     const s = getRepairSteps();
     document.getElementById('stepVacuum').textContent = s.HLU + s.Infusion;
+    updateEstimatedDays();
+}
+
+// Repair type: external repairs add a painting day to the schedule estimate.
+function isExternalRepair() {
+    const el = document.getElementById('repairType');
+    return el ? el.value === 'external' : false;
+}
+
+// Compute + display the estimated repair schedule (total days only).
+function updateEstimatedDays() {
+    const el = document.getElementById('estimatedDays');
+    if (!el) return;
+    const est = computeRepairDays(layerRows.filter(l => l.materialType), isExternalRepair());
+    lastEstimatedDays = est.totalDays;
+    el.textContent = `${est.totalDays} d`;
+}
+
+// Copy the estimate into the PPE-driving "Days of Repair" field.
+function applyEstimatedDays() {
+    updateEstimatedDays();
+    const input = document.getElementById('daysRepair');
+    if (input && lastEstimatedDays) {
+        input.value = Math.max(1, lastEstimatedDays);
+        onRepairStepsChange();
+    }
 }
 
 // ── STEP 4 ────────────────────────────────────────────────────────────
@@ -563,10 +590,16 @@ function calculateAndShow() {
 function renderSummary() {
     if (!lastBOM) return;
     const s = lastBOM.summary;
+    const est = computeRepairDays(layerRows.filter(l => l.materialType), isExternalRepair());
+    lastEstimatedDays = est.totalDays;
     document.getElementById('summaryCards').innerHTML = `
         <div class="summary-card highlight" style="min-width:120px;max-width:160px;padding:12px 14px;flex:1">
             <div class="sc-label" style="font-size:0.68rem">Total BOM Items</div>
             <div class="sc-value" style="font-size:1.3rem">${s.totalItems}</div>
+        </div>
+        <div class="summary-card highlight" style="min-width:130px;max-width:180px;padding:12px 14px;flex:1;background:linear-gradient(160deg,#0ea5e9,#0369a1);color:#fff">
+            <div class="sc-label" style="font-size:0.68rem;color:#e0f2fe">Estimated Duration (${est.breakdown.hasCore ? 'core' : 'no core'}, ${isExternalRepair() ? 'external' : 'internal'})</div>
+            <div class="sc-value" style="font-size:1.3rem">${est.totalDays} day${est.totalDays > 1 ? 's' : ''}</div>
         </div>
         <div class="summary-card" style="min-width:110px;max-width:150px;padding:12px 14px;flex:1">
             <div class="sc-label" style="font-size:0.68rem">Fabric Items</div>
@@ -694,6 +727,8 @@ async function downloadPDF() {
         length:             Math.abs(damageData.rend - damageData.rstart),
         width:              Math.abs(damageData.x1   - damageData.x2),
         days:               daysOfRepair,
+        estimated_days:     computeRepairDays(layerRows.filter(l => l.materialType), isExternalRepair()).totalDays,
+        is_external:        isExternalRepair(),
         total_brl:          0,
         total_eur:          0,
         blade_sn:           userInputs.bladeSN,

@@ -131,6 +131,30 @@ const BLADE_REGIONS = ['Root', 'Middle', 'Tip'];
 const BLADE_MODELS = ['V82', 'V90', 'V100', 'V110', 'V112', 'V136', 'V150'];
 
 // ============================================================
+// REPAIR DAY RULES — schedule estimation (pre-determined days)
+// ============================================================
+// Rationale (confirmed by the field team): every lamination includes a CURE
+// process of several hours, so only ONE lamination is done per day and the
+// maximum is 6 plies per lamination. Therefore each batch of up to 6 plies
+// costs one full day (even a partial batch), and the plies before/after the
+// core are always laminated on separate days.
+//
+// Day model:
+//   1  sanding + measurements            (always)
+//   +ceil(pliesBeforeCore / 6)           lamination before the core
+//   1  core + sand to adjust             (only if a CORE ply exists)
+//   +ceil(pliesAfterCore / 6)            lamination after the core
+//   1  painting                          (only if the repair is EXTERNAL)
+//   1  contingency (problems)            (always)
+const REPAIR_DAY_RULES = {
+    LAYERS_PER_LAM_DAY: 6, // max plies per lamination (1 lamination/day due to cure)
+    SANDING_MEASURE_DAYS: 1,
+    CORE_DAY: 1,           // core lamination + sanding to fit
+    PAINTING_DAY: 1,       // external repairs only
+    CONTINGENCY_DAYS: 1,   // buffer for problems
+};
+
+// ============================================================
 // FABRICS DATABASE (Fabrics & Aux Sheets)
 // ============================================================
 const FABRICS_DB = {

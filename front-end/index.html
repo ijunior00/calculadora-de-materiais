@@ -363,9 +363,21 @@
                         </select>
                     </div>
                     <div class="repair-step-row">
+                        <label>Repair Type <span class="step-info" tabindex="0" data-note="External repairs add a painting day to the schedule estimate."><i class="bi bi-info-circle"></i></span></label>
+                        <select id="repairType" class="form-input" onchange="onRepairStepsChange()">
+                            <option value="internal" selected>Internal</option>
+                            <option value="external">External</option>
+                        </select>
+                    </div>
+                    <div class="repair-step-row">
                         <label>Days of Repair</label>
                         <input type="number" id="daysRepair" class="form-input-sm" value="5" min="1" oninput="onRepairStepsChange()">
                     </div>
+                    <div class="repair-step-row computed-row">
+                        <label>Estimated Duration <span class="step-info" tabindex="0" data-note="Max 6 plies per lamination (one lamination/day due to cure). Includes 1 contingency day. External adds a painting day."><i class="bi bi-info-circle"></i></span></label>
+                        <div class="computed-value-sm" id="estimatedDays">— d</div>
+                    </div>
+                    <button class="btn-outline" style="margin-top:10px;font-size:0.8rem;padding:6px 10px" onclick="applyEstimatedDays()"><i class="bi bi-arrow-down-circle"></i> Use as Days of Repair</button>
                     <div class="info-card" style="margin-top:20px">
                         <div class="info-label"><i class="bi bi-exclamation-triangle"></i> Note</div>
                         <div class="info-text">This tool is designed for a single repair estimate. Always review and check if quantities make sense, mainly if you use it to aggregate materials for more repairs.</div>

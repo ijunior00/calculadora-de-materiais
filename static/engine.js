@@ -367,6 +367,69 @@ function computeFabricsBOM(layupResult, bladeModel, repairSteps, bladeRegion) {
 }
 
 /**
+ * Estimate the repair duration in whole days from the lamination stack.
+ *
+ * Uses REPAIR_DAY_RULES. Plies are laminated one lamination per day (max 6
+ * plies each) because every lamination needs a cure of several hours. Plies
+ * before and after the core are always separate lamination days.
+ *
+ * @param {Array} layers - [{ materialType, gsm, ... }] in lamination order
+ * @param {boolean} isExternal - external repairs add a painting day
+ * @returns {Object} { totalDays, breakdown } — breakdown is informational only
+ */
+function computeRepairDays(layers, isExternal) {
+    const R = (typeof REPAIR_DAY_RULES !== 'undefined') ? REPAIR_DAY_RULES : {
+        LAYERS_PER_LAM_DAY: 6, SANDING_MEASURE_DAYS: 1, CORE_DAY: 1,
+        PAINTING_DAY: 1, CONTINGENCY_DAYS: 1,
+    };
+    const per = R.LAYERS_PER_LAM_DAY;
+
+    const stack = (layers || []).filter(l => l && l.materialType);
+    const coreIdxFirst = stack.findIndex(l => l.materialType === 'CORE');
+    let coreIdxLast = -1;
+    for (let i = stack.length - 1; i >= 0; i--) {
+        if (stack[i].materialType === 'CORE') { coreIdxLast = i; break; }
+    }
+    const hasCore = coreIdxFirst !== -1;
+
+    // Fabric plies (exclude the CORE ply itself) before / after the core block.
+    const isPly = l => l.materialType !== 'CORE';
+    let pliesBeforeCore, pliesAfterCore;
+    if (hasCore) {
+        pliesBeforeCore = stack.slice(0, coreIdxFirst).filter(isPly).length;
+        pliesAfterCore = stack.slice(coreIdxLast + 1).filter(isPly).length;
+    } else {
+        pliesBeforeCore = stack.filter(isPly).length;
+        pliesAfterCore = 0;
+    }
+
+    const lamDaysBefore = Math.ceil(pliesBeforeCore / per);
+    const lamDaysAfter = Math.ceil(pliesAfterCore / per);
+    const coreDays = hasCore ? R.CORE_DAY : 0;
+    const paintingDays = isExternal ? R.PAINTING_DAY : 0;
+
+    const breakdown = {
+        sandingMeasure: R.SANDING_MEASURE_DAYS,
+        laminationBeforeCore: lamDaysBefore,
+        core: coreDays,
+        laminationAfterCore: lamDaysAfter,
+        painting: paintingDays,
+        contingency: R.CONTINGENCY_DAYS,
+        pliesBeforeCore, pliesAfterCore, hasCore,
+    };
+
+    const totalDays =
+        R.SANDING_MEASURE_DAYS +
+        lamDaysBefore +
+        coreDays +
+        lamDaysAfter +
+        paintingDays +
+        R.CONTINGENCY_DAYS;
+
+    return { totalDays, breakdown };
+}
+
+/**
  * Compute full BOM given all inputs.
  */
 function computeFullBOM(damageData, layers, repairSteps, bladeModel, bladeRegion, daysOfRepair) {
