@@ -359,6 +359,12 @@ select {
 .adj-input.ov { border-color: #f59e0b; background: #fef3c7; font-weight: 700; color: #b45309; }
 .adj-derived { grid-column: 1 / -1; font-size: 0.72rem; color: var(--text-muted); text-align: right; }
 
+.mo-alias { display: inline-block; font-size: 0.66rem; font-weight: 700; color: var(--vestas-blue); background: #e0f2fe; border-radius: 6px; padding: 1px 6px; margin-left: 4px; vertical-align: middle; }
+.doc-ref-grid { display: grid; grid-template-columns: 1fr; gap: 6px; margin-top: 8px; }
+.doc-ref-grid .dr { display: flex; justify-content: space-between; gap: 10px; font-size: 0.78rem; padding: 5px 0; border-bottom: 1px solid var(--border); }
+.doc-ref-grid .dr .k { color: var(--text-muted); font-weight: 600; }
+.doc-ref-grid .dr .v { color: var(--text); font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+
 .m-bom-group { margin-bottom: 10px; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--surface); box-shadow: var(--shadow); }
 .m-bom-head {
     display: flex; align-items: center; justify-content: space-between;

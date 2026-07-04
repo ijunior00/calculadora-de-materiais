@@ -18,6 +18,8 @@ const M = {
     estimatedDays: null,
     so: '',
     cir: '',
+    title: '',
+    docRef: null,     // selected BLADE_DOCUMENT_REFERENCES entry (optional)
     layers: [],       // [{ layerName, materialType, gsm }]
     steps: {          // sensible defaults mirroring desktop
         Cleaning: 0, Grinding: 1, Bonding: 1, Lamination: 0,
@@ -101,6 +103,34 @@ function renderStep1() {
     document.getElementById('m-days-val').textContent = M.days;
     document.getElementById('m-so').value = M.so;
     document.getElementById('m-cir').value = M.cir;
+    const t = document.getElementById('m-title'); if (t) t.value = M.title;
+    renderDocRefSelect();
+}
+
+function renderDocRefSelect() {
+    const sel = document.getElementById('m-docref');
+    if (!sel || typeof BLADE_DOCUMENT_REFERENCES === 'undefined') return;
+    const cur = M.docRef ? M.docRef.version : '';
+    sel.innerHTML = '<option value="">None</option>' +
+        BLADE_DOCUMENT_REFERENCES.map(d => `<option value="${d.version}"${cur === d.version ? ' selected' : ''}>${d.version}</option>`).join('');
+    renderDocRefDetail();
+}
+function onDocRefChange(version) {
+    M.docRef = version ? BLADE_DOCUMENT_REFERENCES.find(d => d.version === version) || null : null;
+    renderDocRefDetail();
+}
+function renderDocRefDetail() {
+    const wrap = document.getElementById('m-docref-detail');
+    if (!wrap) return;
+    if (!M.docRef) { wrap.innerHTML = ''; return; }
+    const d = M.docRef;
+    const rowsDef = [
+        ['Blade Final', d.final], ['Blade Finish', d.finish], ['Blade Bonding', d.bonding],
+        ['Blade Assembled', d.assembled], ['Shell Layup WW', d.shellWW], ['Shell Layup LW', d.shellLW], ['Web', d.web],
+    ];
+    wrap.innerHTML = `<div class="doc-ref-grid">` +
+        rowsDef.map(([k, v]) => `<div class="dr"><span class="k">${k}</span><span class="v">${v || '—'}</span></div>`).join('') +
+        `</div>`;
 }
 
 function renderRegionSeg() {
@@ -130,6 +160,7 @@ function captureStep1() {
     M.width = parseFloat(document.getElementById('m-width').value);
     M.so = document.getElementById('m-so').value.trim();
     M.cir = document.getElementById('m-cir').value.trim();
+    const t = document.getElementById('m-title'); if (t) M.title = t.value.trim();
 }
 
 function validateStep1(showMsg) {
@@ -173,8 +204,9 @@ function renderLayers() {
 function labelFor(l) {
     const allowed = BLADE_MATERIAL_MAP[M.blade] || [];
     const found = allowed.find(m => m.materialType === l.materialType && String(m.gsm) === String(l.gsm));
-    if (found) return found.label;
-    return l.materialType + (l.gsm ? ' ' + l.gsm : '');
+    const base = found ? found.label : (l.materialType + (l.gsm ? ' ' + l.gsm : ''));
+    const alias = (typeof fabricAlias === 'function') ? fabricAlias(l.materialType, l.gsm) : '';
+    return alias ? `${base} · ${alias}` : base;
 }
 
 function overlapFor(l) {
@@ -198,14 +230,17 @@ function renderRefFabrics() {
 function openLayerSheet() {
     if (!M.blade) { toast('Select a blade model first.', 'err'); return; }
     const allowed = BLADE_MATERIAL_MAP[M.blade] || [];
-    const opts = allowed.map((m, i) => `
+    const opts = allowed.map((m, i) => {
+        const alias = (typeof fabricAlias === 'function') ? fabricAlias(m.materialType, m.gsm) : '';
+        return `
         <div class="mat-opt" onclick="addLayer(${i})">
             <div>
-                <div class="mo-name">${m.label}</div>
+                <div class="mo-name">${m.label}${alias ? ` <span class="mo-alias">${alias}</span>` : ''}</div>
                 <div class="mo-gsm">${m.gsm ? m.gsm + ' g/m²' : 'core / panel'}</div>
             </div>
             <i class="bi bi-plus-circle" style="color:var(--vestas-blue);font-size:1.2rem"></i>
-        </div>`).join('');
+        </div>`;
+    }).join('');
     const sheet = document.createElement('div');
     sheet.className = 'm-sheet-backdrop';
     sheet.id = 'm-layer-sheet';
@@ -453,10 +488,11 @@ function renderResults() {
             const qtyCell = M.editMode
                 ? `<input type="number" class="br-qty-edit" min="0" step="any" value="${it.qty}" data-group="${g.key}" data-idx="${idx}" onchange="onEditQty(this)">`
                 : `<div class="br-qty">${fmtQty(it.qty)}<span class="q-unit">${it.unit || ''}</span></div>`;
+            const matAlias = (it.material && typeof FABRIC_ALIASES !== 'undefined' && FABRIC_ALIASES[it.material]) ? ` (${FABRIC_ALIASES[it.material]})` : '';
             return `
             <div class="m-bom-row${mismatch ? ' mismatch' : ''}">
                 <div class="br-info">
-                    <div class="br-desc">${it.material ? '<strong>' + it.material + '</strong> · ' : ''}${it.desc}</div>
+                    <div class="br-desc">${it.material ? '<strong>' + it.material + matAlias + '</strong> · ' : ''}${it.desc}</div>
                     <div class="br-sap">SAP ${it.sap || '—'}</div>
                 </div>
                 ${qtyCell}
@@ -545,6 +581,8 @@ function buildPayload() {
         days: M.days,
         estimated_days: (typeof M.estimatedDays === 'number') ? M.estimatedDays : null,
         is_external: M.isExternal,
+        report_title: M.title || '',
+        doc_refs: M.docRef || null,
         total_brl: 0, total_eur: 0,
         blade_sn: '',
         service_order: M.so,
@@ -591,7 +629,9 @@ async function exportFile(kind) {
         a.href = url;
         const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
         const so = M.so || 'UNKNOWN';
-        a.download = `BOM_Report_${M.blade}_${so}_${dateStr}.${kind === 'pdf' ? 'pdf' : 'xlsx'}`;
+        const ext = kind === 'pdf' ? 'pdf' : 'xlsx';
+        const safeTitle = (M.title || '').trim().replace(/[^\w\- ]+/g, '').replace(/\s+/g, '_');
+        a.download = safeTitle ? `${safeTitle}.${ext}` : `BOM_Report_${M.blade}_${so}_${dateStr}.${ext}`;
         document.body.appendChild(a);
         a.click();
         a.remove();

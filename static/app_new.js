@@ -27,10 +27,37 @@ function getUserInputs() {
     };
 }
 
+let lastDocRef = null;
+
 function showApp() {
     document.getElementById('landing-page').classList.add('hidden');
     document.getElementById('app-container').classList.remove('hidden');
     renderOverlapRefTable();
+    populateDocRefSelect();
+}
+
+// ── Drawing reference lookup (independent of the BOM blade model) ────────────
+function populateDocRefSelect() {
+    const sel = document.getElementById('docRefVersion');
+    if (!sel || typeof BLADE_DOCUMENT_REFERENCES === 'undefined') return;
+    sel.innerHTML = '<option value="">None</option>' +
+        BLADE_DOCUMENT_REFERENCES.map(d => `<option value="${d.version}">${d.version}</option>`).join('');
+}
+function onDocRefChange(version) {
+    lastDocRef = version ? BLADE_DOCUMENT_REFERENCES.find(d => d.version === version) || null : null;
+    const panel = document.getElementById('docRefPanel');
+    if (!panel) return;
+    if (!lastDocRef) { panel.innerHTML = ''; return; }
+    const d = lastDocRef;
+    const rows = [
+        ['Blade Final', d.final], ['Blade Finish', d.finish], ['Blade Bonding', d.bonding],
+        ['Blade Assembled', d.assembled], ['Shell Layup WW', d.shellWW], ['Shell Layup LW', d.shellLW], ['Web', d.web],
+    ];
+    panel.innerHTML =
+        `<div class="doc-ref-panel"><div class="doc-ref-title"><i class="bi bi-file-earmark-text"></i> Drawing references — <strong>${d.version}</strong></div>` +
+        `<div class="doc-ref-rows">` +
+        rows.map(([k, v]) => `<div class="drr"><span class="drk">${k}</span><span class="drv">${v || '—'}</span></div>`).join('') +
+        `</div></div>`;
 }
 
 function resetApp() {
@@ -768,6 +795,8 @@ async function downloadPDF() {
         days:               daysOfRepair,
         estimated_days:     computeRepairDays(layerRows.filter(l => l.materialType), isExternalRepair()).totalDays,
         is_external:        isExternalRepair(),
+        report_title:       (document.getElementById('reportTitle')?.value || '').trim(),
+        doc_refs:           lastDocRef || null,
         total_brl:          0,
         total_eur:          0,
         blade_sn:           userInputs.bladeSN,
@@ -815,7 +844,8 @@ async function downloadPDF() {
         a.href = url;
         const so = userInputs.serviceOrder || 'UNKNOWN';
         const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,'');
-        a.download = `BOM_Report_${bladeModel}_${so}_${dateStr}.pdf`;
+        const title = (document.getElementById('reportTitle')?.value || '').trim().replace(/[^\w\- ]+/g,'').replace(/\s+/g,'_');
+        a.download = title ? `${title}.pdf` : `BOM_Report_${bladeModel}_${so}_${dateStr}.pdf`;
         a.click();
     } catch (e) {
         alert('Error generating PDF. Make sure the server is running (python run_server.py).');

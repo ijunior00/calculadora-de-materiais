@@ -131,6 +131,59 @@ const BLADE_REGIONS = ['Root', 'Middle', 'Tip'];
 const BLADE_MODELS = ['V82', 'V90', 'V100', 'V110', 'V112', 'V136', 'V150'];
 
 // ============================================================
+// FABRIC ALIASES — shop-floor nicknames (Vestas "T" nomenclature)
+// ============================================================
+// Maps a shop-floor nickname to a fabric key used in the engine. Only confirmed
+// aliases are listed (zero mock data — same policy as PENDING_REV06.md). The
+// technician recognises "T80" on the floor; the engine knows it as BIAX1200.
+// Add more entries here as the field team confirms each T-code ↔ fabric mapping.
+const FABRIC_ALIASES = {
+    'BIAX1200': 'T80',   // Biax ±80° 1200 g/m² — confirmed by field team
+    // 'BIAX...': 'T45', // Biax ±45° — nickname pending confirmation
+};
+
+// Returns the shop-floor alias for a fabric key, or '' when none is confirmed.
+function fabricAlias(materialType, gsm) {
+    if (!materialType) return '';
+    const key = (materialType === 'CORE' || materialType === 'SPL' || materialType === 'CFM50' || materialType === 'BALSA')
+        ? materialType : materialType + (gsm || '');
+    return FABRIC_ALIASES[key] || '';
+}
+
+// ============================================================
+// BLADE DOCUMENT REFERENCES — drawing numbers per blade version
+// ============================================================
+// Source: "REFERÊNCIAS DOS DOCUMENTOS DAS BLADES" spreadsheet supplied by the
+// field team. Independent reference lookup — the version names here (V116, V120,
+// V163 Mk4A, …) are NOT the same taxonomy as BLADE_MODELS (V82…V150) used for the
+// BOM, so this is a standalone reference table, not a BOM auto-fill. "—" in the
+// source means the value is not applicable / not published for that version.
+const BLADE_DOCUMENT_REFERENCES = [
+    { version: 'V110 MK10C',            final: 'A006-7162', finish: 'A006-7471', bonding: '0067-0379', assembled: 'A006-7193', shellWW: 'A006-7745', shellLW: 'A006-7742', web: 'A006-7457' },
+    { version: 'V110 MK10C (alt)',      final: '0063-9573', finish: '0063-9574', bonding: '0064-6931', assembled: '0063-9575', shellWW: '0063-9577', shellLW: '0063-9576', web: '29090227' },
+    { version: 'V116 MK11B',            final: '0065-9125', finish: '0065-1416', bonding: '0065-9127', assembled: '0065-1417', shellWW: '0067-6115', shellLW: '0067-6114', web: '29104681' },
+    { version: 'V120 (Infused) MK11C',  final: '0065-9125', finish: '0073-9711', bonding: '0074-8517', assembled: '0073-9710', shellWW: '0073-2163', shellLW: '0073-2162', web: '29089819' },
+    { version: 'V120 (Hybrid) MK11D',   final: '0065-9125', finish: '0073-9711', bonding: '0074-8517', assembled: '0073-9710', shellWW: '0073-6980', shellLW: '0073-6978', web: '29115759' },
+    { version: 'V120 (Infused) MK11D',  final: '0065-9125', finish: '0073-9711', bonding: '0074-8517', assembled: '0073-9710', shellWW: '—', shellLW: '—', web: '—' },
+    { version: 'V120 (OLPS-INF) MK11D', final: 'A006-4129', finish: 'A006-4128', bonding: '0074-8517', assembled: 'A006-4127', shellWW: 'A006-4126', shellLW: 'A006-4125', web: '29115759' },
+    { version: 'V126 LPS MK1',          final: 'A007-0637', finish: 'A007-0610', bonding: '0064-8239', assembled: 'A007-0638', shellWW: 'A007-0465', shellLW: 'A007-0464', web: 'A007-0608' },
+    { version: 'V136 HYB',              final: '0055-0068', finish: '0060-1773', bonding: '0059-0510', assembled: '0060-4422', shellWW: '0055-3280', shellLW: '0055-3282', web: '29054123' },
+    { version: 'V136 (alt)',            final: '0055-0068', finish: '0060-1773', bonding: '0059-0510', assembled: '0060-4422', shellWW: '0060-4482', shellLW: '0060-4481', web: '29084313' },
+    { version: 'V136 (Infused)',        final: '0055-0068', finish: '0060-1773', bonding: '0059-0510', assembled: '0060-4422', shellWW: '0073-0992', shellLW: '0073-0991', web: '29123730' },
+    { version: 'V136 MK3E (CC)',        final: '0055-0068', finish: '0072-6345', bonding: '0059-0510', assembled: '0073-7478', shellWW: 'CC: 0072-2854', shellLW: 'CC: 0072-2853', web: '29123730' },
+    { version: 'V136 OLPS-AS (VAS)',    final: '—', finish: '—', bonding: '—', assembled: '—', shellWW: 'VAS: 0074-2910', shellLW: 'VAS: 0074-2909', web: '—' },
+    { version: 'V150 (Hybrid)',         final: '0069-0345', finish: '0069-2203', bonding: '0069-0347', assembled: '0069-2202', shellWW: '0069-2201', shellLW: '0069-2200', web: '29108869' },
+    { version: 'V150 (Infused)',        final: '0069-0345', finish: '0069-2203', bonding: '0069-0347', assembled: '0069-2202', shellWW: '0073-5336', shellLW: '0073-5335', web: '29116893' },
+    { version: 'V150 (INF-OLPS)',       final: '0069-0345', finish: '0069-2203', bonding: '0069-0347', assembled: '0069-2202', shellWW: '0080-6479', shellLW: '0080-6478', web: '29018869' },
+    { version: 'V150 EV (Mini Vidar)',  final: '0078-5376', finish: '0079-1103', bonding: '0079-1104', assembled: '0079-1102', shellWW: '0079-1101', shellLW: '0079-1100', web: '29125367' },
+    { version: 'V162 (Vidar F3)',       final: 'A005-7881', finish: 'A005-7883', bonding: 'A005-7884', assembled: 'A005-7882', shellWW: 'A005-9351', shellLW: 'A005-9350', web: 'A006-0348' },
+    { version: 'V155',                  final: 'A013-1320', finish: 'A013-1319', bonding: 'A012-1879', assembled: 'A012-2019', shellWW: 'A012-5720', shellLW: 'A012-5719', web: 'A012-4142' },
+    { version: 'V163',                  final: 'A019-5680', finish: 'A019-5683', bonding: 'A019-5688', assembled: 'A019-5684', shellWW: 'CATIA', shellLW: 'CATIA', web: 'A022-9797 / A019-5690' },
+    { version: 'V163 Mk4A (Plybooks)',  final: 'A019-5680', finish: 'A019-5683', bonding: 'A019-5688', assembled: 'A019-5684', shellWW: 'A022-9969 (over LW) / A022-1736 (under LW)', shellLW: 'A022-9915 (over WW) / A022-1756 (under WW)', web: 'A021-4220 (main web) / A022-1174 (TE web)' },
+    { version: 'V163 Mk4A (Root/RF)',   final: '—', finish: '—', bonding: '—', assembled: '—', shellWW: 'A022-0277 (RF LW root) / A022-0278 (RF LW tip)', shellLW: 'A022-0279 (RF WW root) / A022-0280 (RF WW tip)', web: 'A022-5395 (TE insert)' },
+];
+
+// ============================================================
 // REPAIR DAY RULES — schedule estimation (pre-determined days)
 // ============================================================
 // Rationale (confirmed by the field team): every lamination includes a CURE

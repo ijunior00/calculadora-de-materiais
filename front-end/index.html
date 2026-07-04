@@ -143,6 +143,20 @@
                 <button class="btn-confirm confirm" onclick="confirmBladeModel()"><i class="bi bi-check-lg"></i> Confirm</button>
             </div>
 
+            <div class="form-grid two-col" style="margin-top:16px">
+                <div class="form-card">
+                    <label class="form-label">Report Title <span style="font-weight:400;color:#94a3b8">(optional — names the exported file)</span></label>
+                    <input type="text" id="reportTitle" class="form-input" placeholder="e.g. Repair TE V110 SO-2025-001">
+                </div>
+                <div class="form-card">
+                    <label class="form-label">Drawing References <span style="font-weight:400;color:#94a3b8">(optional — blade version lookup)</span></label>
+                    <select id="docRefVersion" class="form-input" onchange="onDocRefChange(this.value)">
+                        <option value="">None</option>
+                    </select>
+                </div>
+            </div>
+            <div id="docRefPanel"></div>
+
             <div class="form-grid one-col" style="margin-top:16px">
                 <div class="form-card">
                     <label class="form-label">Damage Description</label>

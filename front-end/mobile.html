@@ -110,6 +110,10 @@
 
             <div class="m-section-title">Reference (optional)</div>
             <div class="m-card">
+                <div class="m-field">
+                    <label>Report title <span class="hint">(names the exported file)</span></label>
+                    <input type="text" id="m-title" placeholder="e.g. Repair TE V110 SO-2025-001">
+                </div>
                 <div class="m-two-col">
                     <div class="m-field" style="margin-bottom:0">
                         <label>SO <span class="hint">(service order)</span></label>
@@ -120,6 +124,15 @@
                         <input type="text" id="m-cir" placeholder="2030119">
                     </div>
                 </div>
+            </div>
+
+            <div class="m-section-title">Drawing references (optional)</div>
+            <div class="m-card">
+                <div class="m-field" style="margin-bottom:0">
+                    <label>Blade version <span class="hint">(document lookup)</span></label>
+                    <select id="m-docref" onchange="onDocRefChange(this.value)"></select>
+                </div>
+                <div id="m-docref-detail"></div>
             </div>
         </div>
 

@@ -111,6 +111,7 @@ class BOMPayload(BaseModel):
     estimated_days: Optional[int] = None
     is_external: Optional[bool] = None
     report_title: Optional[str] = ""
+    doc_refs: Optional[Dict[str, Any]] = None
     total_brl: float = 0
     total_eur: float = 0
     blade_sn: Optional[str] = ""
@@ -282,6 +283,36 @@ def draw_info_block(pdf: FPDF, data: BOMPayload):
     pdf.ln(4)
 
 
+_DOC_REF_FIELDS = [
+    ("version",   "Version"),
+    ("final",     "Blade Final"),
+    ("finish",    "Blade Finish"),
+    ("bonding",   "Blade Bonding"),
+    ("assembled", "Blade Assembled"),
+    ("shellWW",   "Shell Layup WW"),
+    ("shellLW",   "Shell Layup LW"),
+    ("web",       "Web"),
+]
+
+
+def draw_doc_refs(pdf: FPDF, data: BOMPayload):
+    """Optional drawing-reference block (from BLADE_DOCUMENT_REFERENCES)."""
+    refs = data.doc_refs
+    if not refs:
+        return
+    pdf.set_font("Arial", 'B', 8.5)
+    pdf.set_fill_color(*CAT_HDR_BG)
+    pdf.set_text_color(*DARK_TEXT)
+    pdf.cell(190, 6, "  DRAWING REFERENCES", 1, 1, 'L', fill=True)
+    pdf.set_font("Arial", '', 8)
+    for idx, (key, label) in enumerate(_DOC_REF_FIELDS):
+        val = str(refs.get(key) or "-")
+        pdf.set_fill_color(*(ROW_ALT if idx % 2 else ROW_WHITE))
+        pdf.cell(60, 5, f"  {label}", 1, 0, 'L', fill=True)
+        pdf.cell(130, 5, _s(val)[:78], 1, 1, 'L', fill=True)
+    pdf.ln(4)
+
+
 def _cat_col_headers(pdf: FPDF):
     """Draw column headers for item tables — light grey background, black text, fine borders."""
     _set_fine_black_lines(pdf)
@@ -350,6 +381,7 @@ async def generate_pdf(data: BOMPayload):
     pdf.add_page()
     add_header(pdf)
     draw_info_block(pdf, data)
+    draw_doc_refs(pdf, data)
 
     phases: dict = {}
     for item in data.items:
@@ -389,7 +421,9 @@ async def generate_pdf(data: BOMPayload):
     turbine_safe = _safe(data.turbine_model)
     so_safe = _safe(data.service_order or '')
     date_str = time.strftime('%Y%m%d')
-    filename_short = f"BOM_Report_{turbine_safe}_{so_safe}_{date_str}.pdf"
+    title_safe = _safe(data.report_title or '')
+    filename_short = (f"{title_safe}.pdf" if title_safe and title_safe != 'UNKNOWN'
+                      else f"BOM_Report_{turbine_safe}_{so_safe}_{date_str}.pdf")
 
     # Render the PDF into memory so the response works on stateless cloud
     # hosts (Render) where the local disk is ephemeral.
@@ -572,6 +606,23 @@ async def generate_excel(data: BOMPayload):
             r += 1
         r += 1  # blank spacer row
 
+    # ── Drawing references (optional) ───────────────────────────
+    if data.doc_refs:
+        ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=4)
+        cell = ws.cell(r, 1, "DRAWING REFERENCES")
+        cell.fill = cat_fill
+        cell.font = bold
+        cell.alignment = left
+        for col in range(1, 5):
+            ws.cell(r, col).border = border
+        r += 1
+        for key, label in _DOC_REF_FIELDS:
+            ws.cell(r, 1, label).font = bold
+            ws.merge_cells(start_row=r, start_column=2, end_row=r, end_column=4)
+            ws.cell(r, 2, str(data.doc_refs.get(key) or "-")).font = normal
+            r += 1
+        r += 1
+
     # ── Write to in-memory buffer ───────────────────────────────
     buf = BytesIO()
     wb.save(buf)
@@ -583,7 +634,9 @@ async def generate_excel(data: BOMPayload):
         t = re.sub(r"\s+", "_", s.strip())
         return re.sub(r"[^A-Za-z0-9_\-]", "", t)
 
-    filename = f"BOM_Report_{_safe(data.turbine_model)}_{_safe(data.service_order or '')}_{time.strftime('%Y%m%d')}.xlsx"
+    title_safe = _safe(data.report_title or "")
+    filename = (f"{title_safe}.xlsx" if title_safe and title_safe != "UNKNOWN"
+                else f"BOM_Report_{_safe(data.turbine_model)}_{_safe(data.service_order or '')}_{time.strftime('%Y%m%d')}.xlsx")
 
     return Response(
         content=buf.getvalue(),

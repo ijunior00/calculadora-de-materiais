@@ -413,6 +413,14 @@ body {
 .ov-input:focus { outline: none; border-color: var(--accent); }
 .ov-cell.overridden { background: #fef3c7; }
 .ov-cell.overridden .ov-input { border-color: #f59e0b; font-weight: 700; color: #b45309; }
+
+/* Drawing references panel */
+.doc-ref-panel { margin-top: 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
+.doc-ref-title { font-weight: 700; color: var(--primary, #143a5f); margin-bottom: 10px; font-size: 0.92rem; }
+.doc-ref-rows { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 6px 20px; }
+.doc-ref-rows .drr { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 0.84rem; }
+.doc-ref-rows .drk { color: var(--text-light, #64748b); font-weight: 600; }
+.doc-ref-rows .drv { font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
 .repair-steps-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); }
 .repair-steps-card h3 { font-size: 1rem; font-weight: 700; color: var(--primary); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
 .repair-steps-card h3 i { color: var(--accent); }
