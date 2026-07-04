@@ -341,6 +341,29 @@ select {
     background: var(--surface); color: var(--text-muted); border: 1px solid var(--border);
 }
 .m-chip.primary { background: #e0f2fe; color: var(--vestas-blue); border-color: #bae6fd; }
+.m-chip.accent { background: var(--vestas-accent); color: #fff; border-color: var(--vestas-accent); }
+
+.m-days-estimate {
+    font-size: 1.15rem; font-weight: 800; color: var(--vestas-blue);
+    background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 10px;
+    padding: 6px 14px;
+}
+
+/* Layup geometry override sheet */
+.adj-row { border-top: 1px solid var(--border); padding: 10px 0; }
+.adj-row .adj-name { font-weight: 700; font-size: 0.85rem; color: var(--vestas-blue); margin-bottom: 6px; }
+.adj-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.adj-grid label { font-size: 0.68rem; font-weight: 600; color: var(--text-faint); display: flex; flex-direction: column; gap: 3px; }
+.adj-input { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; text-align: center; font-variant-numeric: tabular-nums; }
+.adj-input:focus { outline: none; border-color: var(--vestas-accent); }
+.adj-input.ov { border-color: #f59e0b; background: #fef3c7; font-weight: 700; color: #b45309; }
+.adj-derived { grid-column: 1 / -1; font-size: 0.72rem; color: var(--text-muted); text-align: right; }
+
+.mo-alias { display: inline-block; font-size: 0.66rem; font-weight: 700; color: var(--vestas-blue); background: #e0f2fe; border-radius: 6px; padding: 1px 6px; margin-left: 4px; vertical-align: middle; }
+.doc-ref-grid { display: grid; grid-template-columns: 1fr; gap: 6px; margin-top: 8px; }
+.doc-ref-grid .dr { display: flex; justify-content: space-between; gap: 10px; font-size: 0.78rem; padding: 5px 0; border-bottom: 1px solid var(--border); }
+.doc-ref-grid .dr .k { color: var(--text-muted); font-weight: 600; }
+.doc-ref-grid .dr .v { color: var(--text); font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
 
 .m-bom-group { margin-bottom: 10px; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--surface); box-shadow: var(--shadow); }
 .m-bom-head {

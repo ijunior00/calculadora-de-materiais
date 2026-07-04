@@ -97,7 +97,10 @@
                 <span class="step-label">Results</span>
             </div>
         </div>
-        <button class="nav-reset" onclick="resetApp()"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+        <div style="display:flex;gap:10px;align-items:center">
+            <a href="/m" class="nav-reset" style="text-decoration:none" title="Open the mobile version"><i class="bi bi-phone"></i> Mobile</a>
+            <button class="nav-reset" onclick="resetApp()"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+        </div>
     </nav>
 
     <!-- ==================== STEP 1: DAMAGE DATA INPUT ==================== -->
@@ -142,6 +145,20 @@
                 <span class="banner-text">Select and confirm blade model to proceed.</span>
                 <button class="btn-confirm confirm" onclick="confirmBladeModel()"><i class="bi bi-check-lg"></i> Confirm</button>
             </div>
+
+            <div class="form-grid two-col" style="margin-top:16px">
+                <div class="form-card">
+                    <label class="form-label">Report Title <span style="font-weight:400;color:#94a3b8">(optional — names the exported file)</span></label>
+                    <input type="text" id="reportTitle" class="form-input" placeholder="e.g. Repair TE V110 SO-2025-001">
+                </div>
+                <div class="form-card">
+                    <label class="form-label">Drawing References <span style="font-weight:400;color:#94a3b8">(optional — blade version lookup)</span></label>
+                    <select id="docRefVersion" class="form-input" onchange="onDocRefChange(this.value)">
+                        <option value="">None</option>
+                    </select>
+                </div>
+            </div>
+            <div id="docRefPanel"></div>
 
             <div class="form-grid one-col" style="margin-top:16px">
                 <div class="form-card">
@@ -281,6 +298,41 @@
             <!-- Reference-only fabrics from REV05 Blades_Fabrics (no SAP / not calculable yet) -->
             <div id="referenceFabricsPanel"></div>
 
+            <!-- Computed LAYUP preview — transparency + manual per-layer override -->
+            <div class="layup-preview" id="layupPreview" style="margin-top:22px">
+                <div class="section-header" style="margin-bottom:8px">
+                    <h3 style="font-size:1rem;margin:0"><i class="bi bi-table"></i> Computed LAYUP (verification)</h3>
+                    <p class="section-desc" style="margin:4px 0 0">
+                        Spanwise (R1/R2/Length) is fully automated. Chordwise (X1/X2) expands symmetrically —
+                        for edge-referenced damages the drawing may require manual offsets. Click any X1/X2/R1/R2 cell to override it;
+                        later layers rebuild on the corrected geometry. Overridden cells are highlighted.
+                    </p>
+                </div>
+                <div class="layer-table-container">
+                    <table class="layer-table" id="layupTable">
+                        <thead>
+                            <tr>
+                                <th>Layer</th><th>Type</th><th>GSM</th>
+                                <th>R1</th><th>R2</th><th>Length</th>
+                                <th id="layupX1Header">X1</th><th id="layupX2Header">X2</th><th>Width</th>
+                                <th>Area mm²</th><th>Weight kg</th>
+                            </tr>
+                        </thead>
+                        <tbody id="layupTableBody"></tbody>
+                    </table>
+                </div>
+                <div style="display:flex;gap:12px;align-items:center;margin-top:8px;flex-wrap:wrap">
+                    <button class="btn-outline" style="font-size:0.8rem;padding:6px 10px" onclick="resetLayupOverrides()"><i class="bi bi-arrow-counterclockwise"></i> Reset overrides</button>
+                    <details style="font-size:0.82rem">
+                        <summary style="cursor:pointer;color:var(--vestas-blue,#143a5f)">Standard overlaps (span/chord mm)</summary>
+                        <table class="layer-table" style="margin-top:6px;max-width:320px">
+                            <thead><tr><th>Fabric</th><th>Span</th><th>Chord</th></tr></thead>
+                            <tbody id="overlapRefBody"></tbody>
+                        </table>
+                    </details>
+                </div>
+            </div>
+
             <!-- LAYER DATA CONFIRM BANNER -->
             <div id="layerConfirmBanner" class="confirm-banner unlocked">
                 <i class="bi bi-exclamation-triangle-fill"></i>
@@ -363,9 +415,21 @@
                         </select>
                     </div>
                     <div class="repair-step-row">
+                        <label>Repair Type <span class="step-info" tabindex="0" data-note="External repairs add a painting day to the schedule estimate."><i class="bi bi-info-circle"></i></span></label>
+                        <select id="repairType" class="form-input" onchange="onRepairStepsChange()">
+                            <option value="internal" selected>Internal</option>
+                            <option value="external">External</option>
+                        </select>
+                    </div>
+                    <div class="repair-step-row">
                         <label>Days of Repair</label>
                         <input type="number" id="daysRepair" class="form-input-sm" value="5" min="1" oninput="onRepairStepsChange()">
                     </div>
+                    <div class="repair-step-row computed-row">
+                        <label>Estimated Duration <span class="step-info" tabindex="0" data-note="Max 6 plies per lamination (one lamination/day due to cure). Includes 1 contingency day. External adds a painting day."><i class="bi bi-info-circle"></i></span></label>
+                        <div class="computed-value-sm" id="estimatedDays">— d</div>
+                    </div>
+                    <button class="btn-outline" style="margin-top:10px;font-size:0.8rem;padding:6px 10px" onclick="applyEstimatedDays()"><i class="bi bi-arrow-down-circle"></i> Use as Days of Repair</button>
                     <div class="info-card" style="margin-top:20px">
                         <div class="info-label"><i class="bi bi-exclamation-triangle"></i> Note</div>
                         <div class="info-text">This tool is designed for a single repair estimate. Always review and check if quantities make sense, mainly if you use it to aggregate materials for more repairs.</div>
@@ -412,6 +476,7 @@
                     <button id="btnEditMode" class="btn-outline" onclick="toggleEditMode()" title="Edit quantities and units before generating the PDF" style="border-color:#8b5cf6;color:#7c3aed"><i class="bi bi-pencil-square"></i> EDIT MODE</button>
                     <button id="btnLockEdit" class="btn-outline" onclick="lockEditMode()" style="display:none;border-color:#f59e0b;color:#d97706" title="Lock edits and enable PDF generation"><i class="bi bi-lock"></i> Lock</button>
                     <button id="btnResetEdit" class="btn-outline" onclick="resetEditMode()" style="display:none;border-color:#ef4444;color:#dc2626" title="Discard all edits and return to calculated values"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+                    <button id="btnGenerateExcel" class="btn-outline" onclick="downloadExcel()" style="border-color:#16a34a;color:#15803d"><i class="bi bi-file-earmark-spreadsheet"></i> Excel</button>
                     <button id="btnGeneratePDF" class="btn-primary" onclick="downloadPDF()"><i class="bi bi-file-earmark-pdf"></i> Generate PDF Report</button>
                 </div>
             </div>
@@ -423,6 +488,13 @@
 <script src="static/data.js"></script>
 <script src="static/engine.js"></script>
 <script src="static/app_new.js"></script>
-<script src="static/test.js"></script>
+<!-- Test harness loads only in debug mode: open the page with ?debug=1 then call runBOMTests() -->
+<script>
+    if (new URLSearchParams(location.search).has('debug')) {
+        var _t = document.createElement('script');
+        _t.src = 'static/test.js';
+        document.body.appendChild(_t);
+    }
+</script>
 </body>
 </html>

@@ -75,27 +75,47 @@ function computeLayup(damageData, layers) {
             fabricKey = layer.materialType + (layer.gsm || '');
         }
 
-        // Lookup standard overlaps
-        const overlap = STANDARD_OVERLAPS[fabricKey] || { span: 0, chord: 0 };
+        // Lookup standard overlaps (norm 0149-9754 §12). Fall back to the
+        // percentage-of-gsm formula for any fabric not in the fixed table
+        // (e.g. HM or pending REV06 fabrics) so overlaps stay correct.
+        let overlap = STANDARD_OVERLAPS[fabricKey];
+        if (!overlap && typeof computeFiberOverlap === 'function') {
+            const f = computeFiberOverlap(layer.materialType, layer.gsm);
+            if (f && f.span !== null) overlap = f;
+        }
+        overlap = overlap || { span: 0, chord: 0 };
 
         // E = MIN(all previous E values) - spanOverlap
         const minE = Math.min(...allE);
-        const r1 = minE - overlap.span;
+        let r1 = minE - overlap.span;
 
         // F = MAX(all previous F values) + spanOverlap
         const maxF = Math.max(...allF);
-        const r2 = maxF + overlap.span;
-
-        const length = r2 - r1;
+        let r2 = maxF + overlap.span;
 
         // H = MIN(all previous H values) - chordOverlap
         const minH = Math.min(...allH);
-        const h1 = minH - overlap.chord;
+        let h1 = minH - overlap.chord;
 
         // I = MAX(all previous I values) + chordOverlap
         const maxI = Math.max(...allI);
-        const h2 = maxI + overlap.chord;
+        let h2 = maxI + overlap.chord;
 
+        // Manual per-layer overrides (drawing-specific geometry). The automation
+        // expands the chord symmetrically, but real repairs referenced on an edge
+        // (TE/LE) apply drawing-specific X1/X2 offsets that automation can't infer
+        // — the Lamination Plan Sketch instructs "set X1 accordingly". When an
+        // override is provided it replaces the computed value AND feeds the
+        // accumulators, so later layers build on the corrected geometry.
+        const _num = v => (v !== undefined && v !== null && v !== '' && !isNaN(v)) ? Number(v) : null;
+        const ovR1 = _num(layer.ovR1), ovR2 = _num(layer.ovR2);
+        const ovX1 = _num(layer.ovX1), ovX2 = _num(layer.ovX2);
+        if (ovR1 !== null) r1 = ovR1;
+        if (ovR2 !== null) r2 = ovR2;
+        if (ovX1 !== null) h1 = ovX1;
+        if (ovX2 !== null) h2 = ovX2;
+
+        const length = r2 - r1;
         const width = h2 - h1;
         const area = Math.abs(length * width);
         const gsmNum = parseFloat(layer.gsm) || 0;
@@ -111,7 +131,11 @@ function computeLayup(damageData, layers) {
             h1, h2, width,
             area,
             weight,
-            isBod: false
+            isBod: false,
+            overridden: {
+                r1: ovR1 !== null, r2: ovR2 !== null,
+                x1: ovX1 !== null, x2: ovX2 !== null,
+            }
         });
 
         allE.push(r1);
@@ -364,6 +388,69 @@ function computeFabricsBOM(layupResult, bladeModel, repairSteps, bladeRegion) {
     }
 
     return items;
+}
+
+/**
+ * Estimate the repair duration in whole days from the lamination stack.
+ *
+ * Uses REPAIR_DAY_RULES. Plies are laminated one lamination per day (max 6
+ * plies each) because every lamination needs a cure of several hours. Plies
+ * before and after the core are always separate lamination days.
+ *
+ * @param {Array} layers - [{ materialType, gsm, ... }] in lamination order
+ * @param {boolean} isExternal - external repairs add a painting day
+ * @returns {Object} { totalDays, breakdown } — breakdown is informational only
+ */
+function computeRepairDays(layers, isExternal) {
+    const R = (typeof REPAIR_DAY_RULES !== 'undefined') ? REPAIR_DAY_RULES : {
+        LAYERS_PER_LAM_DAY: 6, SANDING_MEASURE_DAYS: 1, CORE_DAY: 1,
+        PAINTING_DAY: 1, CONTINGENCY_DAYS: 1,
+    };
+    const per = R.LAYERS_PER_LAM_DAY;
+
+    const stack = (layers || []).filter(l => l && l.materialType);
+    const coreIdxFirst = stack.findIndex(l => l.materialType === 'CORE');
+    let coreIdxLast = -1;
+    for (let i = stack.length - 1; i >= 0; i--) {
+        if (stack[i].materialType === 'CORE') { coreIdxLast = i; break; }
+    }
+    const hasCore = coreIdxFirst !== -1;
+
+    // Fabric plies (exclude the CORE ply itself) before / after the core block.
+    const isPly = l => l.materialType !== 'CORE';
+    let pliesBeforeCore, pliesAfterCore;
+    if (hasCore) {
+        pliesBeforeCore = stack.slice(0, coreIdxFirst).filter(isPly).length;
+        pliesAfterCore = stack.slice(coreIdxLast + 1).filter(isPly).length;
+    } else {
+        pliesBeforeCore = stack.filter(isPly).length;
+        pliesAfterCore = 0;
+    }
+
+    const lamDaysBefore = Math.ceil(pliesBeforeCore / per);
+    const lamDaysAfter = Math.ceil(pliesAfterCore / per);
+    const coreDays = hasCore ? R.CORE_DAY : 0;
+    const paintingDays = isExternal ? R.PAINTING_DAY : 0;
+
+    const breakdown = {
+        sandingMeasure: R.SANDING_MEASURE_DAYS,
+        laminationBeforeCore: lamDaysBefore,
+        core: coreDays,
+        laminationAfterCore: lamDaysAfter,
+        painting: paintingDays,
+        contingency: R.CONTINGENCY_DAYS,
+        pliesBeforeCore, pliesAfterCore, hasCore,
+    };
+
+    const totalDays =
+        R.SANDING_MEASURE_DAYS +
+        lamDaysBefore +
+        coreDays +
+        lamDaysAfter +
+        paintingDays +
+        R.CONTINGENCY_DAYS;
+
+    return { totalDays, breakdown };
 }
 
 /**

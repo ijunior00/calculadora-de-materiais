@@ -3,24 +3,53 @@
 // Blade_Repair_Materials_Estimate
 // ============================================================
 
-// ---- STANDARD OVERLAPS (LAYUP!H4:J16 in REV05) ----
-// Source: cells H4:J16 of the LAYUP sheet — exactly 14 fabrics. Do not add
-// entries that are not in that table. Quadrax / Biax ±45 / Biax ±80 variants
-// listed in Blades_Fabrics are NOT wired to overlap values in REV05; see
-// PENDING_REV06.md.
+// ---- FIBER OVERLAP RULE (norm 0149-9754 §12 + 945550 §9) ----
+// The overlap is a PERCENTAGE OF THE FABRIC AREAL WEIGHT (gsm), in mm — not a
+// fixed table. This is the engineering norm and supersedes the fixed REV05
+// LAYUP!H4:J16 values (which had UD chord at 2% and BIAX936 rounded to 50).
+//   Biax:      span 5%   chord 5%
+//   UD:        span 10%  chord 2%  (see note below)
+//   Triax:     span = Biax(5%) + UD(10%) of its sub-plies ; chord 2.5% of total
+//   Carbon UD: span 12%  chord 2%
+// NOTE (UD chord): the norm lists UD chord at 5%, but that overlap was too
+// large in practice — the field team keeps UD chord at 2% (the REV05 value:
+// 12/18/23/24 for 600/900/1140/1200). We follow the field team here.
+// computeFiberOverlap() is the single source for any gsm (incl. HM / pending
+// REV06 fabrics). Triax needs the biax/UD sub-ply split, which is only known
+// for the two catalogued triax — those stay explicit in STANDARD_OVERLAPS.
+function computeFiberOverlap(materialType, gsm) {
+    const g = parseFloat(gsm) || 0;
+    if (g <= 0) return null;
+    const mm = pct => Math.round(g * pct);
+    switch ((materialType || '').toUpperCase()) {
+        case 'BIAX':   return { span: mm(0.05), chord: mm(0.05) };
+        case 'UD':     return { span: mm(0.10), chord: mm(0.02) };  // chord 2% (field team), not the norm's 5%
+        case 'CARBON': return { span: mm(0.12), chord: mm(0.02) };
+        // Triax span depends on the biax/UD split (unknown from gsm alone);
+        // the two real triax live in STANDARD_OVERLAPS. Chord is 2.5% of total.
+        case 'TRIAX':  return { span: null, chord: mm(0.025) };
+        default:       return null; // SPL / CFM50 / CORE / BALSA are special
+    }
+}
+
+// ---- STANDARD OVERLAPS (derived from the norm 0149-9754 §12) ----
+// Glass fabrics: values below are computeFiberOverlap() applied to each gsm.
+// Kept as an explicit table (a) for the two triax whose span needs the sub-ply
+// split, (b) for the special fabrics (SPL/CFM50/CORE/BALSA) outside the fiber
+// rule, and (c) so display/reference tables have a stable list.
 const STANDARD_OVERLAPS = {
-    'BIAX600':   { span: 30,  chord: 30 },
-    'BIAX936':   { span: 50,  chord: 50 },
-    'BIAX1000':  { span: 50,  chord: 50 },
-    'BIAX1200':  { span: 60,  chord: 60 },
-    'UD600':     { span: 60,  chord: 12 },
-    'UD900':     { span: 90,  chord: 18 },
-    'UD1140':    { span: 114, chord: 23 },
-    'UD1200':    { span: 120, chord: 24 },
-    'TRIAX1200': { span: 90,  chord: 30 },
-    'TRIAX1500': { span: 125, chord: 35 },
-    'SPL':       { span: 75,  chord: 75 },
-    'CFM50':     { span: 30,  chord: 30 },
+    'BIAX600':   { span: 30,  chord: 30 },   // 5% × 600  = 30
+    'BIAX936':   { span: 47,  chord: 47 },   // 5% × 936  = 46.8 → 47  (REV05 had 50)
+    'BIAX1000':  { span: 50,  chord: 50 },   // 5% × 1000 = 50
+    'BIAX1200':  { span: 60,  chord: 60 },   // 5% × 1200 = 60
+    'UD600':     { span: 60,  chord: 12 },   // span 10%×600=60 ; chord 2%×600=12  (field team keeps 2%, not norm's 5%)
+    'UD900':     { span: 90,  chord: 18 },   // span 10%×900=90 ; chord 2%×900=18
+    'UD1140':    { span: 114, chord: 23 },   // span 10%×1140=114 ; chord 2%×1140=22.8→23
+    'UD1200':    { span: 120, chord: 24 },   // span 10%×1200=120 ; chord 2%×1200=24
+    'TRIAX1200': { span: 90,  chord: 30 },   // span 600 biax(30)+600 UD(60)=90 ; chord 2.5%×1200=30
+    'TRIAX1500': { span: 125, chord: 38 },   // span ~658 biax(33)+936 UD(94)=~125 ; chord 2.5%×1500=37.5 → 38 (REV05 had 35)
+    'SPL':       { span: 75,  chord: 75 },   // special (patch), fixed
+    'CFM50':     { span: 30,  chord: 30 },   // special (surface veil), fixed
     'CORE':      { span: 0,   chord: 0 },
     'BALSA':     { span: 0,   chord: 0 }
 };
@@ -129,6 +158,83 @@ const BLADE_REFERENCE_FABRICS = {
 const CHORD_REFERENCES = ['LE', 'TE', 'M.Web', 'TE.Web'];
 const BLADE_REGIONS = ['Root', 'Middle', 'Tip'];
 const BLADE_MODELS = ['V82', 'V90', 'V100', 'V110', 'V112', 'V136', 'V150'];
+
+// ============================================================
+// FABRIC ALIASES — shop-floor nicknames (Vestas "T" nomenclature)
+// ============================================================
+// Maps a shop-floor nickname to a fabric key used in the engine. Only confirmed
+// aliases are listed (zero mock data — same policy as PENDING_REV06.md). The
+// technician recognises "T80" on the floor; the engine knows it as BIAX1200.
+// Add more entries here as the field team confirms each T-code ↔ fabric mapping.
+const FABRIC_ALIASES = {
+    'BIAX1200': 'T80',   // Biax ±80° 1200 g/m² — confirmed by field team
+    // 'BIAX...': 'T45', // Biax ±45° — nickname pending confirmation
+};
+
+// Returns the shop-floor alias for a fabric key, or '' when none is confirmed.
+function fabricAlias(materialType, gsm) {
+    if (!materialType) return '';
+    const key = (materialType === 'CORE' || materialType === 'SPL' || materialType === 'CFM50' || materialType === 'BALSA')
+        ? materialType : materialType + (gsm || '');
+    return FABRIC_ALIASES[key] || '';
+}
+
+// ============================================================
+// BLADE DOCUMENT REFERENCES — drawing numbers per blade version
+// ============================================================
+// Source: "REFERÊNCIAS DOS DOCUMENTOS DAS BLADES" spreadsheet supplied by the
+// field team. Independent reference lookup — the version names here (V116, V120,
+// V163 Mk4A, …) are NOT the same taxonomy as BLADE_MODELS (V82…V150) used for the
+// BOM, so this is a standalone reference table, not a BOM auto-fill. "—" in the
+// source means the value is not applicable / not published for that version.
+const BLADE_DOCUMENT_REFERENCES = [
+    { version: 'V110 MK10C',            final: 'A006-7162', finish: 'A006-7471', bonding: '0067-0379', assembled: 'A006-7193', shellWW: 'A006-7745', shellLW: 'A006-7742', web: 'A006-7457' },
+    { version: 'V110 MK10C (alt)',      final: '0063-9573', finish: '0063-9574', bonding: '0064-6931', assembled: '0063-9575', shellWW: '0063-9577', shellLW: '0063-9576', web: '29090227' },
+    { version: 'V116 MK11B',            final: '0065-9125', finish: '0065-1416', bonding: '0065-9127', assembled: '0065-1417', shellWW: '0067-6115', shellLW: '0067-6114', web: '29104681' },
+    { version: 'V120 (Infused) MK11C',  final: '0065-9125', finish: '0073-9711', bonding: '0074-8517', assembled: '0073-9710', shellWW: '0073-2163', shellLW: '0073-2162', web: '29089819' },
+    { version: 'V120 (Hybrid) MK11D',   final: '0065-9125', finish: '0073-9711', bonding: '0074-8517', assembled: '0073-9710', shellWW: '0073-6980', shellLW: '0073-6978', web: '29115759' },
+    { version: 'V120 (Infused) MK11D',  final: '0065-9125', finish: '0073-9711', bonding: '0074-8517', assembled: '0073-9710', shellWW: '—', shellLW: '—', web: '—' },
+    { version: 'V120 (OLPS-INF) MK11D', final: 'A006-4129', finish: 'A006-4128', bonding: '0074-8517', assembled: 'A006-4127', shellWW: 'A006-4126', shellLW: 'A006-4125', web: '29115759' },
+    { version: 'V126 LPS MK1',          final: 'A007-0637', finish: 'A007-0610', bonding: '0064-8239', assembled: 'A007-0638', shellWW: 'A007-0465', shellLW: 'A007-0464', web: 'A007-0608' },
+    { version: 'V136 HYB',              final: '0055-0068', finish: '0060-1773', bonding: '0059-0510', assembled: '0060-4422', shellWW: '0055-3280', shellLW: '0055-3282', web: '29054123' },
+    { version: 'V136 (alt)',            final: '0055-0068', finish: '0060-1773', bonding: '0059-0510', assembled: '0060-4422', shellWW: '0060-4482', shellLW: '0060-4481', web: '29084313' },
+    { version: 'V136 (Infused)',        final: '0055-0068', finish: '0060-1773', bonding: '0059-0510', assembled: '0060-4422', shellWW: '0073-0992', shellLW: '0073-0991', web: '29123730' },
+    { version: 'V136 MK3E (CC)',        final: '0055-0068', finish: '0072-6345', bonding: '0059-0510', assembled: '0073-7478', shellWW: 'CC: 0072-2854', shellLW: 'CC: 0072-2853', web: '29123730' },
+    { version: 'V136 OLPS-AS (VAS)',    final: '—', finish: '—', bonding: '—', assembled: '—', shellWW: 'VAS: 0074-2910', shellLW: 'VAS: 0074-2909', web: '—' },
+    { version: 'V150 (Hybrid)',         final: '0069-0345', finish: '0069-2203', bonding: '0069-0347', assembled: '0069-2202', shellWW: '0069-2201', shellLW: '0069-2200', web: '29108869' },
+    { version: 'V150 (Infused)',        final: '0069-0345', finish: '0069-2203', bonding: '0069-0347', assembled: '0069-2202', shellWW: '0073-5336', shellLW: '0073-5335', web: '29116893' },
+    { version: 'V150 (INF-OLPS)',       final: '0069-0345', finish: '0069-2203', bonding: '0069-0347', assembled: '0069-2202', shellWW: '0080-6479', shellLW: '0080-6478', web: '29018869' },
+    { version: 'V150 EV (Mini Vidar)',  final: '0078-5376', finish: '0079-1103', bonding: '0079-1104', assembled: '0079-1102', shellWW: '0079-1101', shellLW: '0079-1100', web: '29125367' },
+    { version: 'V162 (Vidar F3)',       final: 'A005-7881', finish: 'A005-7883', bonding: 'A005-7884', assembled: 'A005-7882', shellWW: 'A005-9351', shellLW: 'A005-9350', web: 'A006-0348' },
+    { version: 'V155',                  final: 'A013-1320', finish: 'A013-1319', bonding: 'A012-1879', assembled: 'A012-2019', shellWW: 'A012-5720', shellLW: 'A012-5719', web: 'A012-4142' },
+    { version: 'V163',                  final: 'A019-5680', finish: 'A019-5683', bonding: 'A019-5688', assembled: 'A019-5684', shellWW: 'CATIA', shellLW: 'CATIA', web: 'A022-9797 / A019-5690' },
+    { version: 'V163 Mk4A (Plybooks)',  final: 'A019-5680', finish: 'A019-5683', bonding: 'A019-5688', assembled: 'A019-5684', shellWW: 'A022-9969 (over LW) / A022-1736 (under LW)', shellLW: 'A022-9915 (over WW) / A022-1756 (under WW)', web: 'A021-4220 (main web) / A022-1174 (TE web)' },
+    { version: 'V163 Mk4A (Root/RF)',   final: '—', finish: '—', bonding: '—', assembled: '—', shellWW: 'A022-0277 (RF LW root) / A022-0278 (RF LW tip)', shellLW: 'A022-0279 (RF WW root) / A022-0280 (RF WW tip)', web: 'A022-5395 (TE insert)' },
+];
+
+// ============================================================
+// REPAIR DAY RULES — schedule estimation (pre-determined days)
+// ============================================================
+// Rationale (confirmed by the field team): every lamination includes a CURE
+// process of several hours, so only ONE lamination is done per day and the
+// maximum is 6 plies per lamination. Therefore each batch of up to 6 plies
+// costs one full day (even a partial batch), and the plies before/after the
+// core are always laminated on separate days.
+//
+// Day model:
+//   1  sanding + measurements            (always)
+//   +ceil(pliesBeforeCore / 6)           lamination before the core
+//   1  core + sand to adjust             (only if a CORE ply exists)
+//   +ceil(pliesAfterCore / 6)            lamination after the core
+//   1  painting                          (only if the repair is EXTERNAL)
+//   1  contingency (problems)            (always)
+const REPAIR_DAY_RULES = {
+    LAYERS_PER_LAM_DAY: 6, // max plies per lamination (1 lamination/day due to cure)
+    SANDING_MEASURE_DAYS: 1,
+    CORE_DAY: 1,           // core lamination + sanding to fit
+    PAINTING_DAY: 1,       // external repairs only
+    CONTINGENCY_DAYS: 1,   // buffer for problems
+};
 
 // ============================================================
 // FABRICS DATABASE (Fabrics & Aux Sheets)

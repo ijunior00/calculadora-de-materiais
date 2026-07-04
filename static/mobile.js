@@ -14,8 +14,12 @@ const M = {
     length: null,     // mm  (spanwise, = |rend - rstart|)
     width: null,      // mm  (chordwise, = |x2 - x1|)
     days: 5,
+    isExternal: false, // internal repair by default; external adds a painting day
+    estimatedDays: null,
     so: '',
     cir: '',
+    title: '',
+    docRef: null,     // selected BLADE_DOCUMENT_REFERENCES entry (optional)
     layers: [],       // [{ layerName, materialType, gsm }]
     steps: {          // sensible defaults mirroring desktop
         Cleaning: 0, Grinding: 1, Bonding: 1, Lamination: 0,
@@ -99,6 +103,34 @@ function renderStep1() {
     document.getElementById('m-days-val').textContent = M.days;
     document.getElementById('m-so').value = M.so;
     document.getElementById('m-cir').value = M.cir;
+    const t = document.getElementById('m-title'); if (t) t.value = M.title;
+    renderDocRefSelect();
+}
+
+function renderDocRefSelect() {
+    const sel = document.getElementById('m-docref');
+    if (!sel || typeof BLADE_DOCUMENT_REFERENCES === 'undefined') return;
+    const cur = M.docRef ? M.docRef.version : '';
+    sel.innerHTML = '<option value="">None</option>' +
+        BLADE_DOCUMENT_REFERENCES.map(d => `<option value="${d.version}"${cur === d.version ? ' selected' : ''}>${d.version}</option>`).join('');
+    renderDocRefDetail();
+}
+function onDocRefChange(version) {
+    M.docRef = version ? BLADE_DOCUMENT_REFERENCES.find(d => d.version === version) || null : null;
+    renderDocRefDetail();
+}
+function renderDocRefDetail() {
+    const wrap = document.getElementById('m-docref-detail');
+    if (!wrap) return;
+    if (!M.docRef) { wrap.innerHTML = ''; return; }
+    const d = M.docRef;
+    const rowsDef = [
+        ['Blade Final', d.final], ['Blade Finish', d.finish], ['Blade Bonding', d.bonding],
+        ['Blade Assembled', d.assembled], ['Shell Layup WW', d.shellWW], ['Shell Layup LW', d.shellLW], ['Web', d.web],
+    ];
+    wrap.innerHTML = `<div class="doc-ref-grid">` +
+        rowsDef.map(([k, v]) => `<div class="dr"><span class="k">${k}</span><span class="v">${v || '—'}</span></div>`).join('') +
+        `</div>`;
 }
 
 function renderRegionSeg() {
@@ -128,6 +160,7 @@ function captureStep1() {
     M.width = parseFloat(document.getElementById('m-width').value);
     M.so = document.getElementById('m-so').value.trim();
     M.cir = document.getElementById('m-cir').value.trim();
+    const t = document.getElementById('m-title'); if (t) M.title = t.value.trim();
 }
 
 function validateStep1(showMsg) {
@@ -171,8 +204,9 @@ function renderLayers() {
 function labelFor(l) {
     const allowed = BLADE_MATERIAL_MAP[M.blade] || [];
     const found = allowed.find(m => m.materialType === l.materialType && String(m.gsm) === String(l.gsm));
-    if (found) return found.label;
-    return l.materialType + (l.gsm ? ' ' + l.gsm : '');
+    const base = found ? found.label : (l.materialType + (l.gsm ? ' ' + l.gsm : ''));
+    const alias = (typeof fabricAlias === 'function') ? fabricAlias(l.materialType, l.gsm) : '';
+    return alias ? `${base} · ${alias}` : base;
 }
 
 function overlapFor(l) {
@@ -196,14 +230,17 @@ function renderRefFabrics() {
 function openLayerSheet() {
     if (!M.blade) { toast('Select a blade model first.', 'err'); return; }
     const allowed = BLADE_MATERIAL_MAP[M.blade] || [];
-    const opts = allowed.map((m, i) => `
+    const opts = allowed.map((m, i) => {
+        const alias = (typeof fabricAlias === 'function') ? fabricAlias(m.materialType, m.gsm) : '';
+        return `
         <div class="mat-opt" onclick="addLayer(${i})">
             <div>
-                <div class="mo-name">${m.label}</div>
+                <div class="mo-name">${m.label}${alias ? ` <span class="mo-alias">${alias}</span>` : ''}</div>
                 <div class="mo-gsm">${m.gsm ? m.gsm + ' g/m²' : 'core / panel'}</div>
             </div>
             <i class="bi bi-plus-circle" style="color:var(--vestas-blue);font-size:1.2rem"></i>
-        </div>`).join('');
+        </div>`;
+    }).join('');
     const sheet = document.createElement('div');
     sheet.className = 'm-sheet-backdrop';
     sheet.id = 'm-layer-sheet';
@@ -242,10 +279,110 @@ function moveLayer(i, dir) {
     renderLayers();
 }
 
+// ── Layup geometry override (manual per-layer R1/R2/X1/X2) ──────────────────
+// Automation expands the chord symmetrically; edge-referenced (TE/LE) repairs
+// need drawing-specific X1/X2. Overrides feed back into the engine so later
+// layers rebuild on the corrected geometry.
+function openLayupAdjustSheet() {
+    const stack = M.layers.filter(l => l.materialType);
+    if (stack.length === 0) { toast('Add at least one layer first.', 'err'); return; }
+    if (!(M.length > 0) || !(M.width > 0)) { toast('Enter valid damage size (Step 1) first.', 'err'); return; }
+
+    const damageData = { rstart: 0, rend: M.length, x1: 0, x2: M.width, chordRef: 'LE' };
+    const rows = computeLayup(damageData, stack).layupRows.filter(r => !r.isBod);
+
+    const rowHtml = rows.map((row, i) => {
+        const ov = row.overridden || {};
+        const cell = (field, val, isOv) =>
+            `<input type="number" step="any" class="adj-input${isOv ? ' ov' : ''}" value="${Math.round(val)}"
+                onchange="setLayupOverride(${i},'${field}',this.value)">`;
+        return `
+        <div class="adj-row">
+            <div class="adj-name">${labelFor(stack[i])}</div>
+            <div class="adj-grid">
+                <label>R1${cell('ovR1', row.r1, ov.r1)}</label>
+                <label>R2${cell('ovR2', row.r2, ov.r2)}</label>
+                <label>X1${cell('ovX1', row.h1, ov.x1)}</label>
+                <label>X2${cell('ovX2', row.h2, ov.x2)}</label>
+                <div class="adj-derived">L ${Math.round(row.length)} · W ${Math.round(row.width)} mm</div>
+            </div>
+        </div>`;
+    }).join('');
+
+    const sheet = document.createElement('div');
+    sheet.className = 'm-sheet-backdrop';
+    sheet.id = 'm-adjust-sheet';
+    sheet.onclick = (e) => { if (e.target === sheet) closeLayupAdjustSheet(); };
+    sheet.innerHTML = `
+        <div class="m-sheet" style="max-height:88vh;overflow:auto">
+            <h3>Adjust layup geometry</h3>
+            <div class="sheet-sub">Spanwise (R1/R2) is automatic. For edge-referenced damages, set X1/X2 from the drawing. Overrides feed the accumulation.</div>
+            ${rowHtml}
+            <button class="btn btn-ghost" style="margin-top:8px" onclick="resetLayupOverridesMobile()"><i class="bi bi-arrow-counterclockwise"></i> Reset overrides</button>
+            <button class="sheet-cancel" onclick="closeLayupAdjustSheet()">Done</button>
+        </div>`;
+    document.body.appendChild(sheet);
+}
+function closeLayupAdjustSheet() {
+    const s = document.getElementById('m-adjust-sheet');
+    if (s) s.remove();
+}
+function setLayupOverride(stackIdx, field, value) {
+    const stack = M.layers.filter(l => l.materialType);
+    const layer = stack[stackIdx];
+    if (!layer) return;
+    layer[field] = (value === '' || value === null || isNaN(value)) ? undefined : Number(value);
+    // Re-render the sheet so derived L/W and downstream rows update.
+    closeLayupAdjustSheet();
+    openLayupAdjustSheet();
+}
+function resetLayupOverridesMobile() {
+    M.layers.forEach(l => { delete l.ovR1; delete l.ovR2; delete l.ovX1; delete l.ovX2; });
+    closeLayupAdjustSheet();
+    openLayupAdjustSheet();
+    toast('Overrides reset.', 'ok');
+}
+
 // ============================================================
 // STEP 3 — REPAIR STEPS
 // ============================================================
+function renderRepairType() {
+    const wrap = document.getElementById('m-repair-type');
+    if (!wrap) return;
+    const types = [
+        { key: false, label: 'Internal' },
+        { key: true, label: 'External' },
+    ];
+    wrap.innerHTML = types.map(t =>
+        `<div class="seg${M.isExternal === t.key ? ' active' : ''}" onclick="setRepairType(${t.key})">${t.label}</div>`
+    ).join('');
+}
+function setRepairType(isExternal) {
+    M.isExternal = isExternal;
+    renderRepairType();
+    updateDaysEstimate();
+}
+
+// Compute + display the estimated repair schedule (total days only).
+function updateDaysEstimate() {
+    const el = document.getElementById('m-days-estimate');
+    if (!el) return;
+    const est = computeRepairDays(M.layers.filter(l => l.materialType), M.isExternal);
+    M.estimatedDays = est.totalDays;
+    el.textContent = `${est.totalDays} day${est.totalDays > 1 ? 's' : ''}`;
+}
+// Copy the estimate into the PPE-driving "days of repair" field.
+function applyEstimatedDays() {
+    if (!M.estimatedDays) updateDaysEstimate();
+    M.days = Math.max(1, Math.min(60, M.estimatedDays || M.days));
+    const dv = document.getElementById('m-days-val');
+    if (dv) dv.textContent = M.days;
+    toast(`Days of repair set to ${M.days}.`, 'ok');
+}
+
 function renderSteps() {
+    renderRepairType();
+    updateDaysEstimate();
     const wrap = document.getElementById('m-steps-list');
     wrap.innerHTML = STEP_ORDER.map(key => {
         const qty = M.steps[key];
@@ -326,11 +463,14 @@ function renderResults() {
     const s = bom.summary;
 
     // chips
+    const est = computeRepairDays(M.layers.filter(l => l.materialType), M.isExternal);
+    M.estimatedDays = est.totalDays;
     document.getElementById('m-result-chips').innerHTML = `
         <span class="m-chip primary">${M.blade}</span>
         <span class="m-chip">${M.region}</span>
         <span class="m-chip">${fmt(M.length)}×${fmt(M.width)} mm</span>
-        <span class="m-chip">${M.days} day${M.days > 1 ? 's' : ''}</span>`;
+        <span class="m-chip">${M.isExternal ? 'External' : 'Internal'}</span>
+        <span class="m-chip accent"><i class="bi bi-calendar-week"></i> ${est.totalDays} day${est.totalDays > 1 ? 's' : ''} estimated</span>`;
 
     // stats
     document.getElementById('m-result-stats').innerHTML = `
@@ -348,10 +488,11 @@ function renderResults() {
             const qtyCell = M.editMode
                 ? `<input type="number" class="br-qty-edit" min="0" step="any" value="${it.qty}" data-group="${g.key}" data-idx="${idx}" onchange="onEditQty(this)">`
                 : `<div class="br-qty">${fmtQty(it.qty)}<span class="q-unit">${it.unit || ''}</span></div>`;
+            const matAlias = (it.material && typeof FABRIC_ALIASES !== 'undefined' && FABRIC_ALIASES[it.material]) ? ` (${FABRIC_ALIASES[it.material]})` : '';
             return `
             <div class="m-bom-row${mismatch ? ' mismatch' : ''}">
                 <div class="br-info">
-                    <div class="br-desc">${it.material ? '<strong>' + it.material + '</strong> · ' : ''}${it.desc}</div>
+                    <div class="br-desc">${it.material ? '<strong>' + it.material + matAlias + '</strong> · ' : ''}${it.desc}</div>
                     <div class="br-sap">SAP ${it.sap || '—'}</div>
                 </div>
                 ${qtyCell}
@@ -438,6 +579,10 @@ function buildPayload() {
         length: M.length,
         width: M.width,
         days: M.days,
+        estimated_days: (typeof M.estimatedDays === 'number') ? M.estimatedDays : null,
+        is_external: M.isExternal,
+        report_title: M.title || '',
+        doc_refs: M.docRef || null,
         total_brl: 0, total_eur: 0,
         blade_sn: '',
         service_order: M.so,
@@ -484,7 +629,9 @@ async function exportFile(kind) {
         a.href = url;
         const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
         const so = M.so || 'UNKNOWN';
-        a.download = `BOM_Report_${M.blade}_${so}_${dateStr}.${kind === 'pdf' ? 'pdf' : 'xlsx'}`;
+        const ext = kind === 'pdf' ? 'pdf' : 'xlsx';
+        const safeTitle = (M.title || '').trim().replace(/[^\w\- ]+/g, '').replace(/\s+/g, '_');
+        a.download = safeTitle ? `${safeTitle}.${ext}` : `BOM_Report_${M.blade}_${so}_${dateStr}.${ext}`;
         document.body.appendChild(a);
         a.click();
         a.remove();

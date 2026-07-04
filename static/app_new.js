@@ -6,6 +6,7 @@ let currentStep = 1;
 let layerRows = [];
 let lastBOM = null;
 let currentResultTab = 'consumable_protection';
+let lastEstimatedDays = null;
 
 // Edit Mode state
 let editModeActive = false;
@@ -26,10 +27,37 @@ function getUserInputs() {
     };
 }
 
+let lastDocRef = null;
+
 function showApp() {
     document.getElementById('landing-page').classList.add('hidden');
     document.getElementById('app-container').classList.remove('hidden');
     renderOverlapRefTable();
+    populateDocRefSelect();
+}
+
+// ── Drawing reference lookup (independent of the BOM blade model) ────────────
+function populateDocRefSelect() {
+    const sel = document.getElementById('docRefVersion');
+    if (!sel || typeof BLADE_DOCUMENT_REFERENCES === 'undefined') return;
+    sel.innerHTML = '<option value="">None</option>' +
+        BLADE_DOCUMENT_REFERENCES.map(d => `<option value="${d.version}">${d.version}</option>`).join('');
+}
+function onDocRefChange(version) {
+    lastDocRef = version ? BLADE_DOCUMENT_REFERENCES.find(d => d.version === version) || null : null;
+    const panel = document.getElementById('docRefPanel');
+    if (!panel) return;
+    if (!lastDocRef) { panel.innerHTML = ''; return; }
+    const d = lastDocRef;
+    const rows = [
+        ['Blade Final', d.final], ['Blade Finish', d.finish], ['Blade Bonding', d.bonding],
+        ['Blade Assembled', d.assembled], ['Shell Layup WW', d.shellWW], ['Shell Layup LW', d.shellLW], ['Web', d.web],
+    ];
+    panel.innerHTML =
+        `<div class="doc-ref-panel"><div class="doc-ref-title"><i class="bi bi-file-earmark-text"></i> Drawing references — <strong>${d.version}</strong></div>` +
+        `<div class="doc-ref-rows">` +
+        rows.map(([k, v]) => `<div class="drr"><span class="drk">${k}</span><span class="drv">${v || '—'}</span></div>`).join('') +
+        `</div></div>`;
 }
 
 function resetApp() {
@@ -408,6 +436,9 @@ function renderLayerTable() {
     // Reference-only fabrics panel (labels from REV05 Blades_Fabrics,
     // not wired into calculation pipeline — see PENDING_REV06.md)
     renderReferenceFabricsPanel(document.getElementById('bladeModel').value);
+
+    // Keep the computed LAYUP preview in sync with the current layers.
+    recalculateLayup();
 }
 
 /**
@@ -485,31 +516,67 @@ function updateLayupHeaders() {
 }
 
 function recalculateLayup() {
+    const tbody = document.getElementById('layupTableBody');
+    if (!tbody) return;
     const d = getDamageData();
-    if (d.rstart <= 0 || d.rend <= 0) return;
-    renderLayupTable(computeLayup(d, layerRows.filter(l=>l.materialType)).layupRows);
+    updateLayupHeaders();
+    const filtered = layerRows.filter(l => l.materialType);
+    if (d.rstart <= 0 || d.rend <= 0) {
+        tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;color:#94a3b8;padding:14px">Enter valid damage data (Step 1) to preview the layup.</td></tr>`;
+        return;
+    }
+    renderLayupTable(computeLayup(d, filtered).layupRows, filtered);
 }
 
-function renderLayupTable(rows) {
+// Editable override cell for a data layer (BOD is read-only).
+function _ovCell(filteredIdx, field, value, isOverridden) {
+    const cls = isOverridden ? 'ov-cell overridden' : 'ov-cell';
+    return `<td class="${cls}"><input type="number" step="any" class="ov-input" value="${value}"
+        data-idx="${filteredIdx}" data-field="${field}"
+        onchange="setLayerOverride(${filteredIdx},'${field}',this.value)"
+        title="Override ${field.toUpperCase()} — leave to use automatic value"></td>`;
+}
+
+function renderLayupTable(rows, filtered) {
     const tbody = document.getElementById('layupTableBody');
     if (!tbody) return;
     tbody.innerHTML = '';
-    rows.forEach(row => {
+    rows.forEach((row, rowIdx) => {
         const tr = document.createElement('tr');
-        if (row.isBod) tr.classList.add('bod-row');
-        tr.innerHTML = `
-            <td>${row.layer}</td><td>${row.materialType}</td><td>${row.gsm}</td>
-            <td>${row.r1!==undefined?row.r1.toLocaleString():'--'}</td>
-            <td>${row.r2!==undefined?row.r2.toLocaleString():'--'}</td>
-            <td>${row.length!==undefined?row.length.toLocaleString():'--'}</td>
-            <td>${row.h1!==undefined?row.h1.toLocaleString():'--'}</td>
-            <td>${row.h2!==undefined?row.h2.toLocaleString():'--'}</td>
-            <td>${row.width!==undefined?row.width.toLocaleString():'--'}</td>
-            <td>${row.area?row.area.toLocaleString():'--'}</td>
-            <td>${(row.weight!==null&&row.weight!==undefined)?row.weight.toFixed(6):'--'}</td>
-        `;
+        const ov = row.overridden || {};
+        if (row.isBod) {
+            tr.classList.add('bod-row');
+            tr.innerHTML = `
+                <td>${row.layer}</td><td>${row.materialType}</td><td>${row.gsm}</td>
+                <td>${row.r1.toLocaleString()}</td><td>${row.r2.toLocaleString()}</td><td>${row.length.toLocaleString()}</td>
+                <td>${row.h1.toLocaleString()}</td><td>${row.h2.toLocaleString()}</td><td>${row.width.toLocaleString()}</td>
+                <td>${row.area.toLocaleString()}</td><td>--</td>`;
+        } else {
+            const fi = rowIdx - 1; // data rows follow BOD (index 0) in order
+            tr.innerHTML = `
+                <td>${row.layer}</td><td>${row.materialType}</td><td>${row.gsm}</td>
+                ${_ovCell(fi,'ovR1',row.r1,ov.r1)}${_ovCell(fi,'ovR2',row.r2,ov.r2)}
+                <td>${row.length.toLocaleString()}</td>
+                ${_ovCell(fi,'ovX1',row.h1,ov.x1)}${_ovCell(fi,'ovX2',row.h2,ov.x2)}
+                <td>${row.width.toLocaleString()}</td>
+                <td>${row.area.toLocaleString()}</td>
+                <td>${(row.weight!==null&&row.weight!==undefined)?row.weight.toFixed(6):'--'}</td>`;
+        }
         tbody.appendChild(tr);
     });
+}
+
+function setLayerOverride(filteredIdx, field, value) {
+    const filtered = layerRows.filter(l => l.materialType);
+    const layer = filtered[filteredIdx];
+    if (!layer) return;
+    layer[field] = (value === '' || value === null || isNaN(value)) ? undefined : Number(value);
+    recalculateLayup();
+}
+
+function resetLayupOverrides() {
+    layerRows.forEach(l => { delete l.ovR1; delete l.ovR2; delete l.ovX1; delete l.ovX2; });
+    recalculateLayup();
 }
 
 function renderOverlapRefTable() {
@@ -541,6 +608,32 @@ function getRepairSteps() {
 function onRepairStepsChange() {
     const s = getRepairSteps();
     document.getElementById('stepVacuum').textContent = s.HLU + s.Infusion;
+    updateEstimatedDays();
+}
+
+// Repair type: external repairs add a painting day to the schedule estimate.
+function isExternalRepair() {
+    const el = document.getElementById('repairType');
+    return el ? el.value === 'external' : false;
+}
+
+// Compute + display the estimated repair schedule (total days only).
+function updateEstimatedDays() {
+    const el = document.getElementById('estimatedDays');
+    if (!el) return;
+    const est = computeRepairDays(layerRows.filter(l => l.materialType), isExternalRepair());
+    lastEstimatedDays = est.totalDays;
+    el.textContent = `${est.totalDays} d`;
+}
+
+// Copy the estimate into the PPE-driving "Days of Repair" field.
+function applyEstimatedDays() {
+    updateEstimatedDays();
+    const input = document.getElementById('daysRepair');
+    if (input && lastEstimatedDays) {
+        input.value = Math.max(1, lastEstimatedDays);
+        onRepairStepsChange();
+    }
 }
 
 // ── STEP 4 ────────────────────────────────────────────────────────────
@@ -563,10 +656,16 @@ function calculateAndShow() {
 function renderSummary() {
     if (!lastBOM) return;
     const s = lastBOM.summary;
+    const est = computeRepairDays(layerRows.filter(l => l.materialType), isExternalRepair());
+    lastEstimatedDays = est.totalDays;
     document.getElementById('summaryCards').innerHTML = `
         <div class="summary-card highlight" style="min-width:120px;max-width:160px;padding:12px 14px;flex:1">
             <div class="sc-label" style="font-size:0.68rem">Total BOM Items</div>
             <div class="sc-value" style="font-size:1.3rem">${s.totalItems}</div>
+        </div>
+        <div class="summary-card highlight" style="min-width:130px;max-width:180px;padding:12px 14px;flex:1;background:linear-gradient(160deg,#0ea5e9,#0369a1);color:#fff">
+            <div class="sc-label" style="font-size:0.68rem;color:#e0f2fe">Estimated Duration (${est.breakdown.hasCore ? 'core' : 'no core'}, ${isExternalRepair() ? 'external' : 'internal'})</div>
+            <div class="sc-value" style="font-size:1.3rem">${est.totalDays} day${est.totalDays > 1 ? 's' : ''}</div>
         </div>
         <div class="summary-card" style="min-width:110px;max-width:150px;padding:12px 14px;flex:1">
             <div class="sc-label" style="font-size:0.68rem">Fabric Items</div>
@@ -650,11 +749,8 @@ function showResultTab(tabName, btnEl) {
     }
 }
 
-// PDF generation
-async function downloadPDF() {
-    if (!lastBOM) { alert('Please calculate BOM first.'); return; }
-    if (editModeActive && !editModeLocked) { alert('Please Lock your edits before generating the PDF.'); return; }
-
+// Build the export payload shared by PDF and Excel generation.
+function buildDesktopPayload() {
     const bladeModel   = document.getElementById('bladeModel').value;
     const damageData   = getDamageData();
     const daysOfRepair = parseInt(document.getElementById('daysRepair').value) || 5;
@@ -694,6 +790,10 @@ async function downloadPDF() {
         length:             Math.abs(damageData.rend - damageData.rstart),
         width:              Math.abs(damageData.x1   - damageData.x2),
         days:               daysOfRepair,
+        estimated_days:     computeRepairDays(layerRows.filter(l => l.materialType), isExternalRepair()).totalDays,
+        is_external:        isExternalRepair(),
+        report_title:       (document.getElementById('reportTitle')?.value || '').trim(),
+        doc_refs:           lastDocRef || null,
         total_brl:          0,
         total_eur:          0,
         blade_sn:           userInputs.bladeSN,
@@ -727,9 +827,20 @@ async function downloadPDF() {
             totals: lastBOM.summary || {},
         },
     };
+    return payload;
+}
+
+// Shared download for PDF / Excel exports.
+async function _downloadBOM(endpoint, ext) {
+    if (!lastBOM) { alert('Please calculate BOM first.'); return; }
+    if (editModeActive && !editModeLocked) { alert('Please Lock your edits before exporting.'); return; }
+
+    const bladeModel = document.getElementById('bladeModel').value;
+    const so = (document.getElementById('serviceOrder').value || 'UNKNOWN');
+    const payload = buildDesktopPayload();
 
     try {
-        const response = await fetch('/api/generate-pdf', {
+        const response = await fetch(endpoint, {
             method:  'POST',
             headers: {'Content-Type':'application/json'},
             body:    JSON.stringify(payload)
@@ -739,15 +850,18 @@ async function downloadPDF() {
         const url  = URL.createObjectURL(blob);
         const a    = document.createElement('a');
         a.href = url;
-        const so = userInputs.serviceOrder || 'UNKNOWN';
         const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,'');
-        a.download = `BOM_Report_${bladeModel}_${so}_${dateStr}.pdf`;
+        const title = (document.getElementById('reportTitle')?.value || '').trim().replace(/[^\w\- ]+/g,'').replace(/\s+/g,'_');
+        a.download = title ? `${title}.${ext}` : `BOM_Report_${bladeModel}_${so}_${dateStr}.${ext}`;
         a.click();
     } catch (e) {
-        alert('Error generating PDF. Make sure the server is running (python run_server.py).');
+        alert('Error generating file. Make sure the server is running (python run_server.py).');
         console.error(e);
     }
 }
+
+function downloadPDF()   { return _downloadBOM('/api/generate-pdf', 'pdf'); }
+function downloadExcel() { return _downloadBOM('/api/generate-excel', 'xlsx'); }
 
 // ============================================================
 // EDIT MODE — temporary QTY/Unit adjustments before PDF

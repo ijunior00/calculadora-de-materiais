@@ -50,7 +50,10 @@
                 <span class="t2">Blade Repair Materials Planner</span>
             </div>
         </div>
-        <button class="home-btn" onclick="goHome()" aria-label="Restart"><i class="bi bi-house"></i></button>
+        <div style="display:flex;gap:6px">
+            <a href="/" class="home-btn" aria-label="Desktop version" title="Desktop version" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center"><i class="bi bi-display"></i></a>
+            <button class="home-btn" onclick="goHome()" aria-label="Restart"><i class="bi bi-house"></i></button>
+        </div>
     </div>
 
     <div class="m-progress">
@@ -110,6 +113,10 @@
 
             <div class="m-section-title">Reference (optional)</div>
             <div class="m-card">
+                <div class="m-field">
+                    <label>Report title <span class="hint">(names the exported file)</span></label>
+                    <input type="text" id="m-title" placeholder="e.g. Repair TE V110 SO-2025-001">
+                </div>
                 <div class="m-two-col">
                     <div class="m-field" style="margin-bottom:0">
                         <label>SO <span class="hint">(service order)</span></label>
@@ -121,6 +128,15 @@
                     </div>
                 </div>
             </div>
+
+            <div class="m-section-title">Drawing references (optional)</div>
+            <div class="m-card">
+                <div class="m-field" style="margin-bottom:0">
+                    <label>Blade version <span class="hint">(document lookup)</span></label>
+                    <select id="m-docref" onchange="onDocRefChange(this.value)"></select>
+                </div>
+                <div id="m-docref-detail"></div>
+            </div>
         </div>
 
         <!-- ===== STEP 2: LAYERS ===== -->
@@ -128,6 +144,7 @@
             <div class="m-section-title">Lamination stack (order matters)</div>
             <div id="m-layers-list"></div>
             <button class="m-add-btn" onclick="openLayerSheet()"><i class="bi bi-plus-circle"></i> Add layer</button>
+            <button class="m-add-btn" style="margin-top:8px" onclick="openLayupAdjustSheet()"><i class="bi bi-sliders"></i> Adjust layup geometry</button>
             <div id="m-ref-fabrics"></div>
             <div class="m-info-box">
                 <i class="bi bi-info-circle"></i>
@@ -137,6 +154,25 @@
 
         <!-- ===== STEP 3: REPAIR STEPS ===== -->
         <div id="s3" class="m-screen hidden">
+            <div class="m-section-title">Repair type</div>
+            <div class="m-card">
+                <div class="m-field" style="margin-bottom:0">
+                    <label>Internal or external repair</label>
+                    <div class="m-segmented" id="m-repair-type"></div>
+                    <div class="hint" style="margin-top:6px">External repairs add a painting day to the schedule.</div>
+                </div>
+            </div>
+
+            <div class="m-section-title">Estimated schedule</div>
+            <div class="m-card">
+                <div class="m-row-between">
+                    <label style="margin:0;font-size:0.9rem;font-weight:600;color:var(--text)">Estimated duration</label>
+                    <div class="m-days-estimate" id="m-days-estimate">— days</div>
+                </div>
+                <div class="hint" style="margin-top:6px">Max 6 plies per lamination (one lamination/day due to cure). Includes 1 contingency day.</div>
+                <button class="btn btn-ghost" style="margin-top:10px;padding:8px 12px;font-size:0.8rem" onclick="applyEstimatedDays()"><i class="bi bi-arrow-down-circle"></i> Use as days of repair</button>
+            </div>
+
             <div class="m-section-title">Active repair steps</div>
             <div id="m-steps-list"></div>
             <div class="m-info-box">
