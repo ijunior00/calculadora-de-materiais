@@ -281,6 +281,41 @@
             <!-- Reference-only fabrics from REV05 Blades_Fabrics (no SAP / not calculable yet) -->
             <div id="referenceFabricsPanel"></div>
 
+            <!-- Computed LAYUP preview — transparency + manual per-layer override -->
+            <div class="layup-preview" id="layupPreview" style="margin-top:22px">
+                <div class="section-header" style="margin-bottom:8px">
+                    <h3 style="font-size:1rem;margin:0"><i class="bi bi-table"></i> Computed LAYUP (verification)</h3>
+                    <p class="section-desc" style="margin:4px 0 0">
+                        Spanwise (R1/R2/Length) is fully automated. Chordwise (X1/X2) expands symmetrically —
+                        for edge-referenced damages the drawing may require manual offsets. Click any X1/X2/R1/R2 cell to override it;
+                        later layers rebuild on the corrected geometry. Overridden cells are highlighted.
+                    </p>
+                </div>
+                <div class="layer-table-container">
+                    <table class="layer-table" id="layupTable">
+                        <thead>
+                            <tr>
+                                <th>Layer</th><th>Type</th><th>GSM</th>
+                                <th>R1</th><th>R2</th><th>Length</th>
+                                <th id="layupX1Header">X1</th><th id="layupX2Header">X2</th><th>Width</th>
+                                <th>Area mm²</th><th>Weight kg</th>
+                            </tr>
+                        </thead>
+                        <tbody id="layupTableBody"></tbody>
+                    </table>
+                </div>
+                <div style="display:flex;gap:12px;align-items:center;margin-top:8px;flex-wrap:wrap">
+                    <button class="btn-outline" style="font-size:0.8rem;padding:6px 10px" onclick="resetLayupOverrides()"><i class="bi bi-arrow-counterclockwise"></i> Reset overrides</button>
+                    <details style="font-size:0.82rem">
+                        <summary style="cursor:pointer;color:var(--vestas-blue,#143a5f)">Standard overlaps (span/chord mm)</summary>
+                        <table class="layer-table" style="margin-top:6px;max-width:320px">
+                            <thead><tr><th>Fabric</th><th>Span</th><th>Chord</th></tr></thead>
+                            <tbody id="overlapRefBody"></tbody>
+                        </table>
+                    </details>
+                </div>
+            </div>
+
             <!-- LAYER DATA CONFIRM BANNER -->
             <div id="layerConfirmBanner" class="confirm-banner unlocked">
                 <i class="bi bi-exclamation-triangle-fill"></i>

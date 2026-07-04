@@ -80,22 +80,35 @@ function computeLayup(damageData, layers) {
 
         // E = MIN(all previous E values) - spanOverlap
         const minE = Math.min(...allE);
-        const r1 = minE - overlap.span;
+        let r1 = minE - overlap.span;
 
         // F = MAX(all previous F values) + spanOverlap
         const maxF = Math.max(...allF);
-        const r2 = maxF + overlap.span;
-
-        const length = r2 - r1;
+        let r2 = maxF + overlap.span;
 
         // H = MIN(all previous H values) - chordOverlap
         const minH = Math.min(...allH);
-        const h1 = minH - overlap.chord;
+        let h1 = minH - overlap.chord;
 
         // I = MAX(all previous I values) + chordOverlap
         const maxI = Math.max(...allI);
-        const h2 = maxI + overlap.chord;
+        let h2 = maxI + overlap.chord;
 
+        // Manual per-layer overrides (drawing-specific geometry). The automation
+        // expands the chord symmetrically, but real repairs referenced on an edge
+        // (TE/LE) apply drawing-specific X1/X2 offsets that automation can't infer
+        // — the Lamination Plan Sketch instructs "set X1 accordingly". When an
+        // override is provided it replaces the computed value AND feeds the
+        // accumulators, so later layers build on the corrected geometry.
+        const _num = v => (v !== undefined && v !== null && v !== '' && !isNaN(v)) ? Number(v) : null;
+        const ovR1 = _num(layer.ovR1), ovR2 = _num(layer.ovR2);
+        const ovX1 = _num(layer.ovX1), ovX2 = _num(layer.ovX2);
+        if (ovR1 !== null) r1 = ovR1;
+        if (ovR2 !== null) r2 = ovR2;
+        if (ovX1 !== null) h1 = ovX1;
+        if (ovX2 !== null) h2 = ovX2;
+
+        const length = r2 - r1;
         const width = h2 - h1;
         const area = Math.abs(length * width);
         const gsmNum = parseFloat(layer.gsm) || 0;
@@ -111,7 +124,11 @@ function computeLayup(damageData, layers) {
             h1, h2, width,
             area,
             weight,
-            isBod: false
+            isBod: false,
+            overridden: {
+                r1: ovR1 !== null, r2: ovR2 !== null,
+                x1: ovX1 !== null, x2: ovX2 !== null,
+            }
         });
 
         allE.push(r1);

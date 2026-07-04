@@ -409,6 +409,9 @@ function renderLayerTable() {
     // Reference-only fabrics panel (labels from REV05 Blades_Fabrics,
     // not wired into calculation pipeline — see PENDING_REV06.md)
     renderReferenceFabricsPanel(document.getElementById('bladeModel').value);
+
+    // Keep the computed LAYUP preview in sync with the current layers.
+    recalculateLayup();
 }
 
 /**
@@ -486,31 +489,67 @@ function updateLayupHeaders() {
 }
 
 function recalculateLayup() {
+    const tbody = document.getElementById('layupTableBody');
+    if (!tbody) return;
     const d = getDamageData();
-    if (d.rstart <= 0 || d.rend <= 0) return;
-    renderLayupTable(computeLayup(d, layerRows.filter(l=>l.materialType)).layupRows);
+    updateLayupHeaders();
+    const filtered = layerRows.filter(l => l.materialType);
+    if (d.rstart <= 0 || d.rend <= 0) {
+        tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;color:#94a3b8;padding:14px">Enter valid damage data (Step 1) to preview the layup.</td></tr>`;
+        return;
+    }
+    renderLayupTable(computeLayup(d, filtered).layupRows, filtered);
 }
 
-function renderLayupTable(rows) {
+// Editable override cell for a data layer (BOD is read-only).
+function _ovCell(filteredIdx, field, value, isOverridden) {
+    const cls = isOverridden ? 'ov-cell overridden' : 'ov-cell';
+    return `<td class="${cls}"><input type="number" step="any" class="ov-input" value="${value}"
+        data-idx="${filteredIdx}" data-field="${field}"
+        onchange="setLayerOverride(${filteredIdx},'${field}',this.value)"
+        title="Override ${field.toUpperCase()} — leave to use automatic value"></td>`;
+}
+
+function renderLayupTable(rows, filtered) {
     const tbody = document.getElementById('layupTableBody');
     if (!tbody) return;
     tbody.innerHTML = '';
-    rows.forEach(row => {
+    rows.forEach((row, rowIdx) => {
         const tr = document.createElement('tr');
-        if (row.isBod) tr.classList.add('bod-row');
-        tr.innerHTML = `
-            <td>${row.layer}</td><td>${row.materialType}</td><td>${row.gsm}</td>
-            <td>${row.r1!==undefined?row.r1.toLocaleString():'--'}</td>
-            <td>${row.r2!==undefined?row.r2.toLocaleString():'--'}</td>
-            <td>${row.length!==undefined?row.length.toLocaleString():'--'}</td>
-            <td>${row.h1!==undefined?row.h1.toLocaleString():'--'}</td>
-            <td>${row.h2!==undefined?row.h2.toLocaleString():'--'}</td>
-            <td>${row.width!==undefined?row.width.toLocaleString():'--'}</td>
-            <td>${row.area?row.area.toLocaleString():'--'}</td>
-            <td>${(row.weight!==null&&row.weight!==undefined)?row.weight.toFixed(6):'--'}</td>
-        `;
+        const ov = row.overridden || {};
+        if (row.isBod) {
+            tr.classList.add('bod-row');
+            tr.innerHTML = `
+                <td>${row.layer}</td><td>${row.materialType}</td><td>${row.gsm}</td>
+                <td>${row.r1.toLocaleString()}</td><td>${row.r2.toLocaleString()}</td><td>${row.length.toLocaleString()}</td>
+                <td>${row.h1.toLocaleString()}</td><td>${row.h2.toLocaleString()}</td><td>${row.width.toLocaleString()}</td>
+                <td>${row.area.toLocaleString()}</td><td>--</td>`;
+        } else {
+            const fi = rowIdx - 1; // data rows follow BOD (index 0) in order
+            tr.innerHTML = `
+                <td>${row.layer}</td><td>${row.materialType}</td><td>${row.gsm}</td>
+                ${_ovCell(fi,'ovR1',row.r1,ov.r1)}${_ovCell(fi,'ovR2',row.r2,ov.r2)}
+                <td>${row.length.toLocaleString()}</td>
+                ${_ovCell(fi,'ovX1',row.h1,ov.x1)}${_ovCell(fi,'ovX2',row.h2,ov.x2)}
+                <td>${row.width.toLocaleString()}</td>
+                <td>${row.area.toLocaleString()}</td>
+                <td>${(row.weight!==null&&row.weight!==undefined)?row.weight.toFixed(6):'--'}</td>`;
+        }
         tbody.appendChild(tr);
     });
+}
+
+function setLayerOverride(filteredIdx, field, value) {
+    const filtered = layerRows.filter(l => l.materialType);
+    const layer = filtered[filteredIdx];
+    if (!layer) return;
+    layer[field] = (value === '' || value === null || isNaN(value)) ? undefined : Number(value);
+    recalculateLayup();
+}
+
+function resetLayupOverrides() {
+    layerRows.forEach(l => { delete l.ovR1; delete l.ovR2; delete l.ovX1; delete l.ovX2; });
+    recalculateLayup();
 }
 
 function renderOverlapRefTable() {

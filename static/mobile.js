@@ -244,6 +244,70 @@ function moveLayer(i, dir) {
     renderLayers();
 }
 
+// ── Layup geometry override (manual per-layer R1/R2/X1/X2) ──────────────────
+// Automation expands the chord symmetrically; edge-referenced (TE/LE) repairs
+// need drawing-specific X1/X2. Overrides feed back into the engine so later
+// layers rebuild on the corrected geometry.
+function openLayupAdjustSheet() {
+    const stack = M.layers.filter(l => l.materialType);
+    if (stack.length === 0) { toast('Add at least one layer first.', 'err'); return; }
+    if (!(M.length > 0) || !(M.width > 0)) { toast('Enter valid damage size (Step 1) first.', 'err'); return; }
+
+    const damageData = { rstart: 0, rend: M.length, x1: 0, x2: M.width, chordRef: 'LE' };
+    const rows = computeLayup(damageData, stack).layupRows.filter(r => !r.isBod);
+
+    const rowHtml = rows.map((row, i) => {
+        const ov = row.overridden || {};
+        const cell = (field, val, isOv) =>
+            `<input type="number" step="any" class="adj-input${isOv ? ' ov' : ''}" value="${Math.round(val)}"
+                onchange="setLayupOverride(${i},'${field}',this.value)">`;
+        return `
+        <div class="adj-row">
+            <div class="adj-name">${labelFor(stack[i])}</div>
+            <div class="adj-grid">
+                <label>R1${cell('ovR1', row.r1, ov.r1)}</label>
+                <label>R2${cell('ovR2', row.r2, ov.r2)}</label>
+                <label>X1${cell('ovX1', row.h1, ov.x1)}</label>
+                <label>X2${cell('ovX2', row.h2, ov.x2)}</label>
+                <div class="adj-derived">L ${Math.round(row.length)} · W ${Math.round(row.width)} mm</div>
+            </div>
+        </div>`;
+    }).join('');
+
+    const sheet = document.createElement('div');
+    sheet.className = 'm-sheet-backdrop';
+    sheet.id = 'm-adjust-sheet';
+    sheet.onclick = (e) => { if (e.target === sheet) closeLayupAdjustSheet(); };
+    sheet.innerHTML = `
+        <div class="m-sheet" style="max-height:88vh;overflow:auto">
+            <h3>Adjust layup geometry</h3>
+            <div class="sheet-sub">Spanwise (R1/R2) is automatic. For edge-referenced damages, set X1/X2 from the drawing. Overrides feed the accumulation.</div>
+            ${rowHtml}
+            <button class="btn btn-ghost" style="margin-top:8px" onclick="resetLayupOverridesMobile()"><i class="bi bi-arrow-counterclockwise"></i> Reset overrides</button>
+            <button class="sheet-cancel" onclick="closeLayupAdjustSheet()">Done</button>
+        </div>`;
+    document.body.appendChild(sheet);
+}
+function closeLayupAdjustSheet() {
+    const s = document.getElementById('m-adjust-sheet');
+    if (s) s.remove();
+}
+function setLayupOverride(stackIdx, field, value) {
+    const stack = M.layers.filter(l => l.materialType);
+    const layer = stack[stackIdx];
+    if (!layer) return;
+    layer[field] = (value === '' || value === null || isNaN(value)) ? undefined : Number(value);
+    // Re-render the sheet so derived L/W and downstream rows update.
+    closeLayupAdjustSheet();
+    openLayupAdjustSheet();
+}
+function resetLayupOverridesMobile() {
+    M.layers.forEach(l => { delete l.ovR1; delete l.ovR2; delete l.ovX1; delete l.ovX2; });
+    closeLayupAdjustSheet();
+    openLayupAdjustSheet();
+    toast('Overrides reset.', 'ok');
+}
+
 // ============================================================
 // STEP 3 — REPAIR STEPS
 // ============================================================

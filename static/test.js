@@ -23,11 +23,13 @@
         return fail(label, `got ${actual}, expected ${expected} (\u00b1${tol})`);
     }
 
-    /** Find a BOM item by exact SAP or partial description (case-insensitive). */
+    /** Find a BOM item by exact SAP, material key, or partial description. */
     function findItem(items, sapOrDesc) {
+        const needle = String(sapOrDesc).toLowerCase();
         return items.find(i =>
             (i.sap != null && String(i.sap) === String(sapOrDesc)) ||
-            (i.desc && i.desc.toLowerCase().includes(String(sapOrDesc).toLowerCase()))
+            (i.material && String(i.material).toLowerCase() === needle) ||
+            (i.desc && i.desc.toLowerCase().includes(needle))
         );
     }
 
@@ -452,6 +454,80 @@
         return tally(r);
     }
 
+    // ── Lamination Plan Sketch — real drawing validation (DMS 945550) ──────────
+    // Cross-check of the engine against a real Lamination Plan Sketch. Spanwise
+    // (R1/R2/Length) is fully automated and must match the drawing exactly.
+    // Chordwise (X1/X2) expands symmetrically in automation; the drawing applies
+    // per-layer TE offsets, so chord width is EXPECTED to differ until the user
+    // enters manual overrides (ovX1/ovX2). This test documents both facts.
+    const SKETCH = {
+        damageData: { rstart: 40000, rend: 40500, x1: 0, x2: 60, chordRef: 'TE' },
+        layers: [
+            { layerName: 'BIAX600',   materialType: 'BIAX',  gsm: '600'  },
+            { layerName: 'TRIAX1200', materialType: 'TRIAX', gsm: '1200' },
+            { layerName: 'CORE',      materialType: 'CORE',  gsm: ''     },
+            { layerName: 'TRIAX1200', materialType: 'TRIAX', gsm: '1200' },
+            { layerName: 'BIAX600',   materialType: 'BIAX',  gsm: '600'  },
+        ],
+        // Expected spanwise length per data layer, straight from the drawing.
+        expectedLength: [560, 740, 740, 920, 980],
+    };
+
+    function testSketchSpanwiseExact() {
+        console.group('Test 15: Lamination Plan Sketch — spanwise length matches drawing exactly');
+        const layup = computeLayup(SKETCH.damageData, SKETCH.layers);
+        const dataRows = layup.layupRows.filter(r => !r.isBod);
+        const r = [];
+        SKETCH.expectedLength.forEach((exp, i) => {
+            r.push(assertEq(`Layer ${i + 1} length=${exp}`, dataRows[i].length, exp, 0));
+        });
+        console.groupEnd();
+        return tally(r);
+    }
+
+    function testSketchChordOverride() {
+        console.group('Test 16: Sketch chord override — manual X1/X2 reproduces the drawing');
+        // Drawing values for layer 2 (TRIAX1200): X1=60, X2=120 → width 60.
+        const layersOv = SKETCH.layers.map(l => ({ ...l }));
+        layersOv[1].ovX1 = 60;
+        layersOv[1].ovX2 = 120;
+        const layup = computeLayup(SKETCH.damageData, layersOv);
+        const row2 = layup.layupRows.filter(r => !r.isBod)[1];
+        const r = [
+            assertEq('Override width = 60 (drawing)', row2.width, 60, 0),
+            row2.overridden && row2.overridden.x1 && row2.overridden.x2
+                ? pass('Override flags set on row')
+                : fail('Override flags set on row', 'flags missing'),
+        ];
+        console.groupEnd();
+        return tally(r);
+    }
+
+    function testRepairDayEstimator() {
+        console.group('Test 17: Repair day estimator (cure rule, batches of 6)');
+        const r = [
+            assertEq('Sketch internal = 5 days',
+                computeRepairDays(SKETCH.layers, false).totalDays, 5, 0),
+            assertEq('Sketch external = 6 days',
+                computeRepairDays(SKETCH.layers, true).totalDays, 6, 0),
+            // 7 plies before core → ceil(7/6)=2 lam days; 13 after → 3; +sand+core+paint+buffer
+            assertEq('7-before / core / 13-after external = 9 days',
+                computeRepairDays([
+                    ...Array(7).fill({ materialType: 'BIAX', gsm: '600' }),
+                    { materialType: 'CORE' },
+                    ...Array(13).fill({ materialType: 'BIAX', gsm: '600' }),
+                ], true).totalDays, 9, 0),
+            // No core: sand + 1 lam batch + buffer = 3
+            assertEq('2 plies, no core, internal = 3 days',
+                computeRepairDays([
+                    { materialType: 'BIAX', gsm: '600' },
+                    { materialType: 'TRIAX', gsm: '1200' },
+                ], false).totalDays, 3, 0),
+        ];
+        console.groupEnd();
+        return tally(r);
+    }
+
     // ── Main runner ───────────────────────────────────────────────────────────
 
     window.runBOMTests = function () {
@@ -472,6 +548,9 @@
             testBladeReferenceFabricsStructure,
             testRev05PendingMaterialsAreNotInjected,
             testRedDotAcrossAllBlades,
+            testSketchSpanwiseExact,
+            testSketchChordOverride,
+            testRepairDayEstimator,
         ];
         let total = { pass: 0, fail: 0 };
         for (const suite of suites) {
