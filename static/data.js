@@ -38,6 +38,8 @@ function computeFiberOverlap(materialType, gsm) {
 // split, (b) for the special fabrics (SPL/CFM50/CORE/BALSA) outside the fiber
 // rule, and (c) so display/reference tables have a stable list.
 const STANDARD_OVERLAPS = {
+    'BIAX200':   { span: 10,  chord: 10 },   // 5% × 200  = 10   (V136, ex-pending)
+    'BIAX450':   { span: 23,  chord: 23 },   // 5% × 450  = 22.5 → 23 (V136, ex-pending)
     'BIAX600':   { span: 30,  chord: 30 },   // 5% × 600  = 30
     'BIAX936':   { span: 47,  chord: 47 },   // 5% × 936  = 46.8 → 47  (REV05 had 50)
     'BIAX1000':  { span: 50,  chord: 50 },   // 5% × 1000 = 50
@@ -58,7 +60,7 @@ const STANDARD_OVERLAPS = {
 // Source: REV05 Lists!E2:E7 (BIAX/UD/TRIAX/CORE/SPL/CFM50) and Lists!G2:G8 (GSM).
 // BALSA is intentionally tracked separately as a special fabric (no GSM, no overlap).
 const MATERIAL_TYPES = ['BIAX', 'UD', 'TRIAX', 'CORE', 'BALSA', 'SPL', 'CFM50'];
-const GSM_OPTIONS = [600, 900, 936, 1000, 1140, 1200, 1500];
+const GSM_OPTIONS = [200, 450, 600, 900, 936, 1000, 1140, 1200, 1500];
 
 // ============================================================
 // BLADE-SPECIFIC MATERIAL CONFIGURATION
@@ -115,10 +117,13 @@ const BLADE_MATERIAL_MAP = {
         { materialType: 'BALSA', gsm: '',     label: 'BALSA' },
         { materialType: 'SPL',   gsm: '',     label: 'SPL' },
         { materialType: 'CFM50', gsm: '',     label: 'CFM' },
-        // NOTE: REV05 Blades_Fabrics also lists "Biax ±45 450gsm", "Biax ±45 200gsm"
-        // and "Biax ±80 1200gsm" for V136 (cells F11, F12, F13) but the rest of REV05
-        // does not yet wire these into the calculation pipeline. Pending REV06 — see
-        // PENDING_REV06.md.
+        // Biax variants from REV05 Blades_Fabrics (F11/F12/F13). Now calculable:
+        // overlap comes from the norm rule (biax = 5% of gsm) via computeFiberOverlap,
+        // so no overlap value is invented. SAP is still 'TBD' (pending REV06) — the
+        // fabric computes weight/area/qty; only the order number is outstanding.
+        { materialType: 'BIAX',  gsm: '450',  label: 'BIAX ±45° 450 (SAP TBD)' },
+        { materialType: 'BIAX',  gsm: '200',  label: 'BIAX ±45° 200 (SAP TBD)' },
+        { materialType: 'BIAX',  gsm: '1200', label: 'BIAX ±80° 1200 / T80 (SAP TBD)' },
     ],
     'V150': [
         { materialType: 'BIAX',  gsm: '600',  label: 'BIAX 600' },
@@ -148,11 +153,10 @@ const BLADE_REFERENCE_FABRICS = {
         { label: 'Quadrax 850 g/m²', source: 'Blades_Fabrics!A7' },
         { label: 'Quadrax 566 g/m²', source: 'Blades_Fabrics!A8' },
     ],
-    'V136': [
-        { label: 'Biax \u00b145\u00b0 450 g/m\u00b2', source: 'Blades_Fabrics!F11' },
-        { label: 'Biax \u00b145\u00b0 200 g/m\u00b2', source: 'Blades_Fabrics!F12' },
-        { label: 'Biax \u00b180\u00b0 1200 g/m\u00b2', source: 'Blades_Fabrics!F13' },
-    ],
+    // V136 biax variants (F11/F12/F13) were MIGRATED into the calculation
+    // pipeline: overlap now comes from the norm's biax 5% rule, so no value is
+    // invented. SAP is still 'TBD' (pending REV06) but weight/area/qty compute.
+    // Only Quadrax stays reference-only \u2014 the norm gives no quadrax overlap rule.
 };
 
 const CHORD_REFERENCES = ['LE', 'TE', 'M.Web', 'TE.Web'];
@@ -241,10 +245,16 @@ const REPAIR_DAY_RULES = {
 // ============================================================
 const FABRICS_DB = {
     standard: {
+        // V136 ex-pending biax (REV05 Blades_Fabrics F11/F12/F13). Overlap comes
+        // from the norm formula (5% of gsm); SAP is TBD until REV06 provides it.
+        'BIAX200':   { sap: 'TBD',       desc: 'BIAX +/-45 200 g/m2 E-GLASS (SAP pending REV06)', unit: 'KG', kgPerUnit: 1 },
+        'BIAX450':   { sap: 'TBD',       desc: 'BIAX +/-45 450 g/m2 E-GLASS (SAP pending REV06)', unit: 'KG', kgPerUnit: 1 },
         'BIAX600':   { sap: 'S096476',   desc: 'BIAX 600G/M2 GLASS FABRIC',          unit: 'KG', kgPerUnit: 1 },
         'BIAX936':   { sap: '29009736',  desc: 'BIAX 936GSM 127CM STABILIZED',       unit: 'KG', kgPerUnit: 1 },
         'BIAX1000':  { sap: '29281859',  desc: 'FABRIC,E-GLASS,BIAX +/-45,1000 g/m2',unit: 'KG', kgPerUnit: 1 },
-        // BIAX1200 does not exist in standard (Vidro E) catalog — HM only
+        // BIAX1200 E-glass (V136, Biax ±80° / T80). Distinct from the V150 HM
+        // BIAX1200 (SAP 29110146). SAP TBD until REV06.
+        'BIAX1200':  { sap: 'TBD',       desc: 'BIAX +/-80 1200 g/m2 E-GLASS / T80 (SAP pending REV06)', unit: 'KG', kgPerUnit: 1 },
         'UD600':     { sap: '29007004',  desc: 'FABRIC,E,UD 0 DEG,576 g/m2,1265 mm', unit: 'KG', kgPerUnit: 1 },
         'UD900':     { sap: '29017516',  desc: 'UD 0 900g S',                        unit: 'KG', kgPerUnit: 1 },
         'UD1140':    { sap: '29017705',  desc: 'UD 0 1140g 1075mm C',                unit: 'KG', kgPerUnit: 1 },

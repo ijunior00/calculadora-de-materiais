@@ -387,18 +387,13 @@
         r.push(BLADE_REFERENCE_FABRICS['V82'] && BLADE_REFERENCE_FABRICS['V82'][1].source === 'Blades_Fabrics!A8'
             ? pass('V82[1] source = Blades_Fabrics!A8')
             : fail('V82[1] source mismatch', 'expected Blades_Fabrics!A8'));
-        // V136: 3 entries — Biax ±45 450, Biax ±45 200, Biax ±80 1200
-        r.push(Array.isArray(BLADE_REFERENCE_FABRICS['V136']) && BLADE_REFERENCE_FABRICS['V136'].length === 3
-            ? pass('V136 has 3 reference fabric entries')
-            : fail('V136 reference fabrics count wrong', 'expected 3 (Biax 450 + 200 + 1200)'));
-        r.push(BLADE_REFERENCE_FABRICS['V136'] && BLADE_REFERENCE_FABRICS['V136'][0].source === 'Blades_Fabrics!F11'
-            ? pass('V136[0] source = Blades_Fabrics!F11')
-            : fail('V136[0] source mismatch', 'expected Blades_Fabrics!F11'));
-        r.push(BLADE_REFERENCE_FABRICS['V136'] && BLADE_REFERENCE_FABRICS['V136'][2].source === 'Blades_Fabrics!F13'
-            ? pass('V136[2] source = Blades_Fabrics!F13')
-            : fail('V136[2] source mismatch', 'expected Blades_Fabrics!F13'));
+        // V136 biax variants were MIGRATED into the calc pipeline — no longer
+        // reference-only. Only Quadrax (V82) stays reference-only.
+        r.push(!BLADE_REFERENCE_FABRICS['V136']
+            ? pass('V136 has no reference fabric entry (biax variants now calculable)')
+            : fail('V136 still has reference fabrics', 'biax 450/200/1200 should be migrated'));
         // Blades with no reference fabrics should NOT have an entry
-        for (const m of ['V90', 'V100', 'V110', 'V112', 'V150']) {
+        for (const m of ['V90', 'V100', 'V110', 'V112', 'V136', 'V150']) {
             r.push(!BLADE_REFERENCE_FABRICS[m]
                 ? pass(`${m} has no reference fabric entry (correct)`)
                 : fail(`${m} has unexpected reference fabric entry`, 'only V82 and V136 expected'));
@@ -408,22 +403,36 @@
     }
 
     function testRev05PendingMaterialsAreNotInjected() {
-        console.group('Test 13: REV05 pending materials are NOT silently injected into BLADE_MATERIAL_MAP');
+        console.group('Test 13: Quadrax stays pending; V136 biax now enabled with norm overlap');
         const r = [];
+        // Quadrax: still pending — the norm gives no quadrax overlap rule, so it
+        // must NOT be injected anywhere (zero invented data).
         const v82HasQuadrax = BLADE_MATERIAL_MAP['V82'].some(m => m.materialType === 'QUADRAX');
         r.push(!v82HasQuadrax
-            ? pass('V82 BLADE_MATERIAL_MAP has no QUADRAX entry (correctly waiting for REV06)')
-            : fail('V82 BLADE_MATERIAL_MAP contains QUADRAX', 'should be removed until REV06'));
-        const v136Hidden = ['200','450'].some(gsm =>
-            BLADE_MATERIAL_MAP['V136'].some(m => m.materialType === 'BIAX' && m.gsm === gsm));
-        r.push(!v136Hidden
-            ? pass('V136 BLADE_MATERIAL_MAP has no BIAX 200/450 entry (correctly waiting for REV06)')
-            : fail('V136 BLADE_MATERIAL_MAP contains BIAX 200 or 450', 'should be removed until REV06'));
-        for (const k of ['QUADRAX850', 'QUADRAX566', 'BIAX200', 'BIAX450']) {
+            ? pass('V82 map has no QUADRAX (no overlap rule → still pending)')
+            : fail('V82 map contains QUADRAX', 'no norm overlap for quadrax'));
+        for (const k of ['QUADRAX850', 'QUADRAX566']) {
             r.push(!STANDARD_OVERLAPS[k]
-                ? pass(`STANDARD_OVERLAPS has no ${k} (no invented overlap value)`)
-                : fail(`STANDARD_OVERLAPS contains ${k}`, 'inferred value must be removed until REV06'));
+                ? pass(`STANDARD_OVERLAPS has no ${k} (no invented value)`)
+                : fail(`STANDARD_OVERLAPS contains ${k}`, 'quadrax has no norm overlap'));
         }
+        // V136 biax variants: NOW enabled — overlap from the biax 5% rule (not
+        // invented), SAP still 'TBD'.
+        const v136Biax = ['200','450'].every(gsm =>
+            BLADE_MATERIAL_MAP['V136'].some(m => m.materialType === 'BIAX' && m.gsm === gsm));
+        r.push(v136Biax
+            ? pass('V136 map now includes BIAX 200 and 450 (calculable)')
+            : fail('V136 map missing BIAX 200/450', 'should be enabled via norm overlap'));
+        r.push(STANDARD_OVERLAPS['BIAX200'] && STANDARD_OVERLAPS['BIAX200'].chord === 10
+            ? pass('BIAX200 overlap = 10 (5% × 200, from norm)')
+            : fail('BIAX200 overlap wrong', 'expected 10 = 5% × 200'));
+        r.push(STANDARD_OVERLAPS['BIAX450'] && STANDARD_OVERLAPS['BIAX450'].span === 23
+            ? pass('BIAX450 overlap = 23 (5% × 450, from norm)')
+            : fail('BIAX450 overlap wrong', 'expected 23 = round(5% × 450)'));
+        // SAP for the ex-pending biax is intentionally TBD (order number pending).
+        r.push(FABRICS_DB.standard['BIAX200'] && FABRICS_DB.standard['BIAX200'].sap === 'TBD'
+            ? pass('BIAX200 SAP = TBD (order number pending, not invented)')
+            : fail('BIAX200 SAP wrong', 'expected TBD'));
         console.groupEnd();
         return tally(r);
     }

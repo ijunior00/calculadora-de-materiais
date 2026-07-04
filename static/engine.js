@@ -262,7 +262,7 @@ function computeFabricsBOM(layupResult, bladeModel, repairSteps, bladeRegion) {
     // (10 fabric SUMIF rows) — exactly the fabrics REV05 has formulas for.
     // Order is for repeatable BOM output; presence is what matters.
     const fabricTypes = [
-        'BIAX600', 'BIAX1200', 'BIAX936', 'BIAX1000',
+        'BIAX200', 'BIAX450', 'BIAX600', 'BIAX1200', 'BIAX936', 'BIAX1000',
         'UD1200', 'UD1140', 'UD900', 'UD600',
         'TRIAX1200', 'TRIAX1500'
     ];
