@@ -23,7 +23,12 @@ function scarfDefaultOverlap(layer) {
     const key = ['CORE', 'SPL', 'CFM50', 'BALSA'].includes(layer.materialType)
         ? layer.materialType
         : layer.materialType + (layer.gsm || '');
-    return STANDARD_OVERLAPS[key] || { span: 0, chord: 0 };
+    let ov = STANDARD_OVERLAPS[key];
+    if (!ov && typeof computeFiberOverlap === 'function') {
+        const f = computeFiberOverlap(layer.materialType, layer.gsm);
+        if (f && f.span !== null) ov = f;
+    }
+    return ov || { span: 0, chord: 0 };
 }
 
 // Compute the staggering table. Mirrors computeLayup's outward expansion

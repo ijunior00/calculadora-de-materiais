@@ -75,8 +75,15 @@ function computeLayup(damageData, layers) {
             fabricKey = layer.materialType + (layer.gsm || '');
         }
 
-        // Lookup standard overlaps
-        const overlap = STANDARD_OVERLAPS[fabricKey] || { span: 0, chord: 0 };
+        // Lookup standard overlaps (norm 0149-9754 §12). Fall back to the
+        // percentage-of-gsm formula for any fabric not in the fixed table
+        // (e.g. HM or pending REV06 fabrics) so overlaps stay correct.
+        let overlap = STANDARD_OVERLAPS[fabricKey];
+        if (!overlap && typeof computeFiberOverlap === 'function') {
+            const f = computeFiberOverlap(layer.materialType, layer.gsm);
+            if (f && f.span !== null) overlap = f;
+        }
+        overlap = overlap || { span: 0, chord: 0 };
 
         // E = MIN(all previous E values) - spanOverlap
         const minE = Math.min(...allE);

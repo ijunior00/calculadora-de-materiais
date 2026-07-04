@@ -528,6 +528,29 @@
         return tally(r);
     }
 
+    function testFiberOverlapNorm() {
+        console.group('Test 18: Fiber overlap = % of gsm (norm 0149-9754 §12)');
+        const r = [
+            // Biax 5%/5%
+            assertEq('BIAX600 span=30',  STANDARD_OVERLAPS['BIAX600'].span, 30, 0),
+            assertEq('BIAX600 chord=30', STANDARD_OVERLAPS['BIAX600'].chord, 30, 0),
+            assertEq('BIAX936 chord=47 (was 50)', STANDARD_OVERLAPS['BIAX936'].chord, 47, 0),
+            // UD span 10% / chord 5%
+            assertEq('UD600 span=60',  STANDARD_OVERLAPS['UD600'].span, 60, 0),
+            assertEq('UD600 chord=30 (was 12)', STANDARD_OVERLAPS['UD600'].chord, 30, 0),
+            assertEq('UD1200 chord=60 (was 24)', STANDARD_OVERLAPS['UD1200'].chord, 60, 0),
+            // Triax composite span + 2.5% chord
+            assertEq('TRIAX1200 span=90',  STANDARD_OVERLAPS['TRIAX1200'].span, 90, 0),
+            assertEq('TRIAX1200 chord=30', STANDARD_OVERLAPS['TRIAX1200'].chord, 30, 0),
+            // computeFiberOverlap for an arbitrary gsm (e.g. pending fabrics)
+            assertEq('computeFiberOverlap BIAX 450 span=23', computeFiberOverlap('BIAX', 450).span, 23, 0),
+            assertEq('computeFiberOverlap UD 900 chord=45', computeFiberOverlap('UD', 900).chord, 45, 0),
+            assertEq('computeFiberOverlap CARBON 250 span=30', computeFiberOverlap('CARBON', 250).span, 30, 0),
+        ];
+        console.groupEnd();
+        return tally(r);
+    }
+
     // ── Main runner ───────────────────────────────────────────────────────────
 
     window.runBOMTests = function () {
@@ -551,6 +574,7 @@
             testSketchSpanwiseExact,
             testSketchChordOverride,
             testRepairDayEstimator,
+            testFiberOverlapNorm,
         ];
         let total = { pass: 0, fail: 0 };
         for (const suite of suites) {
