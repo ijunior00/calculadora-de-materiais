@@ -6,12 +6,10 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: python run_server.py
     envVars:
-      # Locks the app behind HTTP Basic Auth. Set the password value in the
-      # Render dashboard (Environment) — do NOT commit it to git.
-      - key: APP_PASSWORD
-        sync: false
-      - key: APP_USERNAME
-        value: vestas
+      # App is OPEN by default (no login). To re-enable HTTP Basic Auth later,
+      # add an APP_PASSWORD variable in the Render dashboard (Environment) —
+      # the app locks automatically whenever APP_PASSWORD is set. Optionally
+      # set APP_USERNAME too (defaults to "vestas").
       # Render's disk is ephemeral; skip writing PDF/audit copies to disk.
       - key: BOM_PERSIST
         value: "0"

@@ -123,7 +123,7 @@ const BLADE_MATERIAL_MAP = {
         // fabric computes weight/area/qty; only the order number is outstanding.
         { materialType: 'BIAX',  gsm: '450',  label: 'BIAX ±45° 450 (SAP TBD)' },
         { materialType: 'BIAX',  gsm: '200',  label: 'BIAX ±45° 200 (SAP TBD)' },
-        { materialType: 'BIAX',  gsm: '1200', label: 'BIAX ±80° 1200 / T80 (SAP TBD)' },
+        { materialType: 'BIAX',  gsm: '1200', label: 'BIAX ±80° 1200 / T80' },
     ],
     'V150': [
         { materialType: 'BIAX',  gsm: '600',  label: 'BIAX 600' },
@@ -254,7 +254,7 @@ const FABRICS_DB = {
         'BIAX1000':  { sap: '29281859',  desc: 'FABRIC,E-GLASS,BIAX +/-45,1000 g/m2',unit: 'KG', kgPerUnit: 1 },
         // BIAX1200 E-glass (V136, Biax ±80° / T80). Distinct from the V150 HM
         // BIAX1200 (SAP 29110146). SAP TBD until REV06.
-        'BIAX1200':  { sap: 'TBD',       desc: 'BIAX +/-80 1200 g/m2 E-GLASS / T80 (SAP pending REV06)', unit: 'KG', kgPerUnit: 1 },
+        'BIAX1200':  { sap: '29022487',  desc: 'BIAX +/-80 1200 g/m2 E-GLASS / T80', unit: 'KG', kgPerUnit: 1 },
         'UD600':     { sap: '29007004',  desc: 'FABRIC,E,UD 0 DEG,576 g/m2,1265 mm', unit: 'KG', kgPerUnit: 1 },
         'UD900':     { sap: '29017516',  desc: 'UD 0 900g S',                        unit: 'KG', kgPerUnit: 1 },
         'UD1140':    { sap: '29017705',  desc: 'UD 0 1140g 1075mm C',                unit: 'KG', kgPerUnit: 1 },
