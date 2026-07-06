@@ -429,10 +429,15 @@
         r.push(STANDARD_OVERLAPS['BIAX450'] && STANDARD_OVERLAPS['BIAX450'].span === 23
             ? pass('BIAX450 overlap = 23 (5% × 450, from norm)')
             : fail('BIAX450 overlap wrong', 'expected 23 = round(5% × 450)'));
-        // SAP for the ex-pending biax is intentionally TBD (order number pending).
-        r.push(FABRICS_DB.standard['BIAX200'] && FABRICS_DB.standard['BIAX200'].sap === 'TBD'
-            ? pass('BIAX200 SAP = TBD (order number pending, not invented)')
-            : fail('BIAX200 SAP wrong', 'expected TBD'));
+        // Real SAPs from the Feb/2026 rev 23 list; sold as EA rolls.
+        r.push(FABRICS_DB.standard['BIAX200'] && FABRICS_DB.standard['BIAX200'].sap === '29238494'
+            && FABRICS_DB.standard['BIAX200'].unit === 'EA' && FABRICS_DB.standard['BIAX200'].kgPerUnit === 5
+            ? pass('BIAX200 = SAP 29238494, EA, 5kg/roll')
+            : fail('BIAX200 catalog wrong', 'expected 29238494 / EA / 5'));
+        r.push(FABRICS_DB.standard['BIAX450'] && FABRICS_DB.standard['BIAX450'].sap === '29219676'
+            && FABRICS_DB.standard['BIAX450'].unit === 'EA' && FABRICS_DB.standard['BIAX450'].kgPerUnit === 20
+            ? pass('BIAX450 = SAP 29219676, EA, 20kg/roll')
+            : fail('BIAX450 catalog wrong', 'expected 29219676 / EA / 20'));
         console.groupEnd();
         return tally(r);
     }
