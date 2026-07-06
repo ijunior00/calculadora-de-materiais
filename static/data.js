@@ -121,8 +121,8 @@ const BLADE_MATERIAL_MAP = {
         // overlap comes from the norm rule (biax = 5% of gsm) via computeFiberOverlap,
         // so no overlap value is invented. SAP is still 'TBD' (pending REV06) — the
         // fabric computes weight/area/qty; only the order number is outstanding.
-        { materialType: 'BIAX',  gsm: '450',  label: 'BIAX ±45° 450 (SAP TBD)' },
-        { materialType: 'BIAX',  gsm: '200',  label: 'BIAX ±45° 200 (SAP TBD)' },
+        { materialType: 'BIAX',  gsm: '450',  label: 'BIAX ±45° 450 (rolo)' },
+        { materialType: 'BIAX',  gsm: '200',  label: 'BIAX ±45° 200 (rolo)' },
         { materialType: 'BIAX',  gsm: '1200', label: 'BIAX ±80° 1200 / T80' },
     ],
     'V150': [
@@ -247,8 +247,11 @@ const FABRICS_DB = {
     standard: {
         // V136 ex-pending biax (REV05 Blades_Fabrics F11/F12/F13). Overlap comes
         // from the norm formula (5% of gsm); SAP is TBD until REV06 provides it.
-        'BIAX200':   { sap: 'TBD',       desc: 'BIAX +/-45 200 g/m2 E-GLASS (SAP pending REV06)', unit: 'KG', kgPerUnit: 1 },
-        'BIAX450':   { sap: 'TBD',       desc: 'BIAX +/-45 450 g/m2 E-GLASS (SAP pending REV06)', unit: 'KG', kgPerUnit: 1 },
+        // Sold as ROLLS (EA), not by the kg. kgPerUnit = roll weight, so the
+        // divide formula qty = ceil(weightKg / kgPerUnit) yields whole rolls.
+        // Source: List of tools and materials Feb/2026 rev 23.
+        'BIAX200':   { sap: '29238494',  desc: 'FABRIC BIAX 220 +45/-45 ST (roll 19m/5kg)',   unit: 'EA', kgPerUnit: 5 },
+        'BIAX450':   { sap: '29219676',  desc: 'FGE806-A GE 450 +45/-45 HD (roll 35m/20kg)',  unit: 'EA', kgPerUnit: 20 },
         'BIAX600':   { sap: 'S096476',   desc: 'BIAX 600G/M2 GLASS FABRIC',          unit: 'KG', kgPerUnit: 1 },
         'BIAX936':   { sap: '29009736',  desc: 'BIAX 936GSM 127CM STABILIZED',       unit: 'KG', kgPerUnit: 1 },
         'BIAX1000':  { sap: '29281859',  desc: 'FABRIC,E-GLASS,BIAX +/-45,1000 g/m2',unit: 'KG', kgPerUnit: 1 },
