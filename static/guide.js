@@ -18,6 +18,7 @@ let _guideTab = 'tree';
 let _guideDamageFilter = '';
 let _guideRepairQuery = '';
 let _guideRepairOpen = '';
+let _guideRepairCat = 'all';
 let _repairsLoading = false;
 
 function openRepairGuide() {
@@ -60,11 +61,13 @@ function _guideRepairsBody() {
         _ensureRepairsLoaded();
         return `<div style="padding:24px;text-align:center;color:#64748b">Carregando manual de reparos…</div>`;
     }
+    const chip = (key, label) => `<button onclick="guideRepairCat('${key}')" style="padding:5px 12px;border-radius:16px;border:1px solid ${_guideRepairCat===key?'#143a5f':'#cbd5e1'};background:${_guideRepairCat===key?'#143a5f':'#fff'};color:${_guideRepairCat===key?'#fff':'#475569'};font-size:0.76rem;font-weight:700;cursor:pointer">${label}</button>`;
     return `
         <input id="guide-repair-input" type="text" value="${_guideRepairQuery.replace(/"/g,'&quot;')}"
-            placeholder="Buscar reparo: código, nome ou palavra (ex: upstand, void, TE, 6.4.3)…"
+            placeholder="Buscar: código, nome ou palavra (ex: upstand, void, TE, 6.4.3)…"
             oninput="guideRepairSearch(this.value)"
-            style="width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:0.9rem;margin-bottom:12px">
+            style="width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:0.9rem;margin-bottom:10px">
+        <div style="display:flex;gap:6px;margin-bottom:12px">${chip('all','Todos')}${chip('Reparo','Reparos')}${chip('Guideline','Guidelines')}</div>
         <div id="guide-repair-results"></div>`;
 }
 
@@ -73,6 +76,7 @@ function _renderRepairResults() {
     if (!box || typeof window.REPAIRS_DB === 'undefined') return;
     const q = _guideRepairQuery.trim().toLowerCase();
     let list = window.REPAIRS_DB;
+    if (_guideRepairCat !== 'all') list = list.filter(r => r.category === _guideRepairCat);
     if (q) {
         const terms = q.split(/\s+/);
         list = list.filter(r => {
@@ -95,7 +99,7 @@ function _renderRepairResults() {
         return `
         <div style="border:1px solid #e2e8f0;border-radius:10px;padding:11px 13px;margin-bottom:8px;background:#fff">
             <div onclick="guideRepairToggle('${r.code}')" style="cursor:pointer;display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
-                <div><span style="font-weight:800;color:#143a5f">${r.code}</span> <span style="font-weight:600">${r.title}</span></div>
+                <div><span style="font-weight:800;color:#143a5f">${r.code}</span> <span style="font-weight:600">${r.title}</span>${r.category === 'Guideline' ? ' <span style="font-size:0.64rem;font-weight:700;color:#7c3aed;background:#ede9fe;border-radius:5px;padding:1px 6px;vertical-align:middle">GUIDELINE</span>' : ''}</div>
                 <div style="display:flex;gap:6px;align-items:center;white-space:nowrap">${_repairBadge(r.classification)}<i class="bi bi-chevron-${open ? 'up' : 'down'}" style="color:#94a3b8"></i></div>
             </div>
             ${bodyHtml}
@@ -105,6 +109,7 @@ function _renderRepairResults() {
 
 function guideRepairSearch(v) { _guideRepairQuery = v; _guideRepairOpen = ''; _renderRepairResults(); }
 function guideRepairToggle(code) { _guideRepairOpen = (_guideRepairOpen === code ? '' : code); _renderRepairResults(); }
+function guideRepairCat(c) { _guideRepairCat = c; _guideRepairOpen = ''; renderRepairGuide(); }
 function guideSetDamage(v) { _guideDamageFilter = v; renderRepairGuide(); }
 
 function _guideBadge(level) {
