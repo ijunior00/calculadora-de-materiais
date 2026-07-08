@@ -20,6 +20,7 @@ let _guideRepairQuery = '';
 let _guideRepairOpen = '';
 let _guideRepairCat = 'all';
 let _repairsLoading = false;
+let _guideProfileKey = '';
 
 function openRepairGuide() {
     let host = document.getElementById('repair-guide-modal');
@@ -110,6 +111,63 @@ function _renderRepairResults() {
 function guideRepairSearch(v) { _guideRepairQuery = v; _guideRepairOpen = ''; _renderRepairResults(); }
 function guideRepairToggle(code) { _guideRepairOpen = (_guideRepairOpen === code ? '' : code); _renderRepairResults(); }
 function guideRepairCat(c) { _guideRepairCat = c; _guideRepairOpen = ''; renderRepairGuide(); }
+
+// ── Layup profile by radius (CIM4271) ───────────────────────────────────────
+const PROFILE_COLORS = ['#2563eb', '#f59e0b', '#16a34a', '#dc2626', '#7c3aed'];
+
+function _guideProfileBody() {
+    if (typeof window.CIM_PROFILES === 'undefined') {
+        return `<div style="padding:20px;text-align:center;color:#94a3b8">Dados de perfil indisponíveis.</div>`;
+    }
+    const keys = Object.keys(window.CIM_PROFILES);
+    if (!_guideProfileKey || !window.CIM_PROFILES[_guideProfileKey]) _guideProfileKey = keys[0];
+    const sel = `<select onchange="guideProfileSelect(this.value)" style="width:100%;padding:9px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:0.9rem;margin-bottom:12px">` +
+        keys.map(k => `<option value="${k}"${k === _guideProfileKey ? ' selected' : ''}>${k.trim()}</option>`).join('') + `</select>`;
+    return sel + `<div>${_profileChartSVG(window.CIM_PROFILES[_guideProfileKey])}</div>
+        <div style="font-size:0.72rem;color:#94a3b8;margin-top:8px">Nº de camadas (plies) × raio da pá. Fonte: CIM4271 Preform Repair calculator v2.0.</div>`;
+}
+function guideProfileSelect(k) { _guideProfileKey = k; renderRepairGuide(); }
+
+function _profileChartSVG(profile) {
+    const W = 640, H = 300, L = 40, B = 34, T = 12, R = 12;
+    const pts = profile.points, series = profile.series;
+    const rs = pts.map(p => p.r);
+    const xMin = Math.min(...rs), xMax = Math.max(...rs);
+    let yMax = 0;
+    pts.forEach(p => series.forEach(s => { if (typeof p[s] === 'number') yMax = Math.max(yMax, p[s]); }));
+    yMax = Math.ceil((yMax || 1) / 5) * 5;
+    const xSpan = (xMax - xMin) || 1;
+    const px = r => L + (r - xMin) / xSpan * (W - L - R);
+    const py = v => H - B - (v / yMax) * (H - B - T);
+    let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;background:#fff;border:1px solid #e2e8f0;border-radius:8px" xmlns="http://www.w3.org/2000/svg">`;
+    // y gridlines + labels
+    for (let g = 0; g <= 5; g++) {
+        const v = yMax * g / 5, y = py(v);
+        svg += `<line x1="${L}" y1="${y.toFixed(1)}" x2="${W - R}" y2="${y.toFixed(1)}" stroke="#eef2f7"/>`;
+        svg += `<text x="${L - 5}" y="${(y + 3).toFixed(1)}" font-size="9" fill="#94a3b8" text-anchor="end" font-family="Inter">${v}</text>`;
+    }
+    // x ticks — ~6 evenly spaced, radius in metres (1 decimal)
+    const nTicks = 6;
+    for (let i = 0; i <= nTicks; i++) {
+        const r = xMin + (xMax - xMin) * i / nTicks, x = px(r);
+        svg += `<line x1="${x.toFixed(1)}" y1="${H - B}" x2="${x.toFixed(1)}" y2="${H - B + 3}" stroke="#cbd5e1"/>`;
+        svg += `<text x="${x.toFixed(1)}" y="${H - B + 14}" font-size="8.5" fill="#94a3b8" text-anchor="middle" font-family="Inter">${(r / 1000).toFixed(1)}</text>`;
+    }
+    svg += `<text x="${(L + W - R) / 2}" y="${H - 4}" font-size="9.5" fill="#64748b" text-anchor="middle" font-family="Inter">Raio (m) →</text>`;
+    svg += `<text x="12" y="${(H) / 2}" font-size="9.5" fill="#64748b" text-anchor="middle" font-family="Inter" transform="rotate(-90 12 ${H / 2})">Nº de camadas ↑</text>`;
+    // series lines
+    series.forEach((s, si) => {
+        const color = PROFILE_COLORS[si % PROFILE_COLORS.length];
+        const line = pts.filter(p => typeof p[s] === 'number').map(p => `${px(p.r).toFixed(1)},${py(p[s]).toFixed(1)}`).join(' ');
+        svg += `<polyline points="${line}" fill="none" stroke="${color}" stroke-width="2"/>`;
+        pts.forEach(p => { if (typeof p[s] === 'number') svg += `<circle cx="${px(p.r).toFixed(1)}" cy="${py(p[s]).toFixed(1)}" r="2.4" fill="${color}"/>`; });
+    });
+    svg += `</svg>`;
+    // legend
+    const legend = `<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:8px">` +
+        series.map((s, si) => `<span style="display:inline-flex;align-items:center;gap:5px;font-size:0.76rem;color:#334155"><span style="width:11px;height:11px;border-radius:3px;background:${PROFILE_COLORS[si % PROFILE_COLORS.length]}"></span>${s}</span>`).join('') + `</div>`;
+    return svg + legend;
+}
 function guideSetDamage(v) { _guideDamageFilter = v; renderRepairGuide(); }
 
 function _guideBadge(level) {
@@ -195,6 +253,7 @@ function renderRepairGuide() {
     const tabs = [
         { key: 'tree',    label: 'Árvore de decisão' },
         { key: 'repairs', label: 'Reparos (SST)' },
+        { key: 'profile', label: 'Perfil por raio' },
         { key: 'subs',    label: 'Substituições' },
         { key: 'rules',   label: 'Regras de campo' },
     ];
@@ -204,6 +263,7 @@ function renderRepairGuide() {
             border-radius:8px">${t.label}</button>`).join('');
     const body = _guideTab === 'tree'    ? _guideTreeBody()
                : _guideTab === 'repairs' ? _guideRepairsBody()
+               : _guideTab === 'profile' ? _guideProfileBody()
                : _guideTab === 'subs'    ? _guideSubsBody()
                : _guideRulesBody();
     host.innerHTML = `
