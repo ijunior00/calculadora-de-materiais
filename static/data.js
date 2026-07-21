@@ -136,6 +136,21 @@ const BLADE_MATERIAL_MAP = {
         { materialType: 'SPL',   gsm: '',     label: 'SPL' },
         { materialType: 'CFM50', gsm: '',     label: 'CFM' },
     ],
+    // V162 (Vidar F3) — offshore HM-glass blade. Uses the same HM fabric
+    // catalog as V150 (confirmed against real V162 estimates, which the field
+    // used with the HM fabrics). Refine here if the V162 drawings specify
+    // different HM fabrics. Drawing refs live in BLADE_DOCUMENT_REFERENCES.
+    'V162': [
+        { materialType: 'BIAX',  gsm: '600',  label: 'BIAX 600' },
+        { materialType: 'BIAX',  gsm: '1000', label: 'BIAX 1000' },
+        { materialType: 'BIAX',  gsm: '1200', label: 'BIAX 1200' },
+        { materialType: 'UD',    gsm: '1200', label: 'UD 1200' },
+        { materialType: 'TRIAX', gsm: '1200', label: 'TRIAX 1200' },
+        { materialType: 'CORE',  gsm: '',     label: 'CORE' },
+        { materialType: 'BALSA', gsm: '',     label: 'BALSA' },
+        { materialType: 'SPL',   gsm: '',     label: 'SPL' },
+        { materialType: 'CFM50', gsm: '',     label: 'CFM' },
+    ],
 };
 
 // ── BLADE_REFERENCE_FABRICS ───────────────────────────────────────────────────
@@ -161,7 +176,7 @@ const BLADE_REFERENCE_FABRICS = {
 
 const CHORD_REFERENCES = ['LE', 'TE', 'M.Web', 'TE.Web'];
 const BLADE_REGIONS = ['Root', 'Middle', 'Tip'];
-const BLADE_MODELS = ['V82', 'V90', 'V100', 'V110', 'V112', 'V136', 'V150'];
+const BLADE_MODELS = ['V82', 'V90', 'V100', 'V110', 'V112', 'V136', 'V150', 'V162'];
 
 // ============================================================
 // FABRIC ALIASES — shop-floor nicknames (Vestas "T" nomenclature)

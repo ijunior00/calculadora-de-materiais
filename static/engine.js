@@ -252,7 +252,9 @@ function computeFabricWeights(layupRows) {
  */
 function computeFabricsBOM(layupResult, bladeModel, repairSteps, bladeRegion) {
     const fabricWeights = computeFabricWeights(layupResult.layupRows);
-    const isV150 = bladeModel === 'V150';
+    // HM-glass blades use the HM fabric catalog (FABRICS_DB.V150).
+    // V150 and V162 (Vidar F3) are both HM blades.
+    const isV150 = bladeModel === 'V150' || bladeModel === 'V162';
     const factor = 1.2; // All standard fabrics have factor 1.2
     const infusionSteps = (repairSteps && repairSteps.Infusion) || 1;
 
