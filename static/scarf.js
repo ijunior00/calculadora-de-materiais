@@ -17,6 +17,9 @@ const SCARF = {
     chordRef: 'LE',
     custom: {},       // layerIndex -> { span, chord } overlap overrides
     rows: [],         // last computed rows
+    title: '',        // editable header line (damage / ticket description)
+    ops: {},          // layerIndex -> OP code (e.g. "280.1")
+    comments: {},     // layerIndex -> free-text comment
     // Drawing mode: 'normal' = standard top-view escalonamento (overlaps);
     // 'ramp' = angle-based scarf ramp side-view (inspired by CIM4271).
     mode: 'normal',
@@ -38,6 +41,17 @@ function scarfAngleStep() {
     const a = Math.max(0.5, Number(SCARF.angle) || 10) * Math.PI / 180;
     const t = Math.max(0.05, Number(SCARF.plyThk) || 1);
     return Math.max(1, Math.round(t / Math.tan(a)));
+}
+
+// Short shop-floor label matching the field table style: BX 600, TX 1200,
+// UD 1200, T80 1200 (alias wins when confirmed in FABRIC_ALIASES).
+function shortFabricLabel(l) {
+    if (!l || !l.materialType) return '-';
+    const t = l.materialType;
+    if (['CORE', 'SPL', 'CFM50', 'BALSA'].includes(t)) return t;
+    const alias = (typeof fabricAlias === 'function') ? fabricAlias(t, l.gsm) : '';
+    const short = alias || (t === 'BIAX' ? 'BX' : t === 'TRIAX' ? 'TX' : t);
+    return `${short} ${l.gsm || ''}`.trim();
 }
 
 function scarfDefaultOverlap(layer) {
@@ -70,16 +84,29 @@ function computeScarf() {
     const rows = [bod];
     const allZ1 = [bod.z1], allZ2 = [bod.z2], allX1 = [bod.x1], allX2 = [bod.x2];
 
+    const _num = v => (v !== undefined && v !== null && v !== '' && !isNaN(v)) ? Number(v) : null;
     layers.forEach((l, i) => {
         const def = scarfDefaultOverlap(l);
         const ov = SCARF.custom[i] || { span: def.span, chord: def.chord };
-        const z1 = Math.min(...allZ1) - ov.span;
-        const z2 = Math.max(...allZ2) + ov.span;
-        const x1 = Math.min(...allX1) - ov.chord;
-        const x2 = Math.max(...allX2) + ov.chord;
+        let z1 = Math.min(...allZ1) - ov.span;
+        let z2 = Math.max(...allZ2) + ov.span;
+        let x1 = Math.min(...allX1) - ov.chord;
+        let x2 = Math.max(...allX2) + ov.chord;
+        // Manual layup-geometry overrides (set in the "Adjust layup geometry"
+        // sheet) take priority over overlap expansion, same semantics as
+        // computeLayup: the override replaces the computed value AND feeds the
+        // accumulation. Overrides live in the layup frame (rstart = 0), so the
+        // spanwise ones get the absolute z0 offset here.
+        const ovR1 = _num(l.ovR1), ovR2 = _num(l.ovR2);
+        const ovX1 = _num(l.ovX1), ovX2 = _num(l.ovX2);
+        if (ovR1 !== null) z1 = z0 + ovR1;
+        if (ovR2 !== null) z2 = z0 + ovR2;
+        if (ovX1 !== null) x1 = ovX1;
+        if (ovX2 !== null) x2 = ovX2;
         rows.push({
             name: l.layerName || ('Layer ' + (i + 1)),
             type: (typeof labelFor === 'function') ? labelFor(l) : (l.materialType + (l.gsm || '')),
+            short: shortFabricLabel(l),
             isBod: false, idx: i,
             z1, z2, len: z2 - z1,
             x1, x2, wid: x2 - x1,
@@ -106,9 +133,15 @@ function computeScarfRamp() {
     const rows = [{ name: 'BOD', type: '-', isBod: true, z1: z0, z2: z0 + len, len,
                     step: '-', y0: 0, y1: t }];
     let curZ1 = z0, curZ2 = z0 + len, y = t;
+    const _num = v => (v !== undefined && v !== null && v !== '' && !isNaN(v)) ? Number(v) : null;
     layers.forEach((l, i) => {
         const step = SCARF.staggerByType ? scarfStaggerFor(l) : angleStep;
         curZ1 -= step; curZ2 += step;
+        // Manual spanwise overrides propagate into the ramp too (layup frame
+        // is rstart = 0, so add the absolute z0 offset).
+        const ovR1 = _num(l.ovR1), ovR2 = _num(l.ovR2);
+        if (ovR1 !== null) curZ1 = z0 + ovR1;
+        if (ovR2 !== null) curZ2 = z0 + ovR2;
         rows.push({
             name: l.layerName || ('Layer ' + (i + 1)),
             type: (typeof labelFor === 'function') ? labelFor(l) : (l.materialType + (l.gsm || '')),
@@ -133,6 +166,15 @@ function openScarf() {
     document.getElementById('m-step-name').textContent = 'Scarfing drawing';
     document.getElementById('m-step-count').textContent = 'Escalonamento';
     document.getElementById('m-scarf-z0').value = SCARF.z0 || '';
+    // Pre-compose the header line (editable) from what the user already typed.
+    if (!SCARF.title) {
+        SCARF.title = [
+            M.blade,
+            M.title || 'Repair',
+            M.cir ? 'Ticket ' + M.cir : '',
+            M.so ? 'SO ' + M.so : '',
+        ].filter(Boolean).join(' / ');
+    }
     renderScarfActionBar();
     renderScarf();
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -217,38 +259,49 @@ function renderScarf() {
     }
 }
 
+function onScarfTitle(v) { SCARF.title = v; }
+function onScarfOp(idx, v) { SCARF.ops[idx] = v.trim(); }
+function onScarfComment(idx, v) { SCARF.comments[idx] = v.trim(); }
+
+// Field-standard staggering table (mirrors the manual repair sheet):
+// Layers No. | OP | Type | Ov.Span | Ov.Chord | RI | RF | X1 | X2 | Comments | Length | Width
+// with the Defect (BOD) row first and an editable header line on top.
 function renderScarfTable(rows) {
     const wrap = document.getElementById('m-scarf-table');
-    const head = `
-        <div class="sc-row sc-head">
-            <div class="sc-c name">Layer</div>
-            <div class="sc-c">Z start</div>
-            <div class="sc-c">Z end</div>
-            <div class="sc-c">Ov.span</div>
-            <div class="sc-c">Ov.chord</div>
-            <div class="sc-c">Width</div>
-        </div>`;
-    const body = rows.map(r => {
+    const esc = s => String(s == null ? '' : s).replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    const heads = ['No.', 'OP', 'Type', 'Ov.Span', 'Ov.Chord', 'RI', 'RF', 'X1', 'X2', 'Comments', 'Length', 'Width'];
+    const headHtml = '<tr>' + heads.map(h => `<th>${h}</th>`).join('') + '</tr>';
+    const bodyHtml = rows.map(r => {
         if (r.isBod) {
-            return `<div class="sc-row bod">
-                <div class="sc-c name">BOD <span class="sc-sub">(damage)</span></div>
-                <div class="sc-c">${fmt(r.z1)}</div>
-                <div class="sc-c">${fmt(r.z2)}</div>
-                <div class="sc-c">—</div>
-                <div class="sc-c">—</div>
-                <div class="sc-c">${fmt(r.wid)}</div>
-            </div>`;
+            return `<tr class="sct-bod">
+                <td></td><td>Defect</td><td>-</td><td>—</td><td>—</td>
+                <td>${fmt(r.z1)}</td><td>${fmt(r.z2)}</td>
+                <td>${fmt(r.x1)}</td><td>${fmt(r.x2)}</td>
+                <td class="sct-com"></td>
+                <td>${fmt(r.len)}</td><td>${fmt(r.wid)}</td>
+            </tr>`;
         }
-        return `<div class="sc-row">
-            <div class="sc-c name"><span class="sc-ord">${r.order}</span> ${r.name}<span class="sc-sub">${r.type}</span></div>
-            <div class="sc-c">${fmt(r.z1)}</div>
-            <div class="sc-c">${fmt(r.z2)}</div>
-            <div class="sc-c"><input type="number" class="sc-ov" min="0" value="${r.ovSpan}" onchange="onScarfOverlap(${r.idx},'span',this.value)"></div>
-            <div class="sc-c"><input type="number" class="sc-ov" min="0" value="${r.ovChord}" onchange="onScarfOverlap(${r.idx},'chord',this.value)"></div>
-            <div class="sc-c">${fmt(r.wid)}</div>
-        </div>`;
+        return `<tr>
+            <td><span class="sc-ord">${r.order}</span></td>
+            <td><input type="text" class="sct-in op" value="${esc(SCARF.ops[r.idx])}" placeholder="—" onchange="onScarfOp(${r.idx},this.value)"></td>
+            <td class="sct-type">${r.short}</td>
+            <td><input type="number" class="sc-ov" min="0" value="${r.ovSpan}" onchange="onScarfOverlap(${r.idx},'span',this.value)"></td>
+            <td><input type="number" class="sc-ov" min="0" value="${r.ovChord}" onchange="onScarfOverlap(${r.idx},'chord',this.value)"></td>
+            <td>${fmt(r.z1)}</td><td>${fmt(r.z2)}</td>
+            <td>${fmt(r.x1)}</td><td>${fmt(r.x2)}</td>
+            <td class="sct-com"><input type="text" class="sct-in com" value="${esc(SCARF.comments[r.idx])}" placeholder="—" onchange="onScarfComment(${r.idx},this.value)"></td>
+            <td>${fmt(r.len)}</td><td>${fmt(r.wid)}</td>
+        </tr>`;
     }).join('');
-    wrap.innerHTML = head + body;
+    wrap.innerHTML = `
+        <input type="text" class="sct-title" value="${esc(SCARF.title)}" onchange="onScarfTitle(this.value)"
+            placeholder="Título do reparo (blade / dano / ticket)…" title="Linha de título do relatório — editável">
+        <div class="sct-wrap">
+            <table class="sct">
+                <thead>${headHtml}</thead>
+                <tbody>${bodyHtml}</tbody>
+            </table>
+        </div>`;
 }
 
 // Nested-rectangle top-view (Z horizontal, X vertical). BOD innermost.
@@ -363,8 +416,8 @@ function buildCadScript(rows) {
         lines.push(`${r.z2},${r.x2}`);
         lines.push(`${r.z1},${r.x2}`);
         lines.push('C');                       // close polyline
-        // label near the layer's start corner
-        const label = (r.isBod ? 'BOD' : `${r.order}-${r.name}`).replace(/\s+/g, '_');
+        // label near the layer's start corner — OP code wins when filled
+        const label = (r.isBod ? 'BOD' : `${r.order}-${SCARF.ops[r.idx] || r.name}`).replace(/\s+/g, '_');
         lines.push('-TEXT');
         lines.push(`${r.z1},${r.x2}`);         // insertion point
         lines.push('30');                      // text height
@@ -417,6 +470,7 @@ function scarfExportPayload() {
         z0: SCARF.z0 || 0, chord_ref: SCARF.chordRef,
         service_order: M.so, cir: M.cir,
         mode: SCARF.mode,
+        title: SCARF.title || '',
     };
     if (SCARF.mode === 'ramp') {
         meta.angle = SCARF.angle; meta.ply_thickness = SCARF.plyThk;
@@ -431,11 +485,16 @@ function scarfExportPayload() {
     const rows = computeScarf();
     return {
         meta,
-        columns: ['Layer', 'Fabric', 'Z start', 'Z end', 'Length', 'X1', 'X2', 'Width', 'Ov.span', 'Ov.chord', 'Order'],
+        columns: ['No.', 'OP', 'Type', 'Ov.Span', 'Ov.Chord', 'RI', 'RF', 'X1', 'X2', 'Comments', 'Length', 'Width'],
         rows: rows.map(r => [
-            r.isBod ? 'BOD' : r.name, r.type,
-            r.z1, r.z2, r.len, r.x1, r.x2, r.wid,
-            r.ovSpan, r.ovChord, r.order,
+            r.isBod ? '' : r.order,
+            r.isBod ? 'Defect' : (SCARF.ops[r.idx] || ''),
+            r.isBod ? '-' : r.short,
+            r.isBod ? '' : r.ovSpan,
+            r.isBod ? '' : r.ovChord,
+            r.z1, r.z2, r.x1, r.x2,
+            r.isBod ? '' : (SCARF.comments[r.idx] || ''),
+            r.len, r.wid,
         ]),
     };
 }

@@ -424,7 +424,10 @@ function renderLayerTable() {
                     <button class="btn-move" title="Move down" onclick="moveLayerDown(${idx})" ${idx===layerRows.length-1 || isLocked ? 'disabled' : ''}><i class="bi bi-chevron-down"></i></button>
                 </div>
             </td>
-            <td><button class="btn-remove-row" onclick="removeLayerRow(${idx})" ${isLocked ? 'disabled' : ''}><i class="bi bi-x-circle"></i></button></td>
+            <td style="white-space:nowrap">
+                <button class="btn-move" title="Duplicate this layer ×N" onclick="duplicateLayerRow(${idx})" ${isLocked || !row.materialType ? 'disabled' : ''}><i class="bi bi-copy"></i></button>
+                <button class="btn-remove-row" onclick="removeLayerRow(${idx})" ${isLocked ? 'disabled' : ''}><i class="bi bi-x-circle"></i></button>
+            </td>
         `;
         tbody.appendChild(tr);
     });
@@ -477,9 +480,33 @@ function updateLayerMaterial(idx, combinedVal) {
     renderLayerTable();
 }
 
+// How many rows Add Layer / duplicate insert at once (the ×N field).
+function _layerAddQty() {
+    const el = document.getElementById('layerAddQty');
+    return Math.max(1, Math.min(20, parseInt(el && el.value) || 1));
+}
+
 function addLayerRow() {
     if (layerDataLocked) return;
-    layerRows.push({layerName: `Layer ${layerRows.length+1}`, materialType:'', gsm:'', order:''});
+    const n = _layerAddQty();
+    for (let k = 0; k < n; k++) {
+        layerRows.push({layerName: `Layer ${layerRows.length+1}`, materialType:'', gsm:'', order:''});
+    }
+    renderLayerTable();
+    recalculateLayup();
+}
+
+// Duplicate a configured row ×N (same material/gsm), inserted right after it.
+function duplicateLayerRow(idx) {
+    if (layerDataLocked) return;
+    const src = layerRows[idx];
+    if (!src) return;
+    const n = _layerAddQty();
+    const copies = Array.from({length: n}, () => ({
+        layerName: '', materialType: src.materialType, gsm: src.gsm, order: src.order,
+    }));
+    layerRows.splice(idx + 1, 0, ...copies);
+    layerRows.forEach((l, i) => { if (!l.layerName) l.layerName = `Layer ${i + 1}`; });
     renderLayerTable();
     recalculateLayup();
 }

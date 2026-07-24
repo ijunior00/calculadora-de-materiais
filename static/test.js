@@ -583,6 +583,30 @@
         return tally(r);
     }
 
+    function testScarfHonorsOverrides() {
+        console.group('Test 20: escalonamento honors manual geometry overrides');
+        const r = [];
+        // computeScarf lives in scarf.js (mobile page); on the desktop page it
+        // is absent — report a skip instead of failing.
+        if (typeof computeScarf === 'undefined' || typeof M === 'undefined') {
+            r.push(pass('skipped (scarf.js/mobile not loaded on this page)'));
+        } else {
+            const savedLayers = M.layers, savedLen = M.length, savedWid = M.width, savedZ0 = SCARF.z0;
+            M.length = 500; M.width = 60; SCARF.z0 = 40000;
+            M.layers = [
+                { layerName: 'L1', materialType: 'BIAX', gsm: '600' },
+                { layerName: 'L2', materialType: 'TRIAX', gsm: '1200', ovX1: 60, ovX2: 120 },
+            ];
+            const rows = computeScarf().filter(x => !x.isBod);
+            r.push(assertEq('layer2 x1 honors ovX1=60', rows[1].x1, 60, 0));
+            r.push(assertEq('layer2 x2 honors ovX2=120', rows[1].x2, 120, 0));
+            r.push(assertEq('layer2 width = 60 (from overrides)', rows[1].wid, 60, 0));
+            M.layers = savedLayers; M.length = savedLen; M.width = savedWid; SCARF.z0 = savedZ0;
+        }
+        console.groupEnd();
+        return tally(r);
+    }
+
     // ── Main runner ───────────────────────────────────────────────────────────
 
     window.runBOMTests = function () {
@@ -608,6 +632,7 @@
             testRepairDayEstimator,
             testFiberOverlapNorm,
             testRepairGuideData,
+            testScarfHonorsOverrides,
         ];
         let total = { pass: 0, fail: 0 };
         for (const suite of suites) {
