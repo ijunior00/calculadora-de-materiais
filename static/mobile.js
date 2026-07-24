@@ -227,8 +227,11 @@ function renderRefFabrics() {
         </div>`;
 }
 
+let _layerQty = 1; // how many copies the layer sheet adds per tap (1-20)
+
 function openLayerSheet() {
     if (!M.blade) { toast('Select a blade model first.', 'err'); return; }
+    _layerQty = 1;
     const allowed = BLADE_MATERIAL_MAP[M.blade] || [];
     const opts = allowed.map((m, i) => {
         const alias = (typeof fabricAlias === 'function') ? fabricAlias(m.materialType, m.gsm) : '';
@@ -249,10 +252,23 @@ function openLayerSheet() {
         <div class="m-sheet">
             <h3>Add layer — ${M.blade}</h3>
             <div class="sheet-sub">Materials filtered for this blade model (REV05).</div>
+            <div class="m-row-between" style="margin:4px 0 10px;padding:8px 10px;background:#f1f5f9;border-radius:10px">
+                <span style="font-size:0.84rem;font-weight:600">Quantidade <span class="hint">(camadas por toque)</span></span>
+                <div class="m-stepper">
+                    <button class="s-btn" onclick="changeLayerQty(-1)" aria-label="decrease">−</button>
+                    <span class="s-val" id="m-layer-qty">1</span>
+                    <button class="s-btn" onclick="changeLayerQty(1)" aria-label="increase">+</button>
+                </div>
+            </div>
             ${opts}
             <button class="sheet-cancel" onclick="closeLayerSheet()">Cancel</button>
         </div>`;
     document.body.appendChild(sheet);
+}
+function changeLayerQty(delta) {
+    _layerQty = Math.max(1, Math.min(20, _layerQty + delta));
+    const el = document.getElementById('m-layer-qty');
+    if (el) el.textContent = _layerQty;
 }
 function closeLayerSheet() {
     const s = document.getElementById('m-layer-sheet');
@@ -262,9 +278,13 @@ function addLayer(allowedIdx) {
     const allowed = BLADE_MATERIAL_MAP[M.blade] || [];
     const m = allowed[allowedIdx];
     if (!m) return;
-    M.layers.push({ layerName: `Layer ${M.layers.length + 1}`, materialType: m.materialType, gsm: m.gsm });
+    const n = _layerQty;
+    for (let k = 0; k < n; k++) {
+        M.layers.push({ layerName: `Layer ${M.layers.length + 1}`, materialType: m.materialType, gsm: m.gsm });
+    }
     closeLayerSheet();
     renderLayers();
+    if (n > 1) toast(`${n} camadas de ${m.label} adicionadas.`, 'ok');
 }
 function removeLayer(i) {
     M.layers.splice(i, 1);
@@ -294,7 +314,7 @@ function openLayupAdjustSheet() {
     const rowHtml = rows.map((row, i) => {
         const ov = row.overridden || {};
         const cell = (field, val, isOv) =>
-            `<input type="number" step="any" class="adj-input${isOv ? ' ov' : ''}" value="${Math.round(val)}"
+            `<input type="number" step="any" id="adj-${i}-${field}" class="adj-input${isOv ? ' ov' : ''}" value="${Math.round(val)}"
                 onchange="setLayupOverride(${i},'${field}',this.value)">`;
         return `
         <div class="adj-row">
@@ -304,7 +324,7 @@ function openLayupAdjustSheet() {
                 <label>R2${cell('ovR2', row.r2, ov.r2)}</label>
                 <label>X1${cell('ovX1', row.h1, ov.x1)}</label>
                 <label>X2${cell('ovX2', row.h2, ov.x2)}</label>
-                <div class="adj-derived">L ${Math.round(row.length)} · W ${Math.round(row.width)} mm</div>
+                <div class="adj-derived" id="adj-${i}-der">L ${Math.round(row.length)} · W ${Math.round(row.width)} mm</div>
             </div>
         </div>`;
     }).join('');
@@ -332,14 +352,37 @@ function setLayupOverride(stackIdx, field, value) {
     const layer = stack[stackIdx];
     if (!layer) return;
     layer[field] = (value === '' || value === null || isNaN(value)) ? undefined : Number(value);
-    // Re-render the sheet so derived L/W and downstream rows update.
-    closeLayupAdjustSheet();
-    openLayupAdjustSheet();
+    refreshLayupAdjustSheet();
 }
+
+// In-place refresh: recompute the layup and patch only the affected DOM —
+// derived L/W texts, override highlights, and the values of NON-focused
+// inputs on downstream rows. No sheet rebuild, focus preserved (fast even
+// with many layers).
+function refreshLayupAdjustSheet() {
+    const sheet = document.getElementById('m-adjust-sheet');
+    if (!sheet) return;
+    const stack = M.layers.filter(l => l.materialType);
+    const damageData = { rstart: 0, rend: M.length, x1: 0, x2: M.width, chordRef: 'LE' };
+    const rows = computeLayup(damageData, stack).layupRows.filter(r => !r.isBod);
+    const focused = document.activeElement;
+    rows.forEach((row, i) => {
+        const vals = { ovR1: row.r1, ovR2: row.r2, ovX1: row.h1, ovX2: row.h2 };
+        const ovFlags = { ovR1: row.overridden.r1, ovR2: row.overridden.r2, ovX1: row.overridden.x1, ovX2: row.overridden.x2 };
+        for (const f of ['ovR1', 'ovR2', 'ovX1', 'ovX2']) {
+            const inp = document.getElementById(`adj-${i}-${f}`);
+            if (!inp) continue;
+            if (inp !== focused) inp.value = Math.round(vals[f]);
+            inp.classList.toggle('ov', !!ovFlags[f]);
+        }
+        const der = document.getElementById(`adj-${i}-der`);
+        if (der) der.textContent = `L ${Math.round(row.length)} · W ${Math.round(row.width)} mm`;
+    });
+}
+
 function resetLayupOverridesMobile() {
     M.layers.forEach(l => { delete l.ovR1; delete l.ovR2; delete l.ovX1; delete l.ovX2; });
-    closeLayupAdjustSheet();
-    openLayupAdjustSheet();
+    refreshLayupAdjustSheet();
     toast('Overrides reset.', 'ok');
 }
 

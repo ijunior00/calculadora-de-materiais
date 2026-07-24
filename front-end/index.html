@@ -287,7 +287,13 @@
                     <tbody id="layerTableBody">
                     </tbody>
                 </table>
-                <button id="addLayerBtn" class="btn-secondary" onclick="addLayerRow()"><i class="bi bi-plus-circle"></i> Add Layer</button>
+                <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+                    <button id="addLayerBtn" class="btn-secondary" style="margin-top:0" onclick="addLayerRow()"><i class="bi bi-plus-circle"></i> Add Layer</button>
+                    <label style="display:flex;align-items:center;gap:6px;font-size:0.82rem;color:#475569" title="Quantas camadas adicionar/duplicar por clique">
+                        ×<input type="number" id="layerAddQty" value="1" min="1" max="20" style="width:56px;padding:6px 8px;border:1px solid #cbd5e1;border-radius:6px;text-align:center">
+                    </label>
+                    <span style="font-size:0.75rem;color:#94a3b8">vale para "Add Layer" e para o botão duplicar <i class="bi bi-copy"></i> de cada linha</span>
+                </div>
             </div>
 
             <!-- Reference-only fabrics from REV05 Blades_Fabrics (no SAP / not calculable yet) -->
