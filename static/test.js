@@ -135,15 +135,24 @@
     }
 
     function testV150HMUnitsAreKG() {
-        console.group('Test 3: V150 HM fabrics show unit=KG (REV05 — not EA rolls)');
+        // MX catalog (Formato_consumos_palas): BIAX1000/UD1200/TRIAX1200 HM are now
+        // EA rolls (29234525/29234519/29234528, ~20 kg each); BIAX600/BIAX1200 HM
+        // keep their BR numbers per KG.
+        console.group('Test 3: V150 HM fabrics use MX catalog units (KG or EA roll)');
         const b = bom(V150_TIP_5D);
-        const hmSAPs = ['29116888','29464588','29110146','29110162','29210017'];
+        const expected = {
+            '29116888': 'KG', '29110146': 'KG',                     // unchanged BR
+            '29234525': 'EA', '29234519': 'EA', '29234528': 'EA',   // MX rolls
+        };
         const r = [];
         for (const item of b.fabricItems) {
-            if (hmSAPs.includes(item.sap)) {
-                if (item.unit === 'KG') r.push(pass(`${item.sap} (${item.material}) unit=KG`));
-                else                    r.push(fail(`${item.sap} unit=${item.unit}`, 'expected KG'));
+            if (expected[item.sap]) {
+                if (item.unit === expected[item.sap]) r.push(pass(`${item.sap} (${item.material}) unit=${item.unit}`));
+                else r.push(fail(`${item.sap} unit=${item.unit}`, `expected ${expected[item.sap]}`));
             }
+        }
+        for (const old of ['29464588', '29110162', '29210017']) {
+            r.push(assertItemAbsent(`old BR HM SAP ${old} absent`, b.fabricItems, old));
         }
         // BIAX936 is in the layup but not in V150 HM catalog → must appear as CATALOG MISMATCH
         const mismatch = b.fabricItems.find(i => i.sap === 'CATALOG MISMATCH' && i.material === 'BIAX936');
@@ -190,8 +199,9 @@
         const b = bom(V90_MID_3D);
         const r = [
             assertItemPresent('BIAX600 → S096476',  b.fabricItems, 'S096476'),
-            assertItemPresent('TRIAX1200 → 29017700', b.fabricItems, '29017700'),
-            // Old SAPs must be gone
+            // MX catalog: TRIAX1200 E now the 20kg roll 29250986 (BR was 29017700)
+            assertItemPresent('TRIAX1200 → 29250986 (MX roll)', b.fabricItems, '29250986'),
+            assertItemAbsent('Old BR TRIAX1200 29017700 absent', b.fabricItems, '29017700'),
             assertItemAbsent('Old BIAX600 SAP 60017462 absent', b.fabricItems, '60017462'),
             assertItemAbsent('Old TRIAX1200 SAP S096483 absent', b.fabricItems, 'S096483'),
         ];
@@ -217,35 +227,50 @@
     }
 
     function testConsumablesSAPs() {
-        console.group('Test 8: CONSUMABLES SAPs updated to REV05 values');
+        // MX catalog (Formato_consumos_palas) replaces the BR vacuum-consumable
+        // numbers. Note: 29225928 was the pre-REV05 "old" transport mesh — it is
+        // the number Mexico actually consumes, so it is now the CURRENT one.
+        console.group('Test 8: CONSUMABLES SAPs match the MX catalog');
         const b = bom(V150_TIP_5D);
         const cons = b.consumItems;
         const r = [
-            assertItemPresent('Release film → 300023948',  cons, '300023948'),
-            assertItemPresent('Breathing cloth → S096512', cons, 'S096512'),
-            assertItemPresent('Bagging film → 29017040',   cons, '29017040'),
-            assertItemPresent('Transport mesh → 260710',   cons, '260710'),
-            // Old SAPs must be gone
-            assertItemAbsent('Old release film 29232804 absent',    cons, '29232804'),
-            assertItemAbsent('Old breathing cloth 29227350 absent', cons, '29227350'),
-            assertItemAbsent('Old bagging film 29232945 absent',    cons, '29232945'),
-            assertItemAbsent('Old transport mesh 29225928 absent',  cons, '29225928'),
+            assertItemPresent('Release film → S096521 (MX)',    cons, 'S096521'),
+            assertItemPresent('Breatex → 29227309 (MX)',        cons, '29227309'),
+            assertItemPresent('Bagging film → 29232949 (MX)',   cons, '29232949'),
+            assertItemPresent('Transport mesh → 29225928 (MX)', cons, '29225928'),
+            assertItemPresent('Peel ply → 29232947 (MX)',       cons, '29232947'),
+            // Old BR numbers must be gone
+            assertItemAbsent('Old BR release film 300023948 absent',  cons, '300023948'),
+            assertItemAbsent('Old BR breathing cloth S096512 absent', cons, 'S096512'),
+            assertItemAbsent('Old BR bagging film 29017040 absent',   cons, '29017040'),
+            assertItemAbsent('Old BR transport mesh 260710 absent',   cons, '260710'),
+            assertItemAbsent('Old BR peel ply 29232963 absent',       cons, '29232963'),
         ];
         console.groupEnd();
         return tally(r);
     }
 
     function testConsumablesUnitsAreM2() {
-        console.group('Test 9: Vacuum consumables report in M\u00b2 (REV05 unit change)');
+        // MX units (column K of the consumption log): films per LINEAR METRE of
+        // their roll width, breatex/mesh/peel ply per EA roll.
+        console.group('Test 9: Vacuum consumables use MX units (M linear / EA roll)');
         const b = bom(V150_TIP_5D);
         const cons = b.consumItems;
         const r = [];
-        for (const [sap, name] of [['300023948','Release film'],['S096512','Breathing cloth'],['29017040','Bagging film'],['260710','Transport mesh']]) {
+        for (const [sap, name, unit] of [
+            ['S096521', 'Release film', 'M'],
+            ['29227309', 'Breatex', 'EA'],
+            ['29232949', 'Bagging film', 'M'],
+            ['29225928', 'Transport mesh', 'EA'],
+            ['29232947', 'Peel ply', 'EA'],
+        ]) {
             const item = findItem(cons, sap);
             if (item) {
-                r.push(item.unit === 'M2'
-                    ? pass(`${name} unit=M2`)
-                    : fail(`${name} unit=${item.unit}`, 'expected M2'));
+                r.push(item.unit === unit
+                    ? pass(`${name} unit=${unit}`)
+                    : fail(`${name} unit=${item.unit}`, `expected ${unit}`));
+            } else {
+                r.push(fail(`${name} (${sap}) not found in BOM`, ''));
             }
         }
         console.groupEnd();
@@ -290,10 +315,11 @@
         // cfm50_mass = 3.508 * 1.5 * 0.05 = 0.263 kg
         // qty = ceil(0.263 * 1 * 1.3 / 4) = ceil(0.0855) = 1 kit
         const b = bom(V150_TIP_5D);
-        const prime = findItem(b.chemItems, '29276912');
+        // MX catalog: Prime 37 is 29237987 (BR was 29276912)
+        const prime = findItem(b.chemItems, '29237987');
         const r = [];
         if (!prime) {
-            r.push(fail('PRIME 37 item not found', '29276912'));
+            r.push(fail('PRIME 37 item not found', '29237987'));
         } else {
             r.push(prime.qty <= 3
                 ? pass(`PRIME 37 qty=${prime.qty} KIT (new formula — old gave 5+)`)

@@ -362,3 +362,31 @@ Constantes em `REPAIR_DAY_RULES` (data.js). Interno/externo vem de um toggle exp
 
 ### Referências de desenho por versão de pá
 `BLADE_DOCUMENT_REFERENCES` (22 versões) — consulta independente do modelo do BOM. Aparece opcionalmente no relatório PDF/Excel.
+
+### Catálogo México (Formato_consumos_palas.xlsx)
+
+A operação migrou do Brasil para o México; o log de consumo MX (2.223 linhas, 153 itens) foi cruzado com o catálogo e os números abaixo foram substituídos (preferindo o novo NUM ITEM do México e respeitando a unidade da coluna K). Nome em inglês prevalece quando o mesmo número tinha grafias diferentes.
+
+| Material | BR (antigo) | MX (novo) | Unidade nova |
+|---|---|---|---|
+| Sikapower 1200 | 29078542 (450 mL) | **29237701** (400 mL) | EA |
+| Prime 37 4kg | 29276912 | **29237987** | EA |
+| Brush 70mm | 222720 | **29196729** | EA |
+| Plastic cup 1L | 213560 | **29196707** | EA |
+| Paddle stirrers | 224010 | **29196727** | EA |
+| Grinding plate G60 125 | 232906 | **29196704** (w/o holes) | EA |
+| Rear disc rubber | 233875 | **29196703** | EA |
+| UD1140 | 29017705 | **S096486** (300mm) | KG |
+| TRIAX1200 E | 29017700 (KG) | **29250986** (rolo 14m/20kg; alt 29250987 5kg) | EA |
+| BIAX936 | 29009736 (KG) | **29238490** (rolo 18m/20kg) | EA |
+| HM TRIAX1200 | 29210017 (KG) | **29234528** (rolo 13m ≈20kg) | EA |
+| HM BIAX1000 | 29464588 (KG) | **29234525** (rolo 16m ≈20kg) | EA |
+| HM UD1200 | 29110162 (KG) | **29234519** (rolo 13m ≈20kg; alt 29305383) | EA |
+| SPL patch | 29180313 (5m, 5,75 m²) | **29180312** (10m, **11,5 m²**) | EA |
+| Breathing cloth | S096512 (M2) | **29227309** Breatex 400mm/50m (rolo 20 m²) | EA |
+| Bagging film | 29017040 (M2) | **29232949** 465B 1350mm (por metro linear ÷1,35) | M |
+| Release film | 300023948 (M2) | **S096521** 360mm (por metro linear ÷0,36) | M |
+| Transport mesh | 260710 (M2) | **29225928** (rolo 155 m²) | EA |
+| Peel ply | 29232963 (M2) | **29232947** 450mm (rolo 22,5 m²) | EA |
+
+> Rolos HM ≈20 kg calculados por dimensão × gsm (13×1,26×1,2 = 19,7 etc.). **Flag de campo:** o log MX chama 29238494 de "TELAS BX600", mas a lista oficial fev/2026 diz Biax 220 — verificar no almoxarifado. Itens só-México sem fórmula no BOM (esponja roller 298024, PVC core kit 881865, kits LPS etc.) não foram adicionados.
