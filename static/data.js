@@ -265,21 +265,29 @@ const FABRICS_DB = {
         // Sold as ROLLS (EA), not by the kg. kgPerUnit = roll weight, so the
         // divide formula qty = ceil(weightKg / kgPerUnit) yields whole rolls.
         // Source: List of tools and materials Feb/2026 rev 23.
+        // NOTE: the MX consumption log labels 29238494 as "TELAS BX600" — likely a
+        // field typo (official Feb-2026 list: 29238494 = BIAX 220). Flagged for
+        // warehouse verification; keeping the official identity.
         'BIAX200':   { sap: '29238494',  desc: 'FABRIC BIAX 220 +45/-45 ST (roll 19m/5kg)',   unit: 'EA', kgPerUnit: 5 },
         'BIAX450':   { sap: '29219676',  desc: 'FGE806-A GE 450 +45/-45 HD (roll 35m/20kg)',  unit: 'EA', kgPerUnit: 20 },
         'BIAX600':   { sap: 'S096476',   desc: 'BIAX 600G/M2 GLASS FABRIC',          unit: 'KG', kgPerUnit: 1 },
-        'BIAX936':   { sap: '29009736',  desc: 'BIAX 936GSM 127CM STABILIZED',       unit: 'KG', kgPerUnit: 1 },
+        // MX catalog (Formato_consumos_palas): sold as EA roll 18m/20kg (Feb-2026 list).
+        // BR number was 29009736 (KG).
+        'BIAX936':   { sap: '29238490',  desc: 'FABRIC,E-GLASS,BIAX 45,936 G/M2,1270 MM (roll 20kg)', unit: 'EA', kgPerUnit: 20 },
         'BIAX1000':  { sap: '29281859',  desc: 'FABRIC,E-GLASS,BIAX +/-45,1000 g/m2',unit: 'KG', kgPerUnit: 1 },
         // BIAX1200 E-glass (V136, Biax ±80° / T80). Distinct from the V150 HM
         // BIAX1200 (SAP 29110146). SAP TBD until REV06.
         'BIAX1200':  { sap: '29022487',  desc: 'BIAX +/-80 1200 g/m2 E-GLASS / T80', unit: 'KG', kgPerUnit: 1 },
         'UD600':     { sap: '29007004',  desc: 'FABRIC,E,UD 0 DEG,576 g/m2,1265 mm', unit: 'KG', kgPerUnit: 1 },
         'UD900':     { sap: '29017516',  desc: 'UD 0 900g S',                        unit: 'KG', kgPerUnit: 1 },
-        'UD1140':    { sap: '29017705',  desc: 'UD 0 1140g 1075mm C',                unit: 'KG', kgPerUnit: 1 },
+        // MX catalog: UD1140 consumed as S096486 (300mm winding, per KG). BR was 29017705.
+        'UD1140':    { sap: 'S096486',   desc: 'UD 1140GSM 300MM',                   unit: 'KG', kgPerUnit: 1 },
         // REV05: UD1200 standard uses MULTIPLY (qty_M2 = ceil(weightKg * 1.225))
         // because unit is M² but ordering intent changed from divide-to-convert to multiply-as-factor
         'UD1200':    { sap: '29302515',  desc: 'FABRIC,E,UD 0,1200 g/m2,1270 mm',    unit: 'M2', kgPerUnit: 1.225, multiplyQty: true },
-        'TRIAX1200': { sap: '29017700',  desc: 'TRIAX 1200g',                        unit: 'KG', kgPerUnit: 1 },
+        // MX catalog: EA roll 14m/1265mm/20kg (Feb-2026 list; user chose the wide roll).
+        // BR number was 29017700 (KG). MX narrow alternative: 29250987 (7m/635mm, 5kg).
+        'TRIAX1200': { sap: '29250986',  desc: 'FABRIC,E,TRIAX,1200 G/M2,1265 MM (roll 20kg)', unit: 'EA', kgPerUnit: 20 },
         'TRIAX1500': { sap: '29017701',  desc: 'TRIAX 1500g',                        unit: 'KG', kgPerUnit: 1 },
         // BIAX1200 is intentionally HM-only in REV05 (Layer Data Input!E14 = "HM").
         // The Quadrax / Biax ±45 / Biax ±80 variants in REV05 Blades_Fabrics are NOT
@@ -289,16 +297,22 @@ const FABRICS_DB = {
     V150: {
         // REV05: all HM fabrics now sold by KG (not EA rolls)
         'BIAX600':   { sap: '29116888',  desc: 'FABRIC HM BI45 600G 1260',           unit: 'KG', kgPerUnit: 1 },
-        'BIAX1000':  { sap: '29464588',  desc: 'FABRIC,HM,BIAX +/-45,1014 g/m2,1270 mm', unit: 'KG', kgPerUnit: 1 },
+        // MX: EA roll 16m×1260mm ≈ 20 kg (16×1.26×1.014 = 20.4 — computed from roll
+        // dimensions × gsm, noted in the MX consumption log). BR was 29464588 (KG).
+        'BIAX1000':  { sap: '29234525',  desc: 'FABRIC HM BI45 1000 16Mx1260MM (roll ~20kg)', unit: 'EA', kgPerUnit: 20 },
         'BIAX1200':  { sap: '29110146',  desc: 'FABRIC HM BI80 1200G 1260',          unit: 'KG', kgPerUnit: 1 },
-        'UD1200':    { sap: '29110162',  desc: 'FABRIC HM UD0 1200G 1260',           unit: 'KG', kgPerUnit: 1 },
-        'TRIAX1200': { sap: '29210017',  desc: 'FABRIC HM TR45 1200G 2540',          unit: 'KG', kgPerUnit: 1 },
+        // MX: EA rolls 13m×1260mm ≈ 20 kg each (13×1.26×1.2 = 19.7). BR numbers were
+        // 29110162 / 29210017 (KG). MX alt for UD: 29305383.
+        'UD1200':    { sap: '29234519',  desc: 'FABRIC HM UD0 1200G 13Mx1260MM (roll ~20kg)', unit: 'EA', kgPerUnit: 20 },
+        'TRIAX1200': { sap: '29234528',  desc: 'FABRIC HM TRIAX 1200 13Mx1260MM (roll ~20kg)', unit: 'EA', kgPerUnit: 20 },
     }
 };
 
 const FABRICS_SPECIAL = {
     'CFM50':     { sap: '29023582', desc: 'SURFACE VEIL GLASSTISSUE 50GSM',    unit: 'KG', kgPerUnit: 0.05 },
-    'SPL':       { sap: '29180313', desc: 'SPL Repair Patch - 5M x 1150mm',    unit: 'EA', rollArea: 5.75 },
+    // MX catalog: 10m patch (29180312) replaces the 5m one (BR 29180313).
+    // rollArea = 10 × 1.15 = 11.5 m².
+    'SPL':       { sap: '29180312', desc: 'SPL REPAIR PATCH 10000 x 1150 MM',  unit: 'EA', rollArea: 11.5 },
     // CORE Grade B (115 kg/m³). REV05 Materials!J90 = 2.4 m²/kit (11 kg ÷ 115 ÷ 0.04 m thickness).
     // kitKg retained for AMPREG 30 calc (Fabrics_aux pre-REV05 still uses weight basis).
     'CORE':      { sap: '29114395', desc: 'CORE REPAIR PANEL 40mm BLA 54m',    unit: 'EA', kitKg: 11, kitAreaM2: 2.4 },
@@ -326,17 +340,21 @@ const CONSUMABLE_TOOLS = [
     { sap: '229600',   desc: 'SCISSOR FOR GLASS FIBER',               unit: 'EA', calcQty: (s) => s.Lamination > 0 ? 2 : 0 },
     { sap: '234630',   desc: 'BLUE PLASTIC SPATTLE (FLEXIBLE)',       unit: 'EA', calcQty: (s) => Math.ceil((s.HLU * 1.1) + s.Painting) },
     { sap: '234615',   desc: 'PLASTIC PUTTY KNIFE BLACK (STIFF)',     unit: 'EA', calcQty: (s) => Math.ceil(((s.HLU * 1.1) + s.Painting) / 3) },
-    { sap: '233875',   desc: 'Rear disc rubber 125mm (Backing pad)',  unit: 'EA', calcQty: (s) => s.Grinding > 0 ? 2 : 0 },
+    // MX catalog (Formato_consumos_palas): 29196703 replaces BR 233875.
+    { sap: '29196703', desc: 'REAR DISK RUBBER 125mm (Backing pad)',  unit: 'EA', calcQty: (s) => s.Grinding > 0 ? 2 : 0 },
     { sap: '232923',   desc: 'Round grinding plate G120 125mm',       unit: 'EA', calcQty: (s, d, lay) => s.Grinding > 0 ? Math.ceil(lay.maxAreaM2) * 15 : 0 },
-    { sap: '232906',   desc: 'Round grinding plate G60 125mm',        unit: 'EA', calcQty: (s, d, lay) => s.Grinding > 0 ? Math.ceil(lay.maxAreaM2) * 15 : 0 },
+    // MX: 29196704 (W/O holes, 26 uses) replaces BR 232906 (2 uses in MX log).
+    { sap: '29196704', desc: 'ROUND GRINDING PLATE G60 125mm W/O HOLES', unit: 'EA', calcQty: (s, d, lay) => s.Grinding > 0 ? Math.ceil(lay.maxAreaM2) * 15 : 0 },
     { sap: '233010',   desc: 'Round grinding plate G120 150mm',       unit: 'EA', calcQty: (s, d, lay) => s.Grinding > 0 ? Math.ceil(lay.maxAreaM2) * 15 : 0 },
     { sap: '233005',   desc: 'Round grinding plate G60 150mm',        unit: 'EA', calcQty: (s, d, lay) => s.Grinding > 0 ? Math.ceil(lay.maxAreaM2) * 15 : 0 },
     { sap: '233015',   desc: 'Round grinding plate K220 150mm',       unit: 'EA', calcQty: (s, d, lay) => s.Grinding > 0 ? Math.ceil(lay.maxAreaM2) * 15 : 0 },
     { sap: '233843',   desc: 'SCOTCH BRITE 3M BLK 158x224mm',         unit: 'EA', calcQty: (s) => s.LEP > 0 ? 3 * s.LEP : 0 },
-    { sap: '224010',   desc: 'Paddle stirrers (wood stick)',          unit: 'EA', calcQty: (s) => Math.ceil(s.Weighing * 1.1) },
+    // MX: 29196727 (54 uses) replaces BR 224010 (4 uses in MX log).
+    { sap: '29196727', desc: 'PADDLE STIRRERS (wood stick)',          unit: 'EA', calcQty: (s) => Math.ceil(s.Weighing * 1.1) },
     { sap: '221120',   desc: 'Household scale (weight scale) 5kg',    unit: 'EA', calcQty: (s) => s.Weighing > 0 ? 1 : 0 },
     { sap: '29196730', desc: 'Plast roll (Consolidation Roller) 13x75',unit: 'EA', calcQty: (s) => s.HLU > 0 ? Math.max(2, Math.ceil(s.HLU)) : 0 },
-    { sap: '222720',   desc: 'BRUSH, PAINT, MODDLARE 70MM',           unit: 'EA', calcQty: (s) => Math.ceil(s.HLU * 1.2) },
+    // MX: 29196729 (36 uses) replaces BR 222720 (6 uses in MX log). 50mm alt: 222710.
+    { sap: '29196729', desc: 'BRUSH, PAINT, MODDLARE 70MM',           unit: 'EA', calcQty: (s) => Math.ceil(s.HLU * 1.2) },
     { sap: '60059473', desc: 'PAINT ROLLER, SUPER SMOOTH, 11in',      unit: 'EA', calcQty: (s) => Math.ceil(s.HLU * 1.2) },
     { sap: '293610',   desc: '4 INCH FOAM ROLLER',                    unit: 'EA', calcQty: (s) => Math.ceil(1.2 * s.Painting + 3 * s.LEP) },
     // Handle roller: Excel H35 = ROUNDDOWN(H33/2 + H34/2, 0)
@@ -364,7 +382,8 @@ const CHEMICALS = [
           const c = lay.coreWeightKg > 0 ? Math.ceil(lay.coreWeightKg / coreKitKg) : 0; // H29 = CORE kits
           return Math.ceil((w + c) / 1.26);
       } },
-    { sap: '29276912', desc: 'PRIME 37, 4KG STD (Infusion Resin)',    unit: 'EA',  calcQty: (s, d, lay) => {
+    // MX catalog: 29237987 replaces BR 29276912 (same Prime 37 4kg std kit).
+    { sap: '29237987', desc: 'PRIME 37 RESIN 4KG STD (Infusion)',     unit: 'EA',  calcQty: (s, d, lay) => {
           if (s.Infusion === 0) return 0;
           // REV05 formula: ROUNDUP(cfm50_mass_kg * infusion * 1.3 / 4, 0)
           // cfm50_mass_kg = splAreaM2 * 1.5 (area+50%) * 0.05 kg/m² (50g/m² CFM density)
@@ -372,7 +391,8 @@ const CHEMICALS = [
           const cfm50MassKg = lay.splAreaM2 * 1.5 * 0.05;
           return Math.max(1, Math.ceil(cfm50MassKg * s.Infusion * 1.3 / 4));
       } },
-    { sap: '29078542', desc: 'ADHESIVE SIKAPOWER 1200 450 mL',        unit: 'EA',  calcQty: (s, d, lay) => s.Bonding > 0 ? Math.ceil(lay.maxLength * 120e-6 * 23.33 * s.Bonding) : 0 },
+    // MX catalog: 29237701 (400 mL cartridge, 23 uses) replaces BR 29078542 (450 mL).
+    { sap: '29237701', desc: 'ADHESIVE SIKAPOWER 1200 400 mL',        unit: 'EA',  calcQty: (s, d, lay) => s.Bonding > 0 ? Math.ceil(lay.maxLength * 120e-6 * 23.33 * s.Bonding) : 0 },
     { sap: '29035907', desc: 'SikaForce 7818 L7 195mL',               unit: 'EA',  calcQty: (s, d, lay) => lay.coreWeightKg > 0 ? Math.ceil(1 * 1.5) : 0 },
     { sap: '29035908', desc: 'SIKAFORCE 7800 RED (Filler)',           unit: 'EA',  calcQty: (s, d, lay) => s.Painting > 0 ? Math.ceil(lay.areaWithMarginM2 * 4 * s.Painting) : 0 },
     { sap: '29034878', desc: 'KIT,TOP COAT 12 RAL7035 1kg',           unit: 'KIT', calcQty: (s, d, lay) => s.Painting > 0 ? Math.ceil(lay.areaWithMarginM2 * 0.4 * s.Painting * 2) : 0 },
@@ -425,18 +445,27 @@ const CONSUMABLES = [
     // Baker's bag: 3 ea when Cleaning active (Excel: IF(Cleaning≠0, 1, 0) × 3)
     { sap: '235000',   desc: "Baker's bag (Piping bag for resin)",    unit: 'EA',  calcQty: (s) => s.Cleaning > 0 ? 3 : 0 },
     // Plastic cups: factor 2.2 per Excel
-    { sap: '213560',   desc: 'PLASTIC CUP 1.0 LITER',                 unit: 'EA',  calcQty: (s) => Math.ceil(s.Weighing * 2.2) },
+    // MX: 29196707 (29 uses) replaces BR 213560 (12 uses in MX log).
+    { sap: '29196707', desc: 'PLASTIC CUP 1.0 LITER',                 unit: 'EA',  calcQty: (s) => Math.ceil(s.Weighing * 2.2) },
     { sap: '213550',   desc: 'PLASTIC CUP 0.5 LITRE',                 unit: 'EA',  calcQty: (s) => Math.ceil(s.Weighing * 2.2) },
     // Release film: REV05 unit=M², ROUNDUP((maxLen+100)*(maxW+100)*1e-6 * Vacuum*1.4, 0)
-    { sap: '300023948', desc: 'RELEASE FILM 1500mm',                   unit: 'M2',  calcQty: (s, d, lay) => s.Vacuum > 0 ? Math.ceil((lay.maxLength + 100) * (lay.maxWidth + 100) * 1e-6 * s.Vacuum * 1.4) : 0 },
+    // MX: S096521 (360mm-wide film, sold per LINEAR METRE; most used in MX log, 20×)
+    // replaces BR 300023948 (1500mm, M2). Metres = m² needed ÷ 0.36 m width.
+    { sap: 'S096521',   desc: 'RELEASE FILM 360MM WIDTH P3',           unit: 'M',   calcQty: (s, d, lay) => s.Vacuum > 0 ? Math.ceil((lay.maxLength + 100) * (lay.maxWidth + 100) * 1e-6 * s.Vacuum * 1.4 / 0.36) : 0 },
     // Breathing cloth: REV05 unit=M², ROUNDUP(maxAreaM2 * Vacuum*1.4, 0)
-    { sap: 'S096512',   desc: 'BREATHING CLOTH 900MM 150G/M2',         unit: 'M2',  calcQty: (s, d, lay) => s.Vacuum > 0 ? Math.ceil(lay.maxAreaM2 * s.Vacuum * 1.4) : 0 },
+    // MX: 29227309 (roll 400mm×50m = 20 m², 32 uses) replaces BR S096512 (M2).
+    { sap: '29227309',  desc: 'BREATEX 150 GSM 400MM/50M (roll 20m2)', unit: 'EA',  calcQty: (s, d, lay) => s.Vacuum > 0 ? Math.max(1, Math.ceil(lay.maxAreaM2 * s.Vacuum * 1.4 / 20)) : 0 },
     // Bagging film: REV05 unit=M², ROUNDUP(splAreaM2 * Vacuum*1.4, 0)
-    { sap: '29017040',  desc: 'BAGGING FILM 3000MM Infusion SST',      unit: 'M2',  calcQty: (s, d, lay) => s.Vacuum > 0 ? Math.ceil(lay.splAreaM2 * s.Vacuum * 1.4) : 0 },
+    // MX: 29232949 (465B 1350mm wide, sold per LINEAR METRE; 24 uses) replaces
+    // BR 29017040 (3000mm, M2). Metres = m² ÷ 1.35 m width. Wide alt: S096507.
+    { sap: '29232949',  desc: 'BAGGING FILM 465B 50Mx1350MM',          unit: 'M',   calcQty: (s, d, lay) => s.Vacuum > 0 ? Math.ceil(lay.splAreaM2 * s.Vacuum * 1.4 / 1.35) : 0 },
     // Peel ply: maxAreaM2 × Vacuum × 1.4
-    { sap: '29232963',  desc: 'PEEL PLY A100/A100PS 50mx1500mm',       unit: 'M2',  calcQty: (s, d, lay) => s.Vacuum > 0 ? Math.ceil(lay.maxAreaM2 * s.Vacuum * 1.4) : 0 },
+    // MX: 29232947 (450mm repair-width roll, 50m ≈ 22.5 m²; 11 uses) replaces
+    // BR 29232963 (1500mm, M2). Alts in MX: 29232948, S096044.
+    { sap: '29232947',  desc: 'PEEL PLY A100/A100PS 50Mx450MM (roll 22.5m2)', unit: 'EA', calcQty: (s, d, lay) => s.Vacuum > 0 ? Math.max(1, Math.ceil(lay.maxAreaM2 * s.Vacuum * 1.4 / 22.5)) : 0 },
     // Transport mesh: REV05 unit=M², ROUNDUP(maxAreaM2 * Infusion*1.2, 0)
-    { sap: '260710',    desc: 'TRANSPORT MESH 1550MM',                  unit: 'M2',  calcQty: (s, d, lay) => s.Infusion > 0 ? Math.ceil(lay.maxAreaM2 * s.Infusion * 1.2) : 0 },
+    // MX: 29225928 (roll 100m×1.55m = 155 m²) replaces BR 260710 (M2).
+    { sap: '29225928',  desc: 'TRANSPORT MESH 100Mx1,55M (roll 155m2)', unit: 'EA', calcQty: (s, d, lay) => s.Infusion > 0 ? Math.max(1, Math.ceil(lay.maxAreaM2 * s.Infusion * 1.2 / 155)) : 0 },
     { sap: '29017050', desc: 'VACUUM CHANNEL 50MM INFUSION',          unit: 'M',   calcQty: (s, d, lay) => s.Infusion > 0 ? Math.ceil(lay.perimeter * 1.4) : 0 },
     { sap: '29083917', desc: 'GLASSFIBER OMEGA R8.5,SENS',            unit: 'EA',  calcQty: (s) => s.Infusion > 0 ? 1 : 0 },
     { sap: null,        desc: 'Conexao TEE 1/4" (T-piece) — SAP N/A', unit: 'EA',  calcQty: (s) => s.Infusion > 0 ? s.Infusion + 2 : 0 },
