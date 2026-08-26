@@ -458,7 +458,10 @@ function computeRepairDays(layers, isExternal) {
 /**
  * Compute full BOM given all inputs.
  */
-function computeFullBOM(damageData, layers, repairSteps, bladeModel, bladeRegion, daysOfRepair) {
+// paintScheme: { base: 'RAL7035'|'RAL9010', stripe: 'RAL3020'|'RAL2009'|null }
+// Opcional — omitido, usa DEFAULT_PAINT_SCHEME (cinza + faixa vermelha), que
+// era o comportamento fixo antes de a escolha de pintura existir.
+function computeFullBOM(damageData, layers, repairSteps, bladeModel, bladeRegion, daysOfRepair, paintScheme) {
     // 1. Compute LAYUP
     const layupResult = computeLayup(damageData, layers);
 
@@ -498,11 +501,15 @@ function computeFullBOM(damageData, layers, repairSteps, bladeModel, bladeRegion
     })).filter(i => i.qty > 0);
 
     // 6. Compute Chemicals
+    // O esquema de pintura decide a cor do top coat, então sap/desc podem ser
+    // funções dele (ver TOPCOAT_COLORS em data.js).
+    const paint = paintScheme || (typeof DEFAULT_PAINT_SCHEME !== 'undefined' ? DEFAULT_PAINT_SCHEME : { base: 'RAL7035', stripe: 'RAL3020' });
+    const resolve = (v) => (typeof v === 'function' ? v(paint) : v);
     const chemItems = CHEMICALS.map(item => ({
-        sap: item.sap,
-        desc: item.desc,
+        sap: resolve(item.sap),
+        desc: resolve(item.desc),
         unit: item.unit,
-        qty: item.calcQty(steps, daysOfRepair, layupResult, bladeRegion),
+        qty: item.calcQty(steps, daysOfRepair, layupResult, bladeRegion, paint),
         materialUse: item.materialUse || 'Chemical'
     })).filter(i => i.qty > 0);
 

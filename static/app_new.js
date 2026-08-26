@@ -639,6 +639,15 @@ function onRepairStepsChange() {
 }
 
 // Repair type: external repairs add a painting day to the schedule estimate.
+// Esquema de pintura escolhido no Step 3. Sem os selects (ou valores vazios),
+// cai no padrão do data.js — cinza + faixa vermelha, que era o fixo anterior.
+function currentPaintScheme() {
+    const b = document.getElementById('paintBase');
+    const st = document.getElementById('paintStripe');
+    if (!b) return undefined;
+    return { base: b.value || 'RAL7035', stripe: (st && st.value) ? st.value : null };
+}
+
 function isExternalRepair() {
     const el = document.getElementById('repairType');
     return el ? el.value === 'external' : false;
@@ -674,7 +683,7 @@ function calculateAndShow() {
     if (!bladeModel)                                         { alert('Please select a Blade Model in Step 1.'); goToStep(1); return; }
     if (damageData.rstart<=0 || damageData.rend<=0)          { alert('Please enter valid Rstart and Rend in Step 1.'); goToStep(1); return; }
 
-    lastBOM = computeFullBOM(damageData, layerRows.filter(l=>l.materialType), repairSteps, bladeModel, bladeRegion, daysOfRepair);
+    lastBOM = computeFullBOM(damageData, layerRows.filter(l=>l.materialType), repairSteps, bladeModel, bladeRegion, daysOfRepair, currentPaintScheme());
     goToStep(4);
     renderSummary();
     showResultTab('consumable_protection');
