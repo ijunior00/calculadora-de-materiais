@@ -1,0 +1,39 @@
+# CI — roda a suíte de cálculo, o linter de skills e a sintaxe do backend
+# em todo push e PR.
+#
+# Por que existe: até aqui os 120 testes de BOM só rodavam se alguém abrisse
+# o app no navegador com ?debug=1 e digitasse runBOMTests() no console. Na
+# prática isso significa que ninguém rodava. Como o resultado desse cálculo
+# vira pedido de material em campo, a suíte precisa ser um portão automático,
+# não um ritual manual.
+name: CI
+
+on:
+  push:
+    branches: [main, 'claude/**']
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # Sem dependências de terceiros: os testes rodam em Node puro.
+      - name: Suíte de cálculo do BOM
+        run: npm test
+
+      - name: Validar skills (.claude/skills)
+        run: npm run lint:skills
+
+      - name: Sintaxe do backend
+        run: npm run check:backend

@@ -1,0 +1,15 @@
+{
+  "name": "calculadora-de-materiais",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Blade Repair Materials Planner — estimativa de materiais e ferramentas para reparo de pás eólicas",
+  "license": "MIT",
+  "scripts": {
+    "test": "node scripts/run-tests.mjs --quiet",
+    "test:verbose": "node scripts/run-tests.mjs",
+    "lint:skills": "node scripts/lint-skills.mjs",
+    "check:backend": "python3 -c \"import ast,sys; ast.parse(open('backend/backend.py',encoding='utf-8').read()); ast.parse(open('run_server.py',encoding='utf-8').read()); print('  backend: sintaxe ok')\"",
+    "check": "npm test && npm run lint:skills && npm run check:backend"
+  },
+  "engines": { "node": ">=18" }
+}

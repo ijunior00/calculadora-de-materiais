@@ -248,5 +248,15 @@
 <script src="static/guide.js"></script>
 <script src="static/mobile.js"></script>
 <script src="static/scarf.js"></script>
+<!-- Test harness loads only in debug mode: open the page with ?debug=1 then call runBOMTests()
+     This page loads scarf.js, so the escalonamento tests actually run here
+     (on desktop they self-skip, since scarf.js is mobile-only). -->
+<script>
+    if (new URLSearchParams(location.search).has('debug')) {
+        var _t = document.createElement('script');
+        _t.src = 'static/test.js';
+        document.body.appendChild(_t);
+    }
+</script>
 </body>
 </html>
