@@ -32,9 +32,18 @@ npm run check         # tudo acima + sintaxe do backend
 python run_server.py  # sobe o app em :8010  →  / (desktop) e /m (mobile)
 ```
 
-A suíte também roda no navegador: abra `/?debug=1` e chame `runBOMTests()` no
-console. É o mesmo conjunto de testes — útil quando você quer inspecionar a
-UI junto.
+A suíte também roda no navegador — é o mesmo `static/test.js`, útil quando
+você quer inspecionar a UI junto. Abra com `?debug=1` e chame `runBOMTests()`
+no console. Sem `?debug`, o harness não carrega.
+
+| Página | Resultado | Por quê |
+|---|---|---|
+| `/m?debug=1` (mobile) | **120** | carrega `scarf.js`; cobre o escalonamento |
+| `/?debug=1` (desktop) | **118** | não carrega `scarf.js`; aqueles 3 testes se auto-pulam |
+| `npm test` (Node) | **120** | carrega `scarf.js` com stubs de DOM |
+
+Verificado asserção por asserção: as execuções são idênticas nas asserções em
+comum. A diferença do desktop é só cobertura menor, não divergência.
 
 ## Regras do projeto
 
