@@ -390,3 +390,33 @@ A operação migrou do Brasil para o México; o log de consumo MX (2.223 linhas,
 | Peel ply | 29232963 (M2) | **29232947** 450mm (rolo 22,5 m²) | EA |
 
 > Rolos HM ≈20 kg calculados por dimensão × gsm (13×1,26×1,2 = 19,7 etc.). **Flag de campo:** o log MX chama 29238494 de "TELAS BX600", mas a lista oficial fev/2026 diz Biax 220 — verificar no almoxarifado. Itens só-México sem fórmula no BOM (esponja roller 298024, PVC core kit 881865, kits LPS etc.) não foram adicionados.
+
+
+### Esquema de pintura (top coat)
+
+Antes o BOM emitia **sempre** cinza RAL7035 + vermelho RAL3020, independente da
+pá. Agora a cor é escolhida no Step 3 (as duas UIs), porque a pá é sempre de
+**cor única** ou **cor única com faixas coloridas**.
+
+| Papel | Opções | SAP (kit 1kg) | Embalagem alt. |
+|---|---|---|---|
+| Cor base | Cinza RAL7035 | 29034878 | 29035852 |
+| | Branco RAL9010 | 29034879 | 29035853 |
+| Faixa (opcional) | Vermelho RAL3020 | 29035851 | 29035855 |
+| | Laranja RAL2009 | 29035720 | 29035854 |
+| Diluente | Thinner 12 | 29035856 | — |
+
+Fonte: tabela PINTURA (TOPCOAT) da lista de material. A coluna "embalagem
+alternativa" está registrada em `TOPCOAT_COLORS[...].altSap` mas **não entra no
+cálculo** — o tamanho dela ainda não foi confirmado, e sem o peso não dá para
+converter quantidade (política de zero-mock).
+
+**Quantidade:** cada cor usada consome `ceil(areaComMargem × 0,4 × pintura × 2)`
+— a mesma fórmula de antes, aplicada por cor. A faixa usa a mesma quantidade da
+base (decisão mantida do comportamento atual; superestima, mas é o que já era
+praticado). O thinner soma só as cores efetivamente usadas, então pá de cor
+única consome menos que antes.
+
+**Compatibilidade:** `computeFullBOM(..., paintScheme)` é opcional. Omitido,
+usa `DEFAULT_PAINT_SCHEME` = cinza + faixa vermelha, exatamente o resultado
+anterior — por isso nenhum teste existente precisou de re-baseline.

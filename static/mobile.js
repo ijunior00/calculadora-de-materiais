@@ -15,6 +15,9 @@ const M = {
     width: null,      // mm  (chordwise, = |x2 - x1|)
     days: 5,
     isExternal: false, // internal repair by default; external adds a painting day
+    // Esquema de pintura: base (cor única) + faixa opcional. Padrão = o que o
+    // app emitia fixo antes de a escolha existir (cinza + faixa vermelha).
+    paint: { base: 'RAL7035', stripe: 'RAL3020' },
     estimatedDays: null,
     so: '',
     cir: '',
@@ -400,9 +403,29 @@ function renderRepairType() {
         `<div class="seg${M.isExternal === t.key ? ' active' : ''}" onclick="setRepairType(${t.key})">${t.label}</div>`
     ).join('');
 }
+
+// ── Esquema de pintura ──────────────────────────────────────────────────────
+// A pá é de cor única (cinza ou branco) ou cor única com faixas coloridas
+// (vermelho ou laranja). Antes o BOM saía sempre com cinza + vermelho.
+function renderPaintScheme() {
+    const base = document.getElementById('m-paint-base');
+    const stripe = document.getElementById('m-paint-stripe');
+    if (!base || !stripe) return;
+    const opts = (role, sel, fn) => Object.entries(TOPCOAT_COLORS)
+        .filter(([, c]) => c.role === role)
+        .map(([ral, c]) => `<div class="seg${sel === ral ? ' active' : ''}" onclick="${fn}('${ral}')">${c.label}</div>`)
+        .join('');
+    base.innerHTML = opts('base', M.paint.base, 'setPaintBase');
+    stripe.innerHTML =
+        `<div class="seg${!M.paint.stripe ? ' active' : ''}" onclick="setPaintStripe('')">Sem faixa</div>` +
+        opts('stripe', M.paint.stripe, 'setPaintStripe');
+}
+function setPaintBase(ral) { M.paint.base = ral; renderPaintScheme(); }
+function setPaintStripe(ral) { M.paint.stripe = ral || null; renderPaintScheme(); }
 function setRepairType(isExternal) {
     M.isExternal = isExternal;
     renderRepairType();
+    renderPaintScheme();
     updateDaysEstimate();
 }
 
@@ -425,6 +448,7 @@ function applyEstimatedDays() {
 
 function renderSteps() {
     renderRepairType();
+    renderPaintScheme();
     updateDaysEstimate();
     const wrap = document.getElementById('m-steps-list');
     wrap.innerHTML = STEP_ORDER.map(key => {
@@ -479,7 +503,8 @@ function doCalculate() {
             M.steps,
             M.blade,
             M.region,
-            M.days
+            M.days,
+            M.paint
         );
     } catch (e) {
         console.error(e);

@@ -372,6 +372,31 @@ const CONSUMABLE_TOOLS = [
 // ============================================================
 // FULL CHEMICALS 
 // ============================================================
+// ── Esquema de pintura (top coat) ────────────────────────────────────────────
+// Fonte: tabela PINTURA (TOPCOAT) da lista de material. Cada cor tem duas
+// embalagens; usamos o kit de 1kg (sap) e registramos a alternativa (altSap),
+// cujo tamanho ainda não foi confirmado — por isso não entra no cálculo.
+//
+// A pá é sempre de cor única (base) ou cor única com faixas coloridas (stripe).
+const TOPCOAT_COLORS = {
+    'RAL7035': { sap: '29034878', altSap: '29035852', role: 'base',   label: 'Cinza (RAL7035)',   desc: 'KIT,TOP COAT 12 RAL7035 1kg (Grey)' },
+    'RAL9010': { sap: '29034879', altSap: '29035853', role: 'base',   label: 'Branco (RAL9010)',  desc: 'KIT,TOP COAT 12 RAL9010 1kg (White)' },
+    'RAL3020': { sap: '29035851', altSap: '29035855', role: 'stripe', label: 'Vermelho (RAL3020)', desc: 'KIT,TOP COAT 12 RAL3020 1kg (Red)' },
+    'RAL2009': { sap: '29035720', altSap: '29035854', role: 'stripe', label: 'Laranja (RAL2009)',  desc: 'KIT,TOP COAT 12 RAL2009 1kg (Orange)' },
+};
+
+// Padrão = comportamento histórico do app (cinza + faixa vermelha).
+const DEFAULT_PAINT_SCHEME = { base: 'RAL7035', stripe: 'RAL3020' };
+
+function topcoatColor(ral) {
+    return TOPCOAT_COLORS[ral] || TOPCOAT_COLORS[DEFAULT_PAINT_SCHEME.base];
+}
+
+// Consumo por cor: REV05 Materials — area com margem x 0,4 kg/m2 x demaos.
+function topcoatQty(lay, s) {
+    return Math.ceil(lay.areaWithMarginM2 * 0.4 * s.Painting * 2);
+}
+
 const CHEMICALS = [
     { sap: '234900',   desc: 'ALCOHOL DENATURED 93% 1/2 LITRE',       unit: 'BTL', calcQty: (s) => s.Cleaning > 0 ? Math.ceil(s.Cleaning / 1.5) : 0 },
     { sap: '291574',   desc: 'CLOTH,CLEANING (Satwipes w/ ethanol)',  unit: 'TUB', calcQty: (s) => s.Cleaning > 0 ? 1 : 0 },
@@ -395,13 +420,20 @@ const CHEMICALS = [
     { sap: '29237701', desc: 'ADHESIVE SIKAPOWER 1200 400 mL',        unit: 'EA',  calcQty: (s, d, lay) => s.Bonding > 0 ? Math.ceil(lay.maxLength * 120e-6 * 23.33 * s.Bonding) : 0 },
     { sap: '29035907', desc: 'SikaForce 7818 L7 195mL',               unit: 'EA',  calcQty: (s, d, lay) => lay.coreWeightKg > 0 ? Math.ceil(1 * 1.5) : 0 },
     { sap: '29035908', desc: 'SIKAFORCE 7800 RED (Filler)',           unit: 'EA',  calcQty: (s, d, lay) => s.Painting > 0 ? Math.ceil(lay.areaWithMarginM2 * 4 * s.Painting) : 0 },
-    { sap: '29034878', desc: 'KIT,TOP COAT 12 RAL7035 1kg',           unit: 'KIT', calcQty: (s, d, lay) => s.Painting > 0 ? Math.ceil(lay.areaWithMarginM2 * 0.4 * s.Painting * 2) : 0 },
-    { sap: '29035851', desc: 'KIT,TOP COAT 12 RAL3020 1kg (Red)',     unit: 'KIT', calcQty: (s, d, lay) => s.Painting > 0 ? Math.ceil(lay.areaWithMarginM2 * 0.4 * s.Painting * 2) : 0 },
-    { sap: '29035856', desc: 'THINNER 1kg FOR TOP COAT 12',           unit: 'EA',  calcQty: (s, d, lay) => {
+    // Top coat: a cor sai do esquema de pintura escolhido (TOPCOAT_COLORS), não
+    // mais fixa em cinza + vermelho. sap/desc são funções resolvidas pelo engine.
+    { sap:  (p) => topcoatColor(p.base).sap,
+      desc: (p) => topcoatColor(p.base).desc,
+      unit: 'KIT', calcQty: (s, d, lay) => s.Painting > 0 ? topcoatQty(lay, s) : 0 },
+    { sap:  (p) => p.stripe ? topcoatColor(p.stripe).sap : '',
+      desc: (p) => p.stripe ? topcoatColor(p.stripe).desc : '',
+      unit: 'KIT', calcQty: (s, d, lay, reg, p) => (s.Painting > 0 && p && p.stripe) ? topcoatQty(lay, s) : 0 },
+    { sap: '29035856', desc: 'THINNER 1kg FOR TOP COAT 12',           unit: 'EA',  calcQty: (s, d, lay, reg, p) => {
           if (s.Painting === 0) return 0;
-          const tc7035 = Math.ceil(lay.areaWithMarginM2 * 0.4 * s.Painting * 2);
-          const tc3020 = Math.ceil(lay.areaWithMarginM2 * 0.4 * s.Painting * 2);
-          return (tc7035 > 10 || tc3020 > 10) ? Math.ceil((tc7035 + tc3020) / 10) : 1;
+          // Uma dose por cor efetivamente usada (antes eram sempre duas).
+          const base = topcoatQty(lay, s);
+          const stripe = (p && p.stripe) ? topcoatQty(lay, s) : 0;
+          return (base > 10 || stripe > 10) ? Math.ceil((base + stripe) / 10) : 1;
       } },
     { sap: '29035857', desc: 'LEP ALEXIT 9 RED 200g',                 unit: 'EA',  calcQty: (s, d, lay, reg) => {
           if (s.LEP === 0) return 0;

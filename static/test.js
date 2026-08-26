@@ -633,6 +633,47 @@
         return tally(r);
     }
 
+    function testPaintScheme() {
+        console.group('Test 21: esquema de pintura escolhe a cor do top coat');
+        const dmg = { rstart: 0, rend: 1000, x1: 0, x2: 600, chordRef: 'LE' };
+        const layers = [{ layerName: 'L1', materialType: 'BIAX', gsm: '600' }];
+        const steps = { Cleaning:1, Grinding:1, Bonding:0, Lamination:1, HLU:1,
+                        Infusion:0, Weighing:1, Vacuum:1, Painting:1, LEP:0 };
+        const bom = (scheme) => computeFullBOM(dmg, layers, steps, 'V136', 'Middle', 5, scheme);
+        const r = [];
+
+        // Sem esquema → comportamento histórico (cinza + faixa vermelha).
+        const def = bom(undefined).chemItems;
+        r.push(assertItemPresent('padrão: cinza RAL7035 (29034878)', def, '29034878'));
+        r.push(assertItemPresent('padrão: vermelho RAL3020 (29035851)', def, '29035851'));
+
+        // Branco + faixa laranja.
+        const wo = bom({ base: 'RAL9010', stripe: 'RAL2009' }).chemItems;
+        r.push(assertItemPresent('branco RAL9010 (29034879)', wo, '29034879'));
+        r.push(assertItemPresent('laranja RAL2009 (29035720)', wo, '29035720'));
+        r.push(assertItemAbsent('cinza ausente quando base=branco', wo, '29034878'));
+        r.push(assertItemAbsent('vermelho ausente quando faixa=laranja', wo, '29035851'));
+
+        // Cor única (sem faixa) → só a base entra.
+        const solo = bom({ base: 'RAL9010', stripe: null }).chemItems;
+        r.push(assertItemPresent('cor única: branco presente', solo, '29034879'));
+        for (const ral of ['RAL3020', 'RAL2009']) {
+            r.push(assertItemAbsent(`cor única: ${ral} ausente`, solo, TOPCOAT_COLORS[ral].sap));
+        }
+        // Thinner continua saindo (é usado com qualquer cor).
+        r.push(assertItemPresent('cor única: thinner presente', solo, '29035856'));
+
+        // Catálogo: 4 cores, cada uma com embalagem alternativa registrada.
+        r.push(assertEq('TOPCOAT_COLORS tem 4 cores', Object.keys(TOPCOAT_COLORS).length, 4));
+        const semAlt = Object.entries(TOPCOAT_COLORS).filter(([, c]) => !c.altSap);
+        r.push(semAlt.length === 0
+            ? pass('toda cor tem altSap (2ª embalagem) registrado')
+            : fail('cores sem altSap', semAlt.map(([k]) => k).join(', ')));
+
+        console.groupEnd();
+        return tally(r);
+    }
+
     // ── Main runner ───────────────────────────────────────────────────────────
 
     window.runBOMTests = function () {
@@ -659,6 +700,7 @@
             testFiberOverlapNorm,
             testRepairGuideData,
             testScarfHonorsOverrides,
+            testPaintScheme,
         ];
         let total = { pass: 0, fail: 0 };
         for (const suite of suites) {
