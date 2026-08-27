@@ -345,8 +345,12 @@ const CONSUMABLE_TOOLS = [
     { sap: '232923',   desc: 'Round grinding plate G120 125mm',       unit: 'EA', calcQty: (s, d, lay) => s.Grinding > 0 ? Math.ceil(lay.maxAreaM2) * 15 : 0 },
     // MX: 29196704 (W/O holes, 26 uses) replaces BR 232906 (2 uses in MX log).
     { sap: '29196704', desc: 'ROUND GRINDING PLATE G60 125mm W/O HOLES', unit: 'EA', calcQty: (s, d, lay) => s.Grinding > 0 ? Math.ceil(lay.maxAreaM2) * 15 : 0 },
-    // Único grão de acabamento do catálogo; roda na excêntrica de 150mm.
-    { sap: '233015',   desc: 'Round grinding plate K220 150mm (acabamento)', unit: 'EA', calcQty: (s, d, lay) => s.Grinding > 0 ? Math.ceil(lay.maxAreaM2) * 15 : 0 },
+    // Único grão de acabamento do catálogo (não existe K220 em 125mm), roda na
+    // excêntrica de 150mm. SAP conferido na lista oficial: 29196720 substitui o
+    // 233015 — mesma família 291967xx dos demais abrasivos adotados do México
+    // (29196703 prato 125, 29196704 G60 125) e classificado como consumível.
+    // ATENÇÃO: é prato de 9 FUROS — o suporte precisa ter o mesmo padrão.
+    { sap: '29196720', desc: 'GRIND PLATE ø150 K220, 9 HOLE (acabamento)', unit: 'EA', calcQty: (s, d, lay) => s.Grinding > 0 ? Math.ceil(lay.maxAreaM2) * 15 : 0 },
     { sap: '233843',   desc: 'SCOTCH BRITE 3M BLK 158x224mm',         unit: 'EA', calcQty: (s) => s.LEP > 0 ? 3 * s.LEP : 0 },
     // MX: 29196727 (54 uses) replaces BR 224010 (4 uses in MX log).
     { sap: '29196727', desc: 'PADDLE STIRRERS (wood stick)',          unit: 'EA', calcQty: (s) => Math.ceil(s.Weighing * 1.1) },
@@ -522,8 +526,9 @@ const CONSUMABLES = [
 //   233005 / 233010  Discos G60 e G120 de 150mm — o desbaste passou a ser todo
 //            nas excêntricas de 125mm, que têm os mesmos grãos e o prato
 //            suporte. O diâmetro 150 fica só para o K220 de acabamento.
-// PENDENTE: falta o prato suporte (backing pad) de 150mm — o catálogo só tem
-//            o de 125mm (29196703). Ver PENDING_REV06.md.
+// PENDENTE: falta o prato suporte (backing pad) de 150mm COM 9 FUROS — o
+//            catálogo só tem o de 125mm sem furos (29196703).
+//            Ver PENDING_REV06.md.
 const TOOLS = [
     // Heating blankets — HLU or Infusion
     { sap: 'VT730406',    desc: 'Heating blanket 1300*1300 mm 230v',           unit: 'EA', calcQty: (s) => (s.HLU > 0 || s.Infusion > 0) ? 3 : 0 },

@@ -159,12 +159,18 @@ acabamento, porque o **K220 só existe em 150mm** no catálogo.
 manda comprar o disco K220 de 150 sem o suporte para montá-lo. A inconsistência
 é anterior a esta revisão: já existiam discos de 150 sem prato correspondente.
 
-**O que falta:** o número de item do backing pad de 150mm.
+**O que falta:** o número de item do backing pad de **150mm com 9 furos**.
+
+A busca oficial por K220 (ago/2026) confirmou dois pontos: **não existe K220 em
+125mm** — todos os grãos de acabamento são Ø150, o que torna a excêntrica de 150
+insubstituível — e o prato de acabamento adotado (`29196720`, GRIND PLATE ø150
+K220) é de **9 furos**, para extração de pó. O suporte precisa do mesmo padrão
+de furos; o de 125mm que temos (`29196703`) é sem furos, ou seja, os dois
+sistemas não são intercambiáveis.
 
 **Por que não foi preenchido:** política de zero-mock — número de item não se
 deduz. Assim que o almoxarifado confirmar, basta adicionar em
 `CONSUMABLE_TOOLS` com `calcQty` espelhando o de 125mm.
 
-**Alternativa, se o prato de 150 não existir no estoque:** confirmar se há
-K220 em **125mm**. Nesse caso o diâmetro 150 sai por completo (máquina + disco)
-e o catálogo fica inteiro em 125mm.
+**Alternativa descartada:** padronizar tudo em 125mm não é possível — a busca
+oficial mostrou que K220 só existe em Ø150.

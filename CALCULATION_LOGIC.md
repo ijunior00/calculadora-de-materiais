@@ -388,6 +388,7 @@ A operação migrou do Brasil para o México; o log de consumo MX (2.223 linhas,
 | Release film | 300023948 (M2) | **S096521** 360mm (por metro linear ÷0,36) | M |
 | Transport mesh | 260710 (M2) | **29225928** (rolo 155 m²) | EA |
 | Peel ply | 29232963 (M2) | **29232947** 450mm (rolo 22,5 m²) | EA |
+| Prato K220 acabamento | 233015 | **29196720** ø150 K220 9 furos | EA |
 
 > Rolos HM ≈20 kg calculados por dimensão × gsm (13×1,26×1,2 = 19,7 etc.). **Flag de campo:** o log MX chama 29238494 de "TELAS BX600", mas a lista oficial fev/2026 diz Biax 220 — verificar no almoxarifado. Itens só-México sem fórmula no BOM (esponja roller 298024, PVC core kit 881865, kits LPS etc.) não foram adicionados.
 
