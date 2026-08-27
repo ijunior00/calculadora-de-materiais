@@ -429,7 +429,7 @@ const SPECIAL_REPAIRS = [
             { cat: 'Químicos', sap: '291574',   desc: 'CLOTH,CLEANING (Satwipes w/ ethanol)',       unit: 'TUB', qty: 1 },
             // A lista de campo dizia 29035854 para RAL7035, mas na lista oficial
             // PINTURA 29035854 é a embalagem alternativa do RAL2009 (Orange).
-            // Mantido o RAL7035 oficial (29034878) — conferir com almoxarifado.
+            // RAL7035 oficial (29034878) CONFIRMADO pelo usuário (ago/2026).
             { cat: 'Químicos', sap: '29034878', desc: 'KIT,TOP COAT 12 RAL7035 1kg (Grey)',         unit: 'KIT', qty: 1 },
             { cat: 'Químicos', sap: '60120794', desc: 'CLEANER NO. 205 (Sika cleaner-205)',         unit: 'EA',  qty: 2 },
             { cat: 'Químicos', sap: '29035856', desc: 'THINNER 1kg FOR TOP COAT 12',                unit: 'EA',  qty: 1 },
@@ -479,7 +479,7 @@ const SPECIAL_REPAIRS = [
             { cat: 'Consumíveis', sap: '198006', desc: 'CLEANING PAPER WYPALL X60',                  unit: 'EA',  qty: 1 },
             { cat: 'Consumíveis', sap: '291574', desc: 'SATWIPES ETHANOL (as necessary)',            unit: 'TUB', qty: 1 },
             // "Cleaning agent 0.5 l" do doc não tem número; mapeado para o álcool
-            // 93% 1/2 litre já usado como agente de limpeza — conferir se ok.
+            // 93% 1/2 litre — mapeamento CONFIRMADO pelo usuário (ago/2026).
             { cat: 'Consumíveis', sap: '234900', desc: 'ALCOHOL DENATURED 93% 1/2 LITRE (cleaning agent 0.5 l)', unit: 'BTL', qty: 1 },
             // Ferramentas (tabela 7.1 do doc; reutilizáveis)
             { cat: 'Ferramentas', sap: '213473',   desc: 'BATTERY DRILL MACHINE ELU',                unit: 'EA', qty: 1, perBlade: false },

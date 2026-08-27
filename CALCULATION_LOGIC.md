@@ -439,7 +439,7 @@ Regras: consumíveis/químicos/EPI multiplicam pelo nº de pás; **ferramentas s
 reutilizáveis e ficam fixas** (`perBlade:false`). Itens dos documentos sem
 número de item entram com SAP `-` (zero-mock — nada inventado).
 
-Flags registradas no catálogo: a lista de campo usava `29035854` como RAL7035,
-mas a lista oficial PINTURA diz que ele é a embalagem alternativa do RAL2009 —
-mantido o `29034878` oficial, conferir; o "cleaning agent 0,5 l" do doc do
-collar (sem número) foi mapeado para o álcool 93% ½ L (`234900`), conferir.
+Flags fechadas (confirmadas pelo usuário, ago/2026): RAL7035 fica no
+`29034878` oficial (o `29035854` da lista de campo é a embalagem alternativa
+do RAL2009); o "cleaning agent 0,5 l" do doc do collar (sem número) fica
+mapeado para o álcool 93% ½ L (`234900`).
