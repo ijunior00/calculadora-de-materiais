@@ -345,9 +345,12 @@ const CONSUMABLE_TOOLS = [
     { sap: '232923',   desc: 'Round grinding plate G120 125mm',       unit: 'EA', calcQty: (s, d, lay) => s.Grinding > 0 ? Math.ceil(lay.maxAreaM2) * 15 : 0 },
     // MX: 29196704 (W/O holes, 26 uses) replaces BR 232906 (2 uses in MX log).
     { sap: '29196704', desc: 'ROUND GRINDING PLATE G60 125mm W/O HOLES', unit: 'EA', calcQty: (s, d, lay) => s.Grinding > 0 ? Math.ceil(lay.maxAreaM2) * 15 : 0 },
-    { sap: '233010',   desc: 'Round grinding plate G120 150mm',       unit: 'EA', calcQty: (s, d, lay) => s.Grinding > 0 ? Math.ceil(lay.maxAreaM2) * 15 : 0 },
-    { sap: '233005',   desc: 'Round grinding plate G60 150mm',        unit: 'EA', calcQty: (s, d, lay) => s.Grinding > 0 ? Math.ceil(lay.maxAreaM2) * 15 : 0 },
-    { sap: '233015',   desc: 'Round grinding plate K220 150mm',       unit: 'EA', calcQty: (s, d, lay) => s.Grinding > 0 ? Math.ceil(lay.maxAreaM2) * 15 : 0 },
+    // Único grão de acabamento do catálogo (não existe K220 em 125mm), roda na
+    // excêntrica de 150mm. SAP conferido na lista oficial: 29196720 substitui o
+    // 233015 — mesma família 291967xx dos demais abrasivos adotados do México
+    // (29196703 prato 125, 29196704 G60 125) e classificado como consumível.
+    // ATENÇÃO: é prato de 9 FUROS — o suporte precisa ter o mesmo padrão.
+    { sap: '29196720', desc: 'GRIND PLATE ø150 K220, 9 HOLE (acabamento)', unit: 'EA', calcQty: (s, d, lay) => s.Grinding > 0 ? Math.ceil(lay.maxAreaM2) * 15 : 0 },
     { sap: '233843',   desc: 'SCOTCH BRITE 3M BLK 158x224mm',         unit: 'EA', calcQty: (s) => s.LEP > 0 ? 3 * s.LEP : 0 },
     // MX: 29196727 (54 uses) replaces BR 224010 (4 uses in MX log).
     { sap: '29196727', desc: 'PADDLE STIRRERS (wood stick)',          unit: 'EA', calcQty: (s) => Math.ceil(s.Weighing * 1.1) },
@@ -513,12 +516,27 @@ const CONSUMABLES = [
 // FULL TOOLS DATABASE — exact match to Excel Tools sheet
 // Conditions and quantities mirror column D formulas in the Tools sheet
 // ============================================================
+// Removidos na revisão de redundância (ago/2026), com justificativa:
+//   S096072  Araldite Gun 2021 50mL — não existe adesivo Araldite no catálogo,
+//            a pistola nunca teria o que aplicar.
+//   20034926 Albion 450mL — duplicava o COX 400mL (20032802); o Sikapower 1200
+//            é cartucho de 400 mL, então o COX é o que casa com o consumível.
+//   10102199 Grease Filler Gun — sem consumível correspondente no BOM.
+//   VT181160 Régua inox 150mm — coberta pela régua 0-300mm e pelo paquímetro.
+//   233005 / 233010  Discos G60 e G120 de 150mm — o desbaste passou a ser todo
+//            nas excêntricas de 125mm, que têm os mesmos grãos e o prato
+//            suporte. O diâmetro 150 fica só para o K220 de acabamento.
+// PENDENTE: falta o prato suporte (backing pad) de 150mm COM 9 FUROS — o
+//            catálogo só tem o de 125mm sem furos (29196703).
+//            Ver PENDING_REV06.md.
 const TOOLS = [
     // Heating blankets — HLU or Infusion
     { sap: 'VT730406',    desc: 'Heating blanket 1300*1300 mm 230v',           unit: 'EA', calcQty: (s) => (s.HLU > 0 || s.Infusion > 0) ? 3 : 0 },
     { sap: 'VT730630',    desc: 'HEATING BLANKET 350x3800 230V',               unit: 'EA', calcQty: (s) => (s.HLU > 0 || s.Infusion > 0) ? 1 : 0 },
     // Grinders / Drill / Heat Gun — Grinding condition unless noted
-    { sap: '232936',      desc: 'Excentric grind machine 150mm',               unit: 'EA', calcQty: (s) => s.Grinding > 0 ? 1 : 0 },
+    // 150mm fica SÓ para o acabamento (é o único diâmetro com grão K220).
+    // Todo o desbaste (G60/G120) roda nas excêntricas de 125.
+    { sap: '232936',      desc: 'Excentric grind machine 150mm (acabamento K220)', unit: 'EA', calcQty: (s) => s.Grinding > 0 ? 1 : 0 },
     { sap: '232935',      desc: 'EXCENTRIC GRIND.MACH. 125 BOSCH',             unit: 'EA', calcQty: (s) => s.Grinding > 0 ? 2 : 0 },
     { sap: '233845',      desc: 'ANGLE GRINDER METABO 5" 125 (RPM adj)',       unit: 'EA', calcQty: (s) => s.Grinding > 0 ? 1 : 0 },
     { sap: '20030258',    desc: 'ANGLE GRINDER BATTERY OPERATED',              unit: 'EA', calcQty: (s) => s.Grinding > 0 ? 1 : 0 },
@@ -549,15 +567,11 @@ const TOOLS = [
     // Others — dispensing tools (Bonding condition)
     { sap: 'VT20020580',  desc: 'KIT F TWO COMP DISPENSING GUN',               unit: 'EA', calcQty: (s) => s.Bonding > 0 ? 1 : 0 },
     { sap: '29035578',    desc: 'CAULKING GUN 9"',                             unit: 'EA', calcQty: (s) => s.Bonding > 0 ? 1 : 0 },
-    { sap: '10102199',    desc: 'GREASE FILLER GUN',                           unit: 'EA', calcQty: (s) => s.Bonding > 0 ? 1 : 0 },
     { sap: '20032802',    desc: 'BATTERY POWERED 400ML COX DISPENSER',         unit: 'EA', calcQty: (s) => s.Bonding > 0 ? 1 : 0 },
-    { sap: '20034926',    desc: 'BATTERY POWERED 450ML ALBION DISPENSER',      unit: 'EA', calcQty: (s) => s.Bonding > 0 ? 1 : 0 },
-    { sap: 'S096072',     desc: 'ARALDITE GUN 2021 50ML',                      unit: 'EA', calcQty: (s) => s.Bonding > 0 ? 1 : 0 },
     // Measuring / marking
     { sap: 'VT181637',    desc: 'TAPEMEASURE 50m C1',                          unit: 'EA', calcQty: (s) => s.Cleaning > 0 ? 1 : 0 },
     { sap: 'VT181616',    desc: 'MEASURING TAPE, 5.5M',                        unit: 'EA', calcQty: (s) => s.Cleaning > 0 ? 1 : 0 },
     { sap: '217942',      desc: 'HAMMER, NYLON WOOD HNDL 50X340MM',            unit: 'EA', calcQty: (s) => s.Cleaning > 0 ? 1 : 0 },
-    { sap: 'VT181160',    desc: 'RULER, SS, 150mm',                            unit: 'EA', calcQty: (s) => s.Cleaning > 0 ? 1 : 0 },
     { sap: 'VT181161',    desc: 'RULER, METAL, 0-300mm',                       unit: 'EA', calcQty: (s) => s.Cleaning > 0 ? 1 : 0 },
     { sap: 'VT181171',    desc: 'METAL RULER 0-1000mm',                        unit: 'EA', calcQty: (s) => s.Cleaning > 0 ? 1 : 0 },
     { sap: '222402',      desc: 'PAINT MARKER BLUE EDDING',                    unit: 'EA', calcQty: (s) => s.Cleaning > 0 ? 3 : 0 },

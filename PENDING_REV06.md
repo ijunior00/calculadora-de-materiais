@@ -144,3 +144,33 @@ Busca textual exaustiva por `Quadrax`, `850gsm`, `566gsm`, `450gsm`, `200gsm`, `
 Os hits em `Fabrics!B17` e `B19` são as fabrics HM do V150 já completamente mapeadas (`BIAX600 HM` = SAP 29116888, `BIAX1200 HM` = SAP 29110146). `BI45`/`BI80` é abreviação Vestas para o ângulo do weave (Biax ±45° / Biax ±80°) — não são GSMs.
 
 Conclusão: os 5 materiais novos do `Blades_Fabrics` existem em REV05 **somente como labels**.
+
+
+---
+
+## Prato suporte (backing pad) de 150mm — aguardando número de item
+
+**Situação:** a revisão de ferramentas (ago/2026) consolidou o desbaste nas
+excêntricas de **125mm** e deixou a de **150mm** exclusivamente para o
+acabamento, porque o **K220 só existe em 150mm** no catálogo.
+
+**A lacuna:** o catálogo tem prato suporte apenas em 125mm
+(`29196703`, REAR DISK RUBBER 125mm). Não há prato de 150mm — ou seja, a lista
+manda comprar o disco K220 de 150 sem o suporte para montá-lo. A inconsistência
+é anterior a esta revisão: já existiam discos de 150 sem prato correspondente.
+
+**O que falta:** o número de item do backing pad de **150mm com 9 furos**.
+
+A busca oficial por K220 (ago/2026) confirmou dois pontos: **não existe K220 em
+125mm** — todos os grãos de acabamento são Ø150, o que torna a excêntrica de 150
+insubstituível — e o prato de acabamento adotado (`29196720`, GRIND PLATE ø150
+K220) é de **9 furos**, para extração de pó. O suporte precisa do mesmo padrão
+de furos; o de 125mm que temos (`29196703`) é sem furos, ou seja, os dois
+sistemas não são intercambiáveis.
+
+**Por que não foi preenchido:** política de zero-mock — número de item não se
+deduz. Assim que o almoxarifado confirmar, basta adicionar em
+`CONSUMABLE_TOOLS` com `calcQty` espelhando o de 125mm.
+
+**Alternativa descartada:** padronizar tudo em 125mm não é possível — a busca
+oficial mostrou que K220 só existe em Ø150.
