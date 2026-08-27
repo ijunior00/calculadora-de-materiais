@@ -74,7 +74,7 @@ function renderKitsPanel() {
         <div style="background:#143A5F;color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center">
             <div>
                 <div style="font-weight:800;font-size:1rem">Reparos especiais — kit fixo por pá</div>
-                <div style="font-size:0.74rem;opacity:0.8">Fonte: work instruction ${esc(rep.doc)}</div>
+                <div style="font-size:0.74rem;opacity:0.8">Fonte: work instruction ${esc(variant.doc || rep.doc)}</div>
             </div>
             <button onclick="closeSpecialKits()" style="background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer">×</button>
         </div>
@@ -90,6 +90,7 @@ function renderKitsPanel() {
             <button onclick="exportSpecialKit('excel')" style="padding:9px 14px;border:none;border-radius:8px;background:#16a34a;color:#fff;font-weight:700;cursor:pointer">Excel</button>
             <button onclick="exportSpecialKit('pdf')" style="padding:9px 14px;border:none;border-radius:8px;background:#143A5F;color:#fff;font-weight:700;cursor:pointer">PDF</button>
         </div>
+        ${rep.note ? `<div style="font-size:0.72rem;color:#92400e;background:#fef3c7;margin:0 18px 8px;padding:7px 10px;border-radius:8px">${esc(rep.note)}</div>` : ''}
         <div style="font-size:0.72rem;color:#64748b;padding:0 18px 8px">Consumíveis e EPI multiplicam pelo nº de pás; ferramentas são reutilizáveis e ficam fixas.</div>
         <div style="max-height:52vh;overflow:auto;border-top:1px solid #e2e8f0">
             <table style="border-collapse:collapse;width:100%;font-size:0.78rem">

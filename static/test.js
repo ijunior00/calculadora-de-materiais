@@ -683,8 +683,17 @@
         r.push(ser ? pass('serration presente') : fail('serration ausente', ''));
         r.push(col ? pass('collar presente') : fail('collar ausente', ''));
         if (ser) {
-            r.push(assertEq('serration: kit V136 = 29082248', ser.variants[0].kit.sap === '29082248' ? 1 : 0, 1));
-            r.push(assertEq('serration: kit V162 = 29183278', ser.variants[1].kit.sap === '29183278' ? 1 : 0, 1));
+            // Todas as versões dos dois WIs (0052-7690 v1; 0061-8905 v2/2.1) + V162
+            r.push(assertEq('serration: 13 variantes de kit', ser.variants.length, 13));
+            const kitOf = (id) => (ser.variants.find(v => v.id === id) || { kit: {} }).kit.sap;
+            for (const [id, sap] of [['V90v1','29058631'],['V100v1','29057488'],['V90v2','29085790'],
+                                     ['V112_117v21','29197722'],['V126v21','29186328'],
+                                     ['V136','29082248'],['V162','29183278']]) {
+                r.push(assertEq(`serration kit ${id} = ${sap}`, kitOf(id) === sap ? 1 : 0, 1));
+            }
+            // Nenhum kit com número placeholder (os V112/V117/V126 v1 são TBC no doc e ficam fora)
+            const semNum = ser.variants.filter(v => !v.kit.sap || /TBC|TBD/i.test(v.kit.sap));
+            r.push(semNum.length === 0 ? pass('nenhum kit TBC/sem número') : fail('kit com placeholder', semNum.map(v=>v.id).join(',')));
             // SAPs precisam estar no catálogo MX atual, não nos números BR antigos
             const saps = ser.items.map(i => i.sap);
             for (const velho of ['233015', '233875', '224010']) {

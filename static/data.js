@@ -416,9 +416,25 @@ const SPECIAL_REPAIRS = [
         id: 'serration',
         label: 'Serration install (TE)',
         doc: '00618905',
+        // Kits por modelo/versão. Fontes: WI 0052-7690 V03 (versão 1, tabela 8-1)
+        // e WI 0061-8905 V06 (versões 2/2.1, tabela 8-1); V162 da lista de campo.
+        // Os kits VERSÃO 1 de V112/V117/V126 constam como "TBC" no próprio doc —
+        // sem número, não entram (zero-mock; ver PENDING_REV06.md).
+        note: 'Versões 2 e 2.1 NÃO são intercambiáveis. Retrofit completo de pá → usar 2.1; troca de componente individual → manter a versão existente (WI 0061-8905 §8).',
         variants: [
-            { id: 'V136', label: 'V136', kit: { sap: '29082248', desc: 'SERRATED TE KIT V136', unit: 'EA', qty: 1 } },
-            { id: 'V162', label: 'V162', kit: { sap: '29183278', desc: 'SERRATED TE KIT V162', unit: 'EA', qty: 1 } },
+            { id: 'V90v1',    label: 'V90 — versão 1',        doc: '0052-7690 V03', kit: { sap: '29058631', desc: 'V90 SERRATION KIT VER 1',          unit: 'EA', qty: 1 } },
+            { id: 'V100v1',   label: 'V100 — versão 1',       doc: '0052-7690 V03', kit: { sap: '29057488', desc: 'V100 SERRATION KIT VER 1',         unit: 'EA', qty: 1 } },
+            { id: 'V90v2',    label: 'V90 — versão 2',        doc: '0061-8905 V06', kit: { sap: '29085790', desc: 'SERRATED TE KIT V90 (ver. 2)',     unit: 'EA', qty: 1 } },
+            { id: 'V100v2',   label: 'V100 — versão 2',       doc: '0061-8905 V06', kit: { sap: '29085789', desc: 'SERRATED TE KIT V100 (ver. 2)',    unit: 'EA', qty: 1 } },
+            { id: 'V105v2',   label: 'V105 — versão 2',       doc: '0061-8905 V06', kit: { sap: '29080160', desc: 'SERRATED TE KIT V105 (ver. 2)',    unit: 'EA', qty: 1 } },
+            { id: 'V112_117v2',  label: 'V112/V117 — versão 2',   doc: '0061-8905 V06', kit: { sap: '29079918', desc: 'SERRATED TE KIT V112/V117 (ver. 2)', unit: 'EA', qty: 1 } },
+            { id: 'V112_117v21', label: 'V112/V117 — versão 2.1', doc: '0061-8905 V06', kit: { sap: '29197722', desc: 'SERRATED TE KIT V117 (ver. 2.1)',    unit: 'EA', qty: 1 } },
+            { id: 'V116',     label: 'V116',                  doc: '0061-8905 V06', kit: { sap: '29104664', desc: 'SERRATED TE KIT V116',            unit: 'EA', qty: 1 } },
+            { id: 'V120',     label: 'V120',                  doc: '0061-8905 V06', kit: { sap: '29104665', desc: 'SERRATED TE KIT V120',            unit: 'EA', qty: 1 } },
+            { id: 'V126v2',   label: 'V126 — versão 2',       doc: '0061-8905 V06', kit: { sap: '29079919', desc: 'SERRATED TE KIT V126 (ver. 2)',    unit: 'EA', qty: 1 } },
+            { id: 'V126v21',  label: 'V126 — versão 2.1',     doc: '0061-8905 V06', kit: { sap: '29186328', desc: 'V126 TE SERRATION REV2.1 KIT',    unit: 'EA', qty: 1 } },
+            { id: 'V136',     label: 'V136 — versão 2.1',     doc: '0061-8905 V06', kit: { sap: '29082248', desc: 'SERRATED TE KIT V136 (ver. 2.1)',  unit: 'EA', qty: 1 } },
+            { id: 'V162',     label: 'V162',                  doc: 'lista de campo REYNOSA', kit: { sap: '29183278', desc: 'SERRATED TE KIT V162', unit: 'EA', qty: 1 } },
         ],
         items: [
             // Químicos

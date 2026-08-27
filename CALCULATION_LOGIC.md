@@ -432,7 +432,7 @@ pelos endpoints já existentes.
 
 | Reparo | Fonte | Kits (variantes) |
 |---|---|---|
-| Serration install (TE) | WI 00618905 + lista de campo REYNOSA | V136 `29082248` · V162 `29183278` |
+| Serration install (TE) | WI 0052-7690 V03 (v1) + WI 0061-8905 V06 (v2/2.1) + lista REYNOSA | **13 kits**: V90/V100 v1 e v2, V105, V112/V117 v2 e v2.1, V116, V120, V126 v2 e v2.1, V136, V162 (v2≠v2.1: não intercambiáveis) |
 | Blade collar replacement (2 MW) | WI 0015-0803 V05 | Mk 1–10 `10207233` (R7035) · Mk 11 `29110316` — kit 15 kg |
 
 Regras: consumíveis/químicos/EPI multiplicam pelo nº de pás; **ferramentas são

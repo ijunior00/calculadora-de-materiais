@@ -174,3 +174,18 @@ deduz. Assim que o almoxarifado confirmar, basta adicionar em
 
 **Alternativa descartada:** padronizar tudo em 125mm não é possível — a busca
 oficial mostrou que K220 só existe em Ø150.
+
+
+---
+
+## Kits de serration versão 1 — V112 / V117 / V126 sem número
+
+A WI 0052-7690 V03 (Installation and removal of version 1 serration, tabela
+8-1) lista os kits versão 1 de **V112, V117 e V126 como "TBC"** — o próprio
+documento não tem o número. Só V90 (`29058631`) e V100 (`29057488`) têm número
+de kit v1 e entraram no catálogo `SPECIAL_REPAIRS`.
+
+Se aparecer pá com serration **versão 1** nesses três modelos, buscar o número
+no SAP antes do pedido (ou tratar por componente individual — tabela 8-2 da
+mesma WI, SAPs 29037908–29043964). Lembrete da WI 0061-8905: versões 2 e 2.1
+não são intercambiáveis com a 1.
