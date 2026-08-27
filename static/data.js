@@ -400,6 +400,107 @@ function topcoatQty(lay, s) {
     return Math.ceil(lay.areaWithMarginM2 * 0.4 * s.Painting * 2);
 }
 
+// ── Reparos especiais (kit fixo por pá) ─────────────────────────────────────
+// Listas de material de procedimentos que NÃO dependem da geometria do dano:
+// o material é um kit + consumíveis fixos por pá. Fontes:
+//   serration → work instruction 00618905 + lista de campo REYNOSA (planilha
+//               V136_REYNOSA_SERRATION_REPAIR_MATERIALS, aba SERRATION INSTALL)
+//   collar    → work instruction 0015-0803 V05 (Replacement of blade collar,
+//               plataforma 2 MW; kit pesa 15 kg)
+// SAPs migrados para o catálogo México onde a troca já foi feita no BOM
+// (233015→29196720, 233875→29196703, 224010→29196727). Itens do documento sem
+// número de item entram com sap '-' — política de zero-mock, nada inventado.
+// perBlade:false = ferramenta reutilizável, não multiplica pelo nº de pás.
+const SPECIAL_REPAIRS = [
+    {
+        id: 'serration',
+        label: 'Serration install (TE)',
+        doc: '00618905',
+        variants: [
+            { id: 'V136', label: 'V136', kit: { sap: '29082248', desc: 'SERRATED TE KIT V136', unit: 'EA', qty: 1 } },
+            { id: 'V162', label: 'V162', kit: { sap: '29183278', desc: 'SERRATED TE KIT V162', unit: 'EA', qty: 1 } },
+        ],
+        items: [
+            // Químicos
+            { cat: 'Químicos', sap: '234900',   desc: 'ALCOHOL DENATURED 93% 1/2 LITRE',            unit: 'BTL', qty: 2 },
+            { cat: 'Químicos', sap: '889017',   desc: 'EPOXY REP.SET, BLADES, R7035',               unit: 'EA',  qty: 1 },
+            // Sikaflex 521 UV (300 ml); alternativa de cor/embalagem: 149752
+            { cat: 'Químicos', sap: '149751',   desc: 'SEALING 521UV NCS S 2502-B 300 (Sikaflex 521 UV)', unit: 'TUB', qty: 10 },
+            { cat: 'Químicos', sap: '291574',   desc: 'CLOTH,CLEANING (Satwipes w/ ethanol)',       unit: 'TUB', qty: 1 },
+            // A lista de campo dizia 29035854 para RAL7035, mas na lista oficial
+            // PINTURA 29035854 é a embalagem alternativa do RAL2009 (Orange).
+            // Mantido o RAL7035 oficial (29034878) — conferir com almoxarifado.
+            { cat: 'Químicos', sap: '29034878', desc: 'KIT,TOP COAT 12 RAL7035 1kg (Grey)',         unit: 'KIT', qty: 1 },
+            { cat: 'Químicos', sap: '60120794', desc: 'CLEANER NO. 205 (Sika cleaner-205)',         unit: 'EA',  qty: 2 },
+            { cat: 'Químicos', sap: '29035856', desc: 'THINNER 1kg FOR TOP COAT 12',                unit: 'EA',  qty: 1 },
+            // Ferramentas consumíveis
+            { cat: 'Ferramentas consumíveis', sap: '29057162', desc: 'DISTANCE CLIPS FOR SERRATIONS', unit: 'EA', qty: 1 },
+            { cat: 'Ferramentas consumíveis', sap: '234630',   desc: 'BLUE PLASTIC SPATTLE (FLEXIBLE)', unit: 'EA', qty: 4 },
+            { cat: 'Ferramentas consumíveis', sap: '60059473', desc: 'PAINT ROLLER, SUPER SMOOTH, 11in', unit: 'EA', qty: 4 },
+            { cat: 'Ferramentas consumíveis', sap: '234615',   desc: 'PLASTIC PUTTY KNIFE BLACK (STIFF)', unit: 'EA', qty: 2 },
+            { cat: 'Ferramentas consumíveis', sap: '29196727', desc: 'PADDLE STIRRERS (wood stick)',  unit: 'EA', qty: 4 },
+            { cat: 'Ferramentas consumíveis', sap: '29196720', desc: 'GRIND PLATE ø150 K220, 9 HOLE (acabamento)', unit: 'EA', qty: 15 },
+            { cat: 'Ferramentas consumíveis', sap: '229600',   desc: 'SCISSOR FOR GLASS FIBER',       unit: 'EA', qty: 1 },
+            // Consumíveis
+            { cat: 'Consumíveis', sap: '220320',  desc: 'Cloth harpix (cleaning before paint)',      unit: 'EA',  qty: 2 },
+            { cat: 'Consumíveis', sap: 'S094586', desc: 'Flash tape 1/50mm poly/silic (blue)',       unit: 'ROL', qty: 4 },
+            { cat: 'Consumíveis', sap: '238710',  desc: 'MASKING TAPE, RUBBER 50mmX50m',             unit: 'ROL', qty: 4 },
+            { cat: 'Consumíveis', sap: '198004',  desc: 'Paper tork (Cleaning paper roll)',          unit: 'ROL', qty: 2 },
+            // Ferramentas (reutilizáveis — não multiplicam por pá)
+            { cat: 'Ferramentas', sap: '29097941',   desc: 'BLOWER, 1000 m3/h, 1 kW, 400 V',         unit: 'EA', qty: 1, perBlade: false },
+            { cat: 'Ferramentas', sap: '291960',     desc: 'CABLE REEL, ELEC W/CEE PLUGS 25M',       unit: 'EA', qty: 4, perBlade: false },
+            { cat: 'Ferramentas', sap: '230551',     desc: 'CHISEL, GEN-PURPOSE BEVELED 4MM',        unit: 'EA', qty: 2, perBlade: false },
+            { cat: 'Ferramentas', sap: 'VT70002387', desc: 'CUTTER WITH SPRING (Safety Knife)',      unit: 'EA', qty: 2, perBlade: false },
+            { cat: 'Ferramentas', sap: '232936',     desc: 'Excentric grind machine 150mm (acabamento K220)', unit: 'EA', qty: 2, perBlade: false },
+            { cat: 'Ferramentas', sap: 'VT180199',   desc: 'MANUAL ROLLER MR1',                      unit: 'EA', qty: 1, perBlade: false },
+            { cat: 'Ferramentas', sap: 'VT181616',   desc: 'MEASURING TAPE, 5.5M',                   unit: 'EA', qty: 2, perBlade: false },
+            { cat: 'Ferramentas', sap: 'VT181171',   desc: 'METAL RULER 0-1000mm',                   unit: 'EA', qty: 1, perBlade: false },
+            { cat: 'Ferramentas', sap: '222402',     desc: 'PAINT MARKER BLUE EDDING',               unit: 'EA', qty: 4, perBlade: false },
+            { cat: 'Ferramentas', sap: 'VT181161',   desc: 'RULER, METAL, 0-300mm',                  unit: 'EA', qty: 1, perBlade: false },
+            { cat: 'Ferramentas', sap: 'VT181637',   desc: 'TAPEMEASURE 50m C1',                     unit: 'EA', qty: 1, perBlade: false },
+            // EPI (prática de campo da lista REYNOSA)
+            { cat: 'EPI', sap: '237100', desc: 'Dust loops (3M mask paper)',      unit: 'EA',  qty: 3 },
+            { cat: 'EPI', sap: '218173', desc: 'Gloves blue nitrile L',           unit: 'PAA', qty: 1 },
+            { cat: 'EPI', sap: '214445', desc: 'Suit F/Protec, Tyvec, size XL',   unit: 'EA',  qty: 3 },
+        ],
+    },
+    {
+        id: 'collar',
+        label: 'Blade collar replacement (2 MW)',
+        doc: '0015-0803 V05',
+        variants: [
+            { id: 'mk1_10', label: 'Mk 1–10 (R7035)', kit: { sap: '10207233', desc: '2 MW Blade collar kit Mk 1-10 (SITE PART BLADE R. COVER R7035)', unit: 'EA', qty: 1 } },
+            { id: 'mk11',   label: 'Mk 11',           kit: { sap: '29110316', desc: '2 MW Blade collar kit Mk 11 (SITE PART BLADE R. COVER)',        unit: 'EA', qty: 1 } },
+        ],
+        items: [
+            // Consumíveis (tabela 9.1 do doc)
+            { cat: 'Consumíveis', sap: '115517', desc: 'CABLE TIE 292x4.8mm PLT3S-C0 (as necessary)', unit: 'EA',  qty: 1 },
+            { cat: 'Consumíveis', sap: '149751', desc: 'SEALING 521UV NCS S 2502-B 300 (Sikaflex 521 UV)', unit: 'TUB', qty: 1 },
+            { cat: 'Consumíveis', sap: '198006', desc: 'CLEANING PAPER WYPALL X60',                  unit: 'EA',  qty: 1 },
+            { cat: 'Consumíveis', sap: '291574', desc: 'SATWIPES ETHANOL (as necessary)',            unit: 'TUB', qty: 1 },
+            // "Cleaning agent 0.5 l" do doc não tem número; mapeado para o álcool
+            // 93% 1/2 litre já usado como agente de limpeza — conferir se ok.
+            { cat: 'Consumíveis', sap: '234900', desc: 'ALCOHOL DENATURED 93% 1/2 LITRE (cleaning agent 0.5 l)', unit: 'BTL', qty: 1 },
+            // Ferramentas (tabela 7.1 do doc; reutilizáveis)
+            { cat: 'Ferramentas', sap: '213473',   desc: 'BATTERY DRILL MACHINE ELU',                unit: 'EA', qty: 1, perBlade: false },
+            { cat: 'Ferramentas', sap: '213476',   desc: 'DRILL BOX WITH 1-13MM PERFOR',             unit: 'EA', qty: 1, perBlade: false },
+            { cat: 'Ferramentas', sap: '213616',   desc: 'CAULKING GUN H14',                         unit: 'EA', qty: 1, perBlade: false },
+            { cat: 'Ferramentas', sap: '238353',   desc: 'SOCKET WRENCH 1/4" TECOS T063M',           unit: 'EA', qty: 1, perBlade: false },
+            { cat: 'Ferramentas', sap: '250069',   desc: 'CUTTING PLIERS BAHCO 2101G-125MM',         unit: 'EA', qty: 1, perBlade: false },
+            { cat: 'Ferramentas', sap: '294335',   desc: 'SCREWDRIVER 3,5X75MM',                     unit: 'EA', qty: 1, perBlade: false },
+            { cat: 'Ferramentas', sap: 'VT730302', desc: 'SLING RNEN 1m 1t',                         unit: 'EA', qty: 2, perBlade: false },
+            { cat: 'Ferramentas', sap: '-',        desc: 'Rope to keep the collar from falling down', unit: 'EA', qty: 1, perBlade: false },
+            { cat: 'Ferramentas', sap: '-',        desc: 'Allen key 5 mm',                           unit: 'EA', qty: 1, perBlade: false },
+            { cat: 'Ferramentas', sap: '-',        desc: 'Permanent marker',                         unit: 'EA', qty: 1, perBlade: false },
+            { cat: 'Ferramentas', sap: '-',        desc: 'Plastic red/white tape (as necessary)',    unit: 'ROL', qty: 1, perBlade: false },
+            // EPI (prática de campo — mesma base da serration; ajustar se preciso)
+            { cat: 'EPI', sap: '237100', desc: 'Dust loops (3M mask paper)',      unit: 'EA',  qty: 3 },
+            { cat: 'EPI', sap: '218173', desc: 'Gloves blue nitrile L',           unit: 'PAA', qty: 1 },
+            { cat: 'EPI', sap: '214445', desc: 'Suit F/Protec, Tyvec, size XL',   unit: 'EA',  qty: 3 },
+        ],
+    },
+];
+
 const CHEMICALS = [
     { sap: '234900',   desc: 'ALCOHOL DENATURED 93% 1/2 LITRE',       unit: 'BTL', calcQty: (s) => s.Cleaning > 0 ? Math.ceil(s.Cleaning / 1.5) : 0 },
     { sap: '291574',   desc: 'CLOTH,CLEANING (Satwipes w/ ethanol)',  unit: 'TUB', calcQty: (s) => s.Cleaning > 0 ? 1 : 0 },
