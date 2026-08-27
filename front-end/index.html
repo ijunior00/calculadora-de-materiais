@@ -92,6 +92,7 @@
         </div>
         <div style="display:flex;gap:10px;align-items:center">
             <button class="nav-reset" onclick="openRepairGuide()" title="Guia de reparo (árvore de decisão, substituições, regras de campo)"><i class="bi bi-clipboard2-pulse"></i> Guia</button>
+            <button class="nav-reset" onclick="openSpecialKits()" title="Reparos especiais de kit fixo (serration, blade collar)"><i class="bi bi-box-seam"></i> Kits</button>
             <a href="/m" class="nav-reset" style="text-decoration:none" title="Open the mobile version"><i class="bi bi-phone"></i> Mobile</a>
             <button class="nav-reset" onclick="resetApp()"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
         </div>
@@ -508,6 +509,7 @@
 <script src="static/engine.js"></script>
 <script src="static/cim_profiles.js"></script>
 <script src="static/guide.js"></script>
+<script src="static/kits.js"></script>
 <script src="static/app_new.js"></script>
 <!-- Test harness loads only in debug mode: open the page with ?debug=1 then call runBOMTests() -->
 <script>

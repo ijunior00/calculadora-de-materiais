@@ -421,3 +421,25 @@ praticado). O thinner soma só as cores efetivamente usadas, então pá de cor
 **Compatibilidade:** `computeFullBOM(..., paintScheme)` é opcional. Omitido,
 usa `DEFAULT_PAINT_SCHEME` = cinza + faixa vermelha, exatamente o resultado
 anterior — por isso nenhum teste existente precisou de re-baseline.
+
+
+### Reparos especiais (kit fixo por pá)
+
+Procedimentos cuja lista de material não depende da geometria do dano — o
+material é um kit + consumíveis fixos. Catálogo em `SPECIAL_REPAIRS`
+(`data.js`), painel "Kits" nas duas UIs (`static/kits.js`), export Excel/PDF
+pelos endpoints já existentes.
+
+| Reparo | Fonte | Kits (variantes) |
+|---|---|---|
+| Serration install (TE) | WI 00618905 + lista de campo REYNOSA | V136 `29082248` · V162 `29183278` |
+| Blade collar replacement (2 MW) | WI 0015-0803 V05 | Mk 1–10 `10207233` (R7035) · Mk 11 `29110316` — kit 15 kg |
+
+Regras: consumíveis/químicos/EPI multiplicam pelo nº de pás; **ferramentas são
+reutilizáveis e ficam fixas** (`perBlade:false`). Itens dos documentos sem
+número de item entram com SAP `-` (zero-mock — nada inventado).
+
+Flags registradas no catálogo: a lista de campo usava `29035854` como RAL7035,
+mas a lista oficial PINTURA diz que ele é a embalagem alternativa do RAL2009 —
+mantido o `29034878` oficial, conferir; o "cleaning agent 0,5 l" do doc do
+collar (sem número) foi mapeado para o álcool 93% ½ L (`234900`), conferir.

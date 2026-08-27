@@ -674,6 +674,40 @@
         return tally(r);
     }
 
+    function testSpecialRepairs() {
+        console.group('Test 22: reparos especiais (serration / blade collar) bem formados');
+        const r = [];
+        r.push(assertEq('2 reparos especiais', SPECIAL_REPAIRS.length, 2));
+        const ser = SPECIAL_REPAIRS.find(x => x.id === 'serration');
+        const col = SPECIAL_REPAIRS.find(x => x.id === 'collar');
+        r.push(ser ? pass('serration presente') : fail('serration ausente', ''));
+        r.push(col ? pass('collar presente') : fail('collar ausente', ''));
+        if (ser) {
+            r.push(assertEq('serration: kit V136 = 29082248', ser.variants[0].kit.sap === '29082248' ? 1 : 0, 1));
+            r.push(assertEq('serration: kit V162 = 29183278', ser.variants[1].kit.sap === '29183278' ? 1 : 0, 1));
+            // SAPs precisam estar no catálogo MX atual, não nos números BR antigos
+            const saps = ser.items.map(i => i.sap);
+            for (const velho of ['233015', '233875', '224010']) {
+                r.push(saps.includes(velho) ? fail(`SAP BR antigo ${velho} na serration`, '') : pass(`sem SAP antigo ${velho}`));
+            }
+            r.push(saps.includes('29196720') ? pass('K220 MX (29196720) presente') : fail('K220 MX ausente', ''));
+        }
+        if (col) {
+            r.push(assertEq('collar: kit Mk1-10 = 10207233', col.variants[0].kit.sap === '10207233' ? 1 : 0, 1));
+            r.push(assertEq('collar: kit Mk11 = 29110316', col.variants[1].kit.sap === '29110316' ? 1 : 0, 1));
+            r.push(col.items.some(i => i.sap === '149751') ? pass('Sikaflex 521UV presente') : fail('Sikaflex ausente', ''));
+        }
+        // Estrutura: todo item com cat/desc/unit e qty > 0; ferramentas com perBlade:false
+        for (const rep of SPECIAL_REPAIRS) {
+            const ruins = rep.items.filter(i => !i.cat || !i.desc || !i.unit || !(i.qty > 0));
+            r.push(ruins.length === 0 ? pass(`${rep.id}: ${rep.items.length} itens válidos`) : fail(`${rep.id}: itens inválidos`, String(ruins.length)));
+            const ferrSemFlag = rep.items.filter(i => i.cat === 'Ferramentas' && i.perBlade !== false);
+            r.push(ferrSemFlag.length === 0 ? pass(`${rep.id}: ferramentas todas perBlade:false`) : fail(`${rep.id}: ferramenta multiplicando por pá`, ferrSemFlag.map(i=>i.sap).join(',')));
+        }
+        console.groupEnd();
+        return tally(r);
+    }
+
     // ── Main runner ───────────────────────────────────────────────────────────
 
     window.runBOMTests = function () {
@@ -701,6 +735,7 @@
             testRepairGuideData,
             testScarfHonorsOverrides,
             testPaintScheme,
+            testSpecialRepairs,
         ];
         let total = { pass: 0, fail: 0 };
         for (const suite of suites) {
