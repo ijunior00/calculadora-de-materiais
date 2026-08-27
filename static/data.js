@@ -513,6 +513,13 @@ const CONSUMABLES = [
 // FULL TOOLS DATABASE — exact match to Excel Tools sheet
 // Conditions and quantities mirror column D formulas in the Tools sheet
 // ============================================================
+// Removidos na revisão de redundância (ago/2026), com justificativa:
+//   S096072  Araldite Gun 2021 50mL — não existe adesivo Araldite no catálogo,
+//            a pistola nunca teria o que aplicar.
+//   20034926 Albion 450mL — duplicava o COX 400mL (20032802); o Sikapower 1200
+//            é cartucho de 400 mL, então o COX é o que casa com o consumível.
+//   10102199 Grease Filler Gun — sem consumível correspondente no BOM.
+//   VT181160 Régua inox 150mm — coberta pela régua 0-300mm e pelo paquímetro.
 const TOOLS = [
     // Heating blankets — HLU or Infusion
     { sap: 'VT730406',    desc: 'Heating blanket 1300*1300 mm 230v',           unit: 'EA', calcQty: (s) => (s.HLU > 0 || s.Infusion > 0) ? 3 : 0 },
@@ -549,15 +556,11 @@ const TOOLS = [
     // Others — dispensing tools (Bonding condition)
     { sap: 'VT20020580',  desc: 'KIT F TWO COMP DISPENSING GUN',               unit: 'EA', calcQty: (s) => s.Bonding > 0 ? 1 : 0 },
     { sap: '29035578',    desc: 'CAULKING GUN 9"',                             unit: 'EA', calcQty: (s) => s.Bonding > 0 ? 1 : 0 },
-    { sap: '10102199',    desc: 'GREASE FILLER GUN',                           unit: 'EA', calcQty: (s) => s.Bonding > 0 ? 1 : 0 },
     { sap: '20032802',    desc: 'BATTERY POWERED 400ML COX DISPENSER',         unit: 'EA', calcQty: (s) => s.Bonding > 0 ? 1 : 0 },
-    { sap: '20034926',    desc: 'BATTERY POWERED 450ML ALBION DISPENSER',      unit: 'EA', calcQty: (s) => s.Bonding > 0 ? 1 : 0 },
-    { sap: 'S096072',     desc: 'ARALDITE GUN 2021 50ML',                      unit: 'EA', calcQty: (s) => s.Bonding > 0 ? 1 : 0 },
     // Measuring / marking
     { sap: 'VT181637',    desc: 'TAPEMEASURE 50m C1',                          unit: 'EA', calcQty: (s) => s.Cleaning > 0 ? 1 : 0 },
     { sap: 'VT181616',    desc: 'MEASURING TAPE, 5.5M',                        unit: 'EA', calcQty: (s) => s.Cleaning > 0 ? 1 : 0 },
     { sap: '217942',      desc: 'HAMMER, NYLON WOOD HNDL 50X340MM',            unit: 'EA', calcQty: (s) => s.Cleaning > 0 ? 1 : 0 },
-    { sap: 'VT181160',    desc: 'RULER, SS, 150mm',                            unit: 'EA', calcQty: (s) => s.Cleaning > 0 ? 1 : 0 },
     { sap: 'VT181161',    desc: 'RULER, METAL, 0-300mm',                       unit: 'EA', calcQty: (s) => s.Cleaning > 0 ? 1 : 0 },
     { sap: 'VT181171',    desc: 'METAL RULER 0-1000mm',                        unit: 'EA', calcQty: (s) => s.Cleaning > 0 ? 1 : 0 },
     { sap: '222402',      desc: 'PAINT MARKER BLUE EDDING',                    unit: 'EA', calcQty: (s) => s.Cleaning > 0 ? 3 : 0 },
