@@ -448,7 +448,10 @@ mapeado para o álcool 93% ½ L (`234900`).
 ### Reedição pelo próprio Excel (aba INPUTS)
 
 Todo Excel gerado no mobile ganha uma aba **INPUTS** (marcador
-`BRMP_REEDIT_V1`) com as entradas completas do cálculo: blade, região,
+`BRMP_REEDIT_V1`), que **nasce oculta** — quem recebe o arquivo vê só o BOM;
+quem conhece o sistema faz Unhide (botão direito na aba) ou usa "Reabrir de
+Excel", que lê a aba oculta normalmente. Ela traz as entradas completas do
+cálculo: blade, região,
 dimensões, dias, interno/externo, esquema de pintura, SO/CIR/título, a pilha
 de camadas (material, gsm e overrides ovR1/ovR2/ovX1/ovX2) e as etapas com
 quantidade. O endpoint `/api/import-bom-excel` lê essa aba de volta e o botão
