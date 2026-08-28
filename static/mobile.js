@@ -189,8 +189,8 @@ function renderLayers() {
             return `
             <div class="m-layer">
                 <div class="l-num">${i + 1}</div>
-                <div class="l-info">
-                    <div class="l-name">${labelFor(l)}</div>
+                <div class="l-info" onclick="openLayerSheet(${i})" style="cursor:pointer" title="Tocar para trocar o material desta camada">
+                    <div class="l-name">${labelFor(l)} <i class="bi bi-arrow-repeat" style="font-size:0.72rem;color:var(--text-faint)"></i></div>
                     <div class="l-sub">${gsm} · ${ovTxt}</div>
                 </div>
                 <div class="l-actions">
@@ -230,11 +230,16 @@ function renderRefFabrics() {
         </div>`;
 }
 
-let _layerQty = 1; // how many copies the layer sheet adds per tap (1-20)
+let _layerQty = 1;      // how many copies the layer sheet adds per tap (1-20)
+let _replaceIdx = null; // when set, the sheet REPLACES that layer's material in place
 
-function openLayerSheet() {
+// Sem argumento: adicionar camadas. Com índice: trocar o material da camada
+// naquela posição — evita apagar/recriar e re-subir a pilha quando o layup é
+// quase igual a um anterior.
+function openLayerSheet(replaceIdx) {
     if (!M.blade) { toast('Select a blade model first.', 'err'); return; }
     _layerQty = 1;
+    _replaceIdx = (typeof replaceIdx === 'number') ? replaceIdx : null;
     const allowed = BLADE_MATERIAL_MAP[M.blade] || [];
     const opts = allowed.map((m, i) => {
         const alias = (typeof fabricAlias === 'function') ? fabricAlias(m.materialType, m.gsm) : '';
@@ -253,9 +258,11 @@ function openLayerSheet() {
     sheet.onclick = (e) => { if (e.target === sheet) closeLayerSheet(); };
     sheet.innerHTML = `
         <div class="m-sheet">
-            <h3>Add layer — ${M.blade}</h3>
-            <div class="sheet-sub">Materials filtered for this blade model (REV05).</div>
-            <div class="m-row-between" style="margin:4px 0 10px;padding:8px 10px;background:#f1f5f9;border-radius:10px">
+            <h3>${_replaceIdx !== null ? `Trocar camada ${_replaceIdx + 1}` : `Add layer — ${M.blade}`}</h3>
+            <div class="sheet-sub">${_replaceIdx !== null
+                ? `Escolha o material novo — a camada mantém a posição ${_replaceIdx + 1} na pilha.`
+                : 'Materials filtered for this blade model (REV05).'}</div>
+            <div class="m-row-between" style="margin:4px 0 10px;padding:8px 10px;background:#f1f5f9;border-radius:10px${_replaceIdx !== null ? ';display:none' : ''}">
                 <span style="font-size:0.84rem;font-weight:600">Quantidade <span class="hint">(camadas por toque)</span></span>
                 <div class="m-stepper">
                     <button class="s-btn" onclick="changeLayerQty(-1)" aria-label="decrease">−</button>
@@ -281,6 +288,20 @@ function addLayer(allowedIdx) {
     const allowed = BLADE_MATERIAL_MAP[M.blade] || [];
     const m = allowed[allowedIdx];
     if (!m) return;
+    if (_replaceIdx !== null) {
+        const layer = M.layers[_replaceIdx];
+        if (layer) {
+            // Mantém posição, nome e overrides de geometria (posições absolutas
+            // que o usuário escolheu); só o material muda.
+            layer.materialType = m.materialType;
+            layer.gsm = m.gsm;
+            toast(`Camada ${_replaceIdx + 1} → ${m.label}.`, 'ok');
+        }
+        _replaceIdx = null;
+        closeLayerSheet();
+        renderLayers();
+        return;
+    }
     const n = _layerQty;
     for (let k = 0; k < n; k++) {
         M.layers.push({ layerName: `Layer ${M.layers.length + 1}`, materialType: m.materialType, gsm: m.gsm });
@@ -662,9 +683,12 @@ function buildPayload() {
         items: allItems,
         audit_inputs: {
             repair_steps: M.steps,
+            paint: M.paint,
             layers: M.layers.filter(l => l.materialType).map((l, idx) => ({
                 order: idx + 1, layerName: l.layerName || '',
                 materialType: l.materialType, gsm: l.gsm || '',
+                ovR1: l.ovR1 ?? null, ovR2: l.ovR2 ?? null,
+                ovX1: l.ovX1 ?? null, ovX2: l.ovX2 ?? null,
             })),
         },
         audit_outputs: {
@@ -768,3 +792,50 @@ document.addEventListener('DOMContentLoaded', () => {
     renderStep1();
     renderActionBar();
 });
+
+
+// ============================================================
+// REABRIR DE EXCEL — lê a aba INPUTS (BRMP_REEDIT_V1) de um Excel
+// gerado pelo app e reconstrói o estado para reedição.
+// ============================================================
+function openImportPicker() {
+    const inp = document.getElementById('m-import-file');
+    if (inp) { inp.value = ''; inp.click(); }
+}
+async function importFromExcel(fileInput) {
+    const f = fileInput.files && fileInput.files[0];
+    if (!f) return;
+    try {
+        const res = await fetch('/api/import-bom-excel', { method: 'POST', body: f });
+        const data = await res.json();
+        if (!res.ok) { toast(data.error || ('Import falhou (HTTP ' + res.status + ')'), 'err'); return; }
+        if (!BLADE_MODELS.includes(data.blade)) { toast('Blade "' + data.blade + '" não existe no app.', 'err'); return; }
+
+        M.blade = data.blade;
+        M.region = BLADE_REGIONS.includes(data.region) ? data.region : 'Middle';
+        M.length = data.length || null;
+        M.width = data.width || null;
+        M.days = data.days || 5;
+        M.isExternal = !!data.isExternal;
+        M.paint = {
+            base: (typeof TOPCOAT_COLORS !== 'undefined' && TOPCOAT_COLORS[data.paint?.base]) ? data.paint.base : 'RAL7035',
+            stripe: (typeof TOPCOAT_COLORS !== 'undefined' && TOPCOAT_COLORS[data.paint?.stripe]) ? data.paint.stripe : null,
+        };
+        M.so = data.so || ''; M.cir = data.cir || ''; M.title = data.title || '';
+        M.layers = (data.layers || []).map((l, i) => {
+            const layer = { layerName: 'Layer ' + (i + 1), materialType: l.materialType, gsm: l.gsm || '' };
+            for (const k of ['ovR1', 'ovR2', 'ovX1', 'ovX2']) {
+                if (l[k] !== null && l[k] !== undefined) layer[k] = l[k];
+            }
+            return layer;
+        });
+        if (data.steps && Object.keys(data.steps).length) {
+            for (const k of Object.keys(M.steps)) M.steps[k] = data.steps[k] ?? 0;
+        }
+        startApp();
+        renderStep1();
+        toast('Excel importado — ' + M.layers.length + ' camadas. Revise e recalcule.', 'ok');
+    } catch (e) {
+        toast('Import falhou: ' + e.message, 'err');
+    }
+}

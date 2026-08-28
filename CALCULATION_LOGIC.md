@@ -443,3 +443,18 @@ Flags fechadas (confirmadas pelo usuário, ago/2026): RAL7035 fica no
 `29034878` oficial (o `29035854` da lista de campo é a embalagem alternativa
 do RAL2009); o "cleaning agent 0,5 l" do doc do collar (sem número) fica
 mapeado para o álcool 93% ½ L (`234900`).
+
+
+### Reedição pelo próprio Excel (aba INPUTS)
+
+Todo Excel gerado no mobile ganha uma aba **INPUTS** (marcador
+`BRMP_REEDIT_V1`) com as entradas completas do cálculo: blade, região,
+dimensões, dias, interno/externo, esquema de pintura, SO/CIR/título, a pilha
+de camadas (material, gsm e overrides ovR1/ovR2/ovX1/ovX2) e as etapas com
+quantidade. O endpoint `/api/import-bom-excel` lê essa aba de volta e o botão
+**"Reabrir de Excel"** (landing do mobile) reconstrói o estado para reedição —
+o Excel entregue vira o arquivo de projeto do reparo.
+
+Na etapa de camadas, tocar no corpo de uma camada abre o seletor em **modo
+troca**: o material muda mantendo a posição na pilha, o nome e os overrides de
+geometria.
