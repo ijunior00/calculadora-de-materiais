@@ -749,6 +749,10 @@ async def generate_excel(data: BOMPayload):
     if data.audit_inputs:
         ai = data.audit_inputs
         ws2 = wb.create_sheet("INPUTS")
+        # Aba oculta de propósito: quem recebe o Excel vê só o BOM; quem conhece
+        # o sistema faz Unhide (botão direito na aba) ou usa "Reabrir de Excel",
+        # que lê a aba oculta normalmente.
+        ws2.sheet_state = "hidden"
         ws2.cell(1, 1, "BRMP_REEDIT_V1").font = bold
         meta_rows = [
             ("Blade", data.turbine_model), ("Region", data.blade_zone),
