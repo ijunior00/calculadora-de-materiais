@@ -350,7 +350,7 @@ const CONSUMABLE_TOOLS = [
     // 233015 — mesma família 291967xx dos demais abrasivos adotados do México
     // (29196703 prato 125, 29196704 G60 125) e classificado como consumível.
     // ATENÇÃO: é prato de 9 FUROS — o suporte precisa ter o mesmo padrão.
-    { sap: '29196720', desc: 'GRIND PLATE ø150 K220, 9 HOLE (acabamento)', unit: 'EA', calcQty: (s, d, lay) => s.Grinding > 0 ? Math.ceil(lay.maxAreaM2) * 15 : 0 },
+    { sap: '29196720', desc: 'GRIND PLATE ø150 K220, 9 HOLE (finishing)', unit: 'EA', calcQty: (s, d, lay) => s.Grinding > 0 ? Math.ceil(lay.maxAreaM2) * 15 : 0 },
     { sap: '233843',   desc: 'SCOTCH BRITE 3M BLK 158x224mm',         unit: 'EA', calcQty: (s) => s.LEP > 0 ? 3 * s.LEP : 0 },
     // MX: 29196727 (54 uses) replaces BR 224010 (4 uses in MX log).
     { sap: '29196727', desc: 'PADDLE STIRRERS (wood stick)',          unit: 'EA', calcQty: (s) => Math.ceil(s.Weighing * 1.1) },
@@ -382,10 +382,10 @@ const CONSUMABLE_TOOLS = [
 //
 // A pá é sempre de cor única (base) ou cor única com faixas coloridas (stripe).
 const TOPCOAT_COLORS = {
-    'RAL7035': { sap: '29034878', altSap: '29035852', role: 'base',   label: 'Cinza (RAL7035)',   desc: 'KIT,TOP COAT 12 RAL7035 1kg (Grey)' },
-    'RAL9010': { sap: '29034879', altSap: '29035853', role: 'base',   label: 'Branco (RAL9010)',  desc: 'KIT,TOP COAT 12 RAL9010 1kg (White)' },
-    'RAL3020': { sap: '29035851', altSap: '29035855', role: 'stripe', label: 'Vermelho (RAL3020)', desc: 'KIT,TOP COAT 12 RAL3020 1kg (Red)' },
-    'RAL2009': { sap: '29035720', altSap: '29035854', role: 'stripe', label: 'Laranja (RAL2009)',  desc: 'KIT,TOP COAT 12 RAL2009 1kg (Orange)' },
+    'RAL7035': { sap: '29034878', altSap: '29035852', role: 'base',   label: 'Grey (RAL7035)',   desc: 'KIT,TOP COAT 12 RAL7035 1kg (Grey)' },
+    'RAL9010': { sap: '29034879', altSap: '29035853', role: 'base',   label: 'White (RAL9010)',  desc: 'KIT,TOP COAT 12 RAL9010 1kg (White)' },
+    'RAL3020': { sap: '29035851', altSap: '29035855', role: 'stripe', label: 'Red (RAL3020)', desc: 'KIT,TOP COAT 12 RAL3020 1kg (Red)' },
+    'RAL2009': { sap: '29035720', altSap: '29035854', role: 'stripe', label: 'Orange (RAL2009)',  desc: 'KIT,TOP COAT 12 RAL2009 1kg (Orange)' },
 };
 
 // Padrão = comportamento histórico do app (cinza + faixa vermelha).
@@ -420,64 +420,64 @@ const SPECIAL_REPAIRS = [
         // e WI 0061-8905 V06 (versões 2/2.1, tabela 8-1); V162 da lista de campo.
         // Os kits VERSÃO 1 de V112/V117/V126 constam como "TBC" no próprio doc —
         // sem número, não entram (zero-mock; ver PENDING_REV06.md).
-        note: 'Versões 2 e 2.1 NÃO são intercambiáveis. Retrofit completo de pá → usar 2.1; troca de componente individual → manter a versão existente (WI 0061-8905 §8).',
+        note: 'Versions 2 and 2.1 are NOT interchangeable. Full blade retrofit → use 2.1; individual component replacement → keep the existing version (WI 0061-8905 §8).',
         variants: [
-            { id: 'V90v1',    label: 'V90 — versão 1',        doc: '0052-7690 V03', kit: { sap: '29058631', desc: 'V90 SERRATION KIT VER 1',          unit: 'EA', qty: 1 } },
-            { id: 'V100v1',   label: 'V100 — versão 1',       doc: '0052-7690 V03', kit: { sap: '29057488', desc: 'V100 SERRATION KIT VER 1',         unit: 'EA', qty: 1 } },
-            { id: 'V90v2',    label: 'V90 — versão 2',        doc: '0061-8905 V06', kit: { sap: '29085790', desc: 'SERRATED TE KIT V90 (ver. 2)',     unit: 'EA', qty: 1 } },
-            { id: 'V100v2',   label: 'V100 — versão 2',       doc: '0061-8905 V06', kit: { sap: '29085789', desc: 'SERRATED TE KIT V100 (ver. 2)',    unit: 'EA', qty: 1 } },
-            { id: 'V105v2',   label: 'V105 — versão 2',       doc: '0061-8905 V06', kit: { sap: '29080160', desc: 'SERRATED TE KIT V105 (ver. 2)',    unit: 'EA', qty: 1 } },
-            { id: 'V112_117v2',  label: 'V112/V117 — versão 2',   doc: '0061-8905 V06', kit: { sap: '29079918', desc: 'SERRATED TE KIT V112/V117 (ver. 2)', unit: 'EA', qty: 1 } },
-            { id: 'V112_117v21', label: 'V112/V117 — versão 2.1', doc: '0061-8905 V06', kit: { sap: '29197722', desc: 'SERRATED TE KIT V117 (ver. 2.1)',    unit: 'EA', qty: 1 } },
+            { id: 'V90v1',    label: 'V90 — version 1',        doc: '0052-7690 V03', kit: { sap: '29058631', desc: 'V90 SERRATION KIT VER 1',          unit: 'EA', qty: 1 } },
+            { id: 'V100v1',   label: 'V100 — version 1',       doc: '0052-7690 V03', kit: { sap: '29057488', desc: 'V100 SERRATION KIT VER 1',         unit: 'EA', qty: 1 } },
+            { id: 'V90v2',    label: 'V90 — version 2',        doc: '0061-8905 V06', kit: { sap: '29085790', desc: 'SERRATED TE KIT V90 (ver. 2)',     unit: 'EA', qty: 1 } },
+            { id: 'V100v2',   label: 'V100 — version 2',       doc: '0061-8905 V06', kit: { sap: '29085789', desc: 'SERRATED TE KIT V100 (ver. 2)',    unit: 'EA', qty: 1 } },
+            { id: 'V105v2',   label: 'V105 — version 2',       doc: '0061-8905 V06', kit: { sap: '29080160', desc: 'SERRATED TE KIT V105 (ver. 2)',    unit: 'EA', qty: 1 } },
+            { id: 'V112_117v2',  label: 'V112/V117 — version 2',   doc: '0061-8905 V06', kit: { sap: '29079918', desc: 'SERRATED TE KIT V112/V117 (ver. 2)', unit: 'EA', qty: 1 } },
+            { id: 'V112_117v21', label: 'V112/V117 — version 2.1', doc: '0061-8905 V06', kit: { sap: '29197722', desc: 'SERRATED TE KIT V117 (ver. 2.1)',    unit: 'EA', qty: 1 } },
             { id: 'V116',     label: 'V116',                  doc: '0061-8905 V06', kit: { sap: '29104664', desc: 'SERRATED TE KIT V116',            unit: 'EA', qty: 1 } },
             { id: 'V120',     label: 'V120',                  doc: '0061-8905 V06', kit: { sap: '29104665', desc: 'SERRATED TE KIT V120',            unit: 'EA', qty: 1 } },
-            { id: 'V126v2',   label: 'V126 — versão 2',       doc: '0061-8905 V06', kit: { sap: '29079919', desc: 'SERRATED TE KIT V126 (ver. 2)',    unit: 'EA', qty: 1 } },
-            { id: 'V126v21',  label: 'V126 — versão 2.1',     doc: '0061-8905 V06', kit: { sap: '29186328', desc: 'V126 TE SERRATION REV2.1 KIT',    unit: 'EA', qty: 1 } },
-            { id: 'V136',     label: 'V136 — versão 2.1',     doc: '0061-8905 V06', kit: { sap: '29082248', desc: 'SERRATED TE KIT V136 (ver. 2.1)',  unit: 'EA', qty: 1 } },
-            { id: 'V162',     label: 'V162',                  doc: 'lista de campo REYNOSA', kit: { sap: '29183278', desc: 'SERRATED TE KIT V162', unit: 'EA', qty: 1 } },
+            { id: 'V126v2',   label: 'V126 — version 2',       doc: '0061-8905 V06', kit: { sap: '29079919', desc: 'SERRATED TE KIT V126 (ver. 2)',    unit: 'EA', qty: 1 } },
+            { id: 'V126v21',  label: 'V126 — version 2.1',     doc: '0061-8905 V06', kit: { sap: '29186328', desc: 'V126 TE SERRATION REV2.1 KIT',    unit: 'EA', qty: 1 } },
+            { id: 'V136',     label: 'V136 — version 2.1',     doc: '0061-8905 V06', kit: { sap: '29082248', desc: 'SERRATED TE KIT V136 (ver. 2.1)',  unit: 'EA', qty: 1 } },
+            { id: 'V162',     label: 'V162',                  doc: 'REYNOSA field list', kit: { sap: '29183278', desc: 'SERRATED TE KIT V162', unit: 'EA', qty: 1 } },
         ],
         items: [
             // Químicos
-            { cat: 'Químicos', sap: '234900',   desc: 'ALCOHOL DENATURED 93% 1/2 LITRE',            unit: 'BTL', qty: 2 },
-            { cat: 'Químicos', sap: '889017',   desc: 'EPOXY REP.SET, BLADES, R7035',               unit: 'EA',  qty: 1 },
+            { cat: 'Chemicals', sap: '234900',   desc: 'ALCOHOL DENATURED 93% 1/2 LITRE',            unit: 'BTL', qty: 2 },
+            { cat: 'Chemicals', sap: '889017',   desc: 'EPOXY REP.SET, BLADES, R7035',               unit: 'EA',  qty: 1 },
             // Sikaflex 521 UV (300 ml); alternativa de cor/embalagem: 149752
-            { cat: 'Químicos', sap: '149751',   desc: 'SEALING 521UV NCS S 2502-B 300 (Sikaflex 521 UV)', unit: 'TUB', qty: 10 },
-            { cat: 'Químicos', sap: '291574',   desc: 'CLOTH,CLEANING (Satwipes w/ ethanol)',       unit: 'TUB', qty: 1 },
+            { cat: 'Chemicals', sap: '149751',   desc: 'SEALING 521UV NCS S 2502-B 300 (Sikaflex 521 UV)', unit: 'TUB', qty: 10 },
+            { cat: 'Chemicals', sap: '291574',   desc: 'CLOTH,CLEANING (Satwipes w/ ethanol)',       unit: 'TUB', qty: 1 },
             // A lista de campo dizia 29035854 para RAL7035, mas na lista oficial
             // PINTURA 29035854 é a embalagem alternativa do RAL2009 (Orange).
             // RAL7035 oficial (29034878) CONFIRMADO pelo usuário (ago/2026).
-            { cat: 'Químicos', sap: '29034878', desc: 'KIT,TOP COAT 12 RAL7035 1kg (Grey)',         unit: 'KIT', qty: 1 },
-            { cat: 'Químicos', sap: '60120794', desc: 'CLEANER NO. 205 (Sika cleaner-205)',         unit: 'EA',  qty: 2 },
-            { cat: 'Químicos', sap: '29035856', desc: 'THINNER 1kg FOR TOP COAT 12',                unit: 'EA',  qty: 1 },
+            { cat: 'Chemicals', sap: '29034878', desc: 'KIT,TOP COAT 12 RAL7035 1kg (Grey)',         unit: 'KIT', qty: 1 },
+            { cat: 'Chemicals', sap: '60120794', desc: 'CLEANER NO. 205 (Sika cleaner-205)',         unit: 'EA',  qty: 2 },
+            { cat: 'Chemicals', sap: '29035856', desc: 'THINNER 1kg FOR TOP COAT 12',                unit: 'EA',  qty: 1 },
             // Ferramentas consumíveis
-            { cat: 'Ferramentas consumíveis', sap: '29057162', desc: 'DISTANCE CLIPS FOR SERRATIONS', unit: 'EA', qty: 1 },
-            { cat: 'Ferramentas consumíveis', sap: '234630',   desc: 'BLUE PLASTIC SPATTLE (FLEXIBLE)', unit: 'EA', qty: 4 },
-            { cat: 'Ferramentas consumíveis', sap: '60059473', desc: 'PAINT ROLLER, SUPER SMOOTH, 11in', unit: 'EA', qty: 4 },
-            { cat: 'Ferramentas consumíveis', sap: '234615',   desc: 'PLASTIC PUTTY KNIFE BLACK (STIFF)', unit: 'EA', qty: 2 },
-            { cat: 'Ferramentas consumíveis', sap: '29196727', desc: 'PADDLE STIRRERS (wood stick)',  unit: 'EA', qty: 4 },
-            { cat: 'Ferramentas consumíveis', sap: '29196720', desc: 'GRIND PLATE ø150 K220, 9 HOLE (acabamento)', unit: 'EA', qty: 15 },
-            { cat: 'Ferramentas consumíveis', sap: '229600',   desc: 'SCISSOR FOR GLASS FIBER',       unit: 'EA', qty: 1 },
+            { cat: 'Consumable tools', sap: '29057162', desc: 'DISTANCE CLIPS FOR SERRATIONS', unit: 'EA', qty: 1 },
+            { cat: 'Consumable tools', sap: '234630',   desc: 'BLUE PLASTIC SPATTLE (FLEXIBLE)', unit: 'EA', qty: 4 },
+            { cat: 'Consumable tools', sap: '60059473', desc: 'PAINT ROLLER, SUPER SMOOTH, 11in', unit: 'EA', qty: 4 },
+            { cat: 'Consumable tools', sap: '234615',   desc: 'PLASTIC PUTTY KNIFE BLACK (STIFF)', unit: 'EA', qty: 2 },
+            { cat: 'Consumable tools', sap: '29196727', desc: 'PADDLE STIRRERS (wood stick)',  unit: 'EA', qty: 4 },
+            { cat: 'Consumable tools', sap: '29196720', desc: 'GRIND PLATE ø150 K220, 9 HOLE (finishing)', unit: 'EA', qty: 15 },
+            { cat: 'Consumable tools', sap: '229600',   desc: 'SCISSOR FOR GLASS FIBER',       unit: 'EA', qty: 1 },
             // Consumíveis
-            { cat: 'Consumíveis', sap: '220320',  desc: 'Cloth harpix (cleaning before paint)',      unit: 'EA',  qty: 2 },
-            { cat: 'Consumíveis', sap: 'S094586', desc: 'Flash tape 1/50mm poly/silic (blue)',       unit: 'ROL', qty: 4 },
-            { cat: 'Consumíveis', sap: '238710',  desc: 'MASKING TAPE, RUBBER 50mmX50m',             unit: 'ROL', qty: 4 },
-            { cat: 'Consumíveis', sap: '198004',  desc: 'Paper tork (Cleaning paper roll)',          unit: 'ROL', qty: 2 },
+            { cat: 'Consumables', sap: '220320',  desc: 'Cloth harpix (cleaning before paint)',      unit: 'EA',  qty: 2 },
+            { cat: 'Consumables', sap: 'S094586', desc: 'Flash tape 1/50mm poly/silic (blue)',       unit: 'ROL', qty: 4 },
+            { cat: 'Consumables', sap: '238710',  desc: 'MASKING TAPE, RUBBER 50mmX50m',             unit: 'ROL', qty: 4 },
+            { cat: 'Consumables', sap: '198004',  desc: 'Paper tork (Cleaning paper roll)',          unit: 'ROL', qty: 2 },
             // Ferramentas (reutilizáveis — não multiplicam por pá)
-            { cat: 'Ferramentas', sap: '29097941',   desc: 'BLOWER, 1000 m3/h, 1 kW, 400 V',         unit: 'EA', qty: 1, perBlade: false },
-            { cat: 'Ferramentas', sap: '291960',     desc: 'CABLE REEL, ELEC W/CEE PLUGS 25M',       unit: 'EA', qty: 4, perBlade: false },
-            { cat: 'Ferramentas', sap: '230551',     desc: 'CHISEL, GEN-PURPOSE BEVELED 4MM',        unit: 'EA', qty: 2, perBlade: false },
-            { cat: 'Ferramentas', sap: 'VT70002387', desc: 'CUTTER WITH SPRING (Safety Knife)',      unit: 'EA', qty: 2, perBlade: false },
-            { cat: 'Ferramentas', sap: '232936',     desc: 'Excentric grind machine 150mm (acabamento K220)', unit: 'EA', qty: 2, perBlade: false },
-            { cat: 'Ferramentas', sap: 'VT180199',   desc: 'MANUAL ROLLER MR1',                      unit: 'EA', qty: 1, perBlade: false },
-            { cat: 'Ferramentas', sap: 'VT181616',   desc: 'MEASURING TAPE, 5.5M',                   unit: 'EA', qty: 2, perBlade: false },
-            { cat: 'Ferramentas', sap: 'VT181171',   desc: 'METAL RULER 0-1000mm',                   unit: 'EA', qty: 1, perBlade: false },
-            { cat: 'Ferramentas', sap: '222402',     desc: 'PAINT MARKER BLUE EDDING',               unit: 'EA', qty: 4, perBlade: false },
-            { cat: 'Ferramentas', sap: 'VT181161',   desc: 'RULER, METAL, 0-300mm',                  unit: 'EA', qty: 1, perBlade: false },
-            { cat: 'Ferramentas', sap: 'VT181637',   desc: 'TAPEMEASURE 50m C1',                     unit: 'EA', qty: 1, perBlade: false },
+            { cat: 'Tools', sap: '29097941',   desc: 'BLOWER, 1000 m3/h, 1 kW, 400 V',         unit: 'EA', qty: 1, perBlade: false },
+            { cat: 'Tools', sap: '291960',     desc: 'CABLE REEL, ELEC W/CEE PLUGS 25M',       unit: 'EA', qty: 4, perBlade: false },
+            { cat: 'Tools', sap: '230551',     desc: 'CHISEL, GEN-PURPOSE BEVELED 4MM',        unit: 'EA', qty: 2, perBlade: false },
+            { cat: 'Tools', sap: 'VT70002387', desc: 'CUTTER WITH SPRING (Safety Knife)',      unit: 'EA', qty: 2, perBlade: false },
+            { cat: 'Tools', sap: '232936',     desc: 'Excentric grind machine 150mm (K220 finishing)', unit: 'EA', qty: 2, perBlade: false },
+            { cat: 'Tools', sap: 'VT180199',   desc: 'MANUAL ROLLER MR1',                      unit: 'EA', qty: 1, perBlade: false },
+            { cat: 'Tools', sap: 'VT181616',   desc: 'MEASURING TAPE, 5.5M',                   unit: 'EA', qty: 2, perBlade: false },
+            { cat: 'Tools', sap: 'VT181171',   desc: 'METAL RULER 0-1000mm',                   unit: 'EA', qty: 1, perBlade: false },
+            { cat: 'Tools', sap: '222402',     desc: 'PAINT MARKER BLUE EDDING',               unit: 'EA', qty: 4, perBlade: false },
+            { cat: 'Tools', sap: 'VT181161',   desc: 'RULER, METAL, 0-300mm',                  unit: 'EA', qty: 1, perBlade: false },
+            { cat: 'Tools', sap: 'VT181637',   desc: 'TAPEMEASURE 50m C1',                     unit: 'EA', qty: 1, perBlade: false },
             // EPI (prática de campo da lista REYNOSA)
-            { cat: 'EPI', sap: '237100', desc: 'Dust loops (3M mask paper)',      unit: 'EA',  qty: 3 },
-            { cat: 'EPI', sap: '218173', desc: 'Gloves blue nitrile L',           unit: 'PAA', qty: 1 },
-            { cat: 'EPI', sap: '214445', desc: 'Suit F/Protec, Tyvec, size XL',   unit: 'EA',  qty: 3 },
+            { cat: 'PPE', sap: '237100', desc: 'Dust loops (3M mask paper)',      unit: 'EA',  qty: 3 },
+            { cat: 'PPE', sap: '218173', desc: 'Gloves blue nitrile L',           unit: 'PAA', qty: 1 },
+            { cat: 'PPE', sap: '214445', desc: 'Suit F/Protec, Tyvec, size XL',   unit: 'EA',  qty: 3 },
         ],
     },
     {
@@ -490,29 +490,29 @@ const SPECIAL_REPAIRS = [
         ],
         items: [
             // Consumíveis (tabela 9.1 do doc)
-            { cat: 'Consumíveis', sap: '115517', desc: 'CABLE TIE 292x4.8mm PLT3S-C0 (as necessary)', unit: 'EA',  qty: 1 },
-            { cat: 'Consumíveis', sap: '149751', desc: 'SEALING 521UV NCS S 2502-B 300 (Sikaflex 521 UV)', unit: 'TUB', qty: 1 },
-            { cat: 'Consumíveis', sap: '198006', desc: 'CLEANING PAPER WYPALL X60',                  unit: 'EA',  qty: 1 },
-            { cat: 'Consumíveis', sap: '291574', desc: 'SATWIPES ETHANOL (as necessary)',            unit: 'TUB', qty: 1 },
+            { cat: 'Consumables', sap: '115517', desc: 'CABLE TIE 292x4.8mm PLT3S-C0 (as necessary)', unit: 'EA',  qty: 1 },
+            { cat: 'Consumables', sap: '149751', desc: 'SEALING 521UV NCS S 2502-B 300 (Sikaflex 521 UV)', unit: 'TUB', qty: 1 },
+            { cat: 'Consumables', sap: '198006', desc: 'CLEANING PAPER WYPALL X60',                  unit: 'EA',  qty: 1 },
+            { cat: 'Consumables', sap: '291574', desc: 'SATWIPES ETHANOL (as necessary)',            unit: 'TUB', qty: 1 },
             // "Cleaning agent 0.5 l" do doc não tem número; mapeado para o álcool
             // 93% 1/2 litre — mapeamento CONFIRMADO pelo usuário (ago/2026).
-            { cat: 'Consumíveis', sap: '234900', desc: 'ALCOHOL DENATURED 93% 1/2 LITRE (cleaning agent 0.5 l)', unit: 'BTL', qty: 1 },
+            { cat: 'Consumables', sap: '234900', desc: 'ALCOHOL DENATURED 93% 1/2 LITRE (cleaning agent 0.5 l)', unit: 'BTL', qty: 1 },
             // Ferramentas (tabela 7.1 do doc; reutilizáveis)
-            { cat: 'Ferramentas', sap: '213473',   desc: 'BATTERY DRILL MACHINE ELU',                unit: 'EA', qty: 1, perBlade: false },
-            { cat: 'Ferramentas', sap: '213476',   desc: 'DRILL BOX WITH 1-13MM PERFOR',             unit: 'EA', qty: 1, perBlade: false },
-            { cat: 'Ferramentas', sap: '213616',   desc: 'CAULKING GUN H14',                         unit: 'EA', qty: 1, perBlade: false },
-            { cat: 'Ferramentas', sap: '238353',   desc: 'SOCKET WRENCH 1/4" TECOS T063M',           unit: 'EA', qty: 1, perBlade: false },
-            { cat: 'Ferramentas', sap: '250069',   desc: 'CUTTING PLIERS BAHCO 2101G-125MM',         unit: 'EA', qty: 1, perBlade: false },
-            { cat: 'Ferramentas', sap: '294335',   desc: 'SCREWDRIVER 3,5X75MM',                     unit: 'EA', qty: 1, perBlade: false },
-            { cat: 'Ferramentas', sap: 'VT730302', desc: 'SLING RNEN 1m 1t',                         unit: 'EA', qty: 2, perBlade: false },
-            { cat: 'Ferramentas', sap: '-',        desc: 'Rope to keep the collar from falling down', unit: 'EA', qty: 1, perBlade: false },
-            { cat: 'Ferramentas', sap: '-',        desc: 'Allen key 5 mm',                           unit: 'EA', qty: 1, perBlade: false },
-            { cat: 'Ferramentas', sap: '-',        desc: 'Permanent marker',                         unit: 'EA', qty: 1, perBlade: false },
-            { cat: 'Ferramentas', sap: '-',        desc: 'Plastic red/white tape (as necessary)',    unit: 'ROL', qty: 1, perBlade: false },
+            { cat: 'Tools', sap: '213473',   desc: 'BATTERY DRILL MACHINE ELU',                unit: 'EA', qty: 1, perBlade: false },
+            { cat: 'Tools', sap: '213476',   desc: 'DRILL BOX WITH 1-13MM PERFOR',             unit: 'EA', qty: 1, perBlade: false },
+            { cat: 'Tools', sap: '213616',   desc: 'CAULKING GUN H14',                         unit: 'EA', qty: 1, perBlade: false },
+            { cat: 'Tools', sap: '238353',   desc: 'SOCKET WRENCH 1/4" TECOS T063M',           unit: 'EA', qty: 1, perBlade: false },
+            { cat: 'Tools', sap: '250069',   desc: 'CUTTING PLIERS BAHCO 2101G-125MM',         unit: 'EA', qty: 1, perBlade: false },
+            { cat: 'Tools', sap: '294335',   desc: 'SCREWDRIVER 3,5X75MM',                     unit: 'EA', qty: 1, perBlade: false },
+            { cat: 'Tools', sap: 'VT730302', desc: 'SLING RNEN 1m 1t',                         unit: 'EA', qty: 2, perBlade: false },
+            { cat: 'Tools', sap: '-',        desc: 'Rope to keep the collar from falling down', unit: 'EA', qty: 1, perBlade: false },
+            { cat: 'Tools', sap: '-',        desc: 'Allen key 5 mm',                           unit: 'EA', qty: 1, perBlade: false },
+            { cat: 'Tools', sap: '-',        desc: 'Permanent marker',                         unit: 'EA', qty: 1, perBlade: false },
+            { cat: 'Tools', sap: '-',        desc: 'Plastic red/white tape (as necessary)',    unit: 'ROL', qty: 1, perBlade: false },
             // EPI (prática de campo — mesma base da serration; ajustar se preciso)
-            { cat: 'EPI', sap: '237100', desc: 'Dust loops (3M mask paper)',      unit: 'EA',  qty: 3 },
-            { cat: 'EPI', sap: '218173', desc: 'Gloves blue nitrile L',           unit: 'PAA', qty: 1 },
-            { cat: 'EPI', sap: '214445', desc: 'Suit F/Protec, Tyvec, size XL',   unit: 'EA',  qty: 3 },
+            { cat: 'PPE', sap: '237100', desc: 'Dust loops (3M mask paper)',      unit: 'EA',  qty: 3 },
+            { cat: 'PPE', sap: '218173', desc: 'Gloves blue nitrile L',           unit: 'PAA', qty: 1 },
+            { cat: 'PPE', sap: '214445', desc: 'Suit F/Protec, Tyvec, size XL',   unit: 'EA',  qty: 3 },
         ],
     },
 ];
@@ -620,7 +620,7 @@ const CONSUMABLES = [
     { sap: '29225928',  desc: 'TRANSPORT MESH 100Mx1,55M (roll 155m2)', unit: 'EA', calcQty: (s, d, lay) => s.Infusion > 0 ? Math.max(1, Math.ceil(lay.maxAreaM2 * s.Infusion * 1.2 / 155)) : 0 },
     { sap: '29017050', desc: 'VACUUM CHANNEL 50MM INFUSION',          unit: 'M',   calcQty: (s, d, lay) => s.Infusion > 0 ? Math.ceil(lay.perimeter * 1.4) : 0 },
     { sap: '29083917', desc: 'GLASSFIBER OMEGA R8.5,SENS',            unit: 'EA',  calcQty: (s) => s.Infusion > 0 ? 1 : 0 },
-    { sap: null,        desc: 'Conexao TEE 1/4" (T-piece) — SAP N/A', unit: 'EA',  calcQty: (s) => s.Infusion > 0 ? s.Infusion + 2 : 0 },
+    { sap: null,        desc: 'TEE connection 1/4" (T-piece) — SAP N/A', unit: 'EA',  calcQty: (s) => s.Infusion > 0 ? s.Infusion + 2 : 0 },
     // Spirol band: Vacuum condition, perimeter × Vacuum × 1.2
     { sap: '29023572', desc: 'SPIROL BAND 12mm (Spiral tube)',        unit: 'M',   calcQty: (s, d, lay) => s.Vacuum > 0 ? Math.ceil(lay.perimeter * s.Vacuum * 1.2) : 0 },
     // Nylon pipe: 40m base + maxLength/1000 × Vacuum
@@ -653,7 +653,7 @@ const TOOLS = [
     // Grinders / Drill / Heat Gun — Grinding condition unless noted
     // 150mm fica SÓ para o acabamento (é o único diâmetro com grão K220).
     // Todo o desbaste (G60/G120) roda nas excêntricas de 125.
-    { sap: '232936',      desc: 'Excentric grind machine 150mm (acabamento K220)', unit: 'EA', calcQty: (s) => s.Grinding > 0 ? 1 : 0 },
+    { sap: '232936',      desc: 'Excentric grind machine 150mm (K220 finishing)', unit: 'EA', calcQty: (s) => s.Grinding > 0 ? 1 : 0 },
     { sap: '232935',      desc: 'EXCENTRIC GRIND.MACH. 125 BOSCH',             unit: 'EA', calcQty: (s) => s.Grinding > 0 ? 2 : 0 },
     { sap: '233845',      desc: 'ANGLE GRINDER METABO 5" 125 (RPM adj)',       unit: 'EA', calcQty: (s) => s.Grinding > 0 ? 1 : 0 },
     { sap: '20030258',    desc: 'ANGLE GRINDER BATTERY OPERATED',              unit: 'EA', calcQty: (s) => s.Grinding > 0 ? 1 : 0 },
@@ -711,50 +711,50 @@ const TOOLS = [
 
 // 10 general field rules (945550 §9).
 const FIELD_RULES = [
-    { n: 1,  rule: 'Superfície limpa antes de laminar',          detail: 'Após remover peel-ply ou abrasão: máx 3h exposta ao ambiente', consequence: 'Contaminação → falha de adesão' },
-    { n: 2,  rule: 'Fibra alinhada conforme desenho',            detail: 'Duplicar a orientação do material removido, sem bumps',        consequence: 'Perda de resistência estrutural' },
-    { n: 3,  rule: 'Overlap mínimo',                              detail: '5% do peso da fibra (g/m²) em mm. Ex: 600gsm = 30mm',          consequence: 'Junta fraca' },
-    { n: 4,  rule: 'Primeira camada = a menor (multi-camada)',   detail: 'Em reparo multi-camada, começar pela menor',                  consequence: 'Perfil incorreto' },
-    { n: 5,  rule: 'Vácuo mín. 0.8 bar',                          detail: 'Vacuum consolidation sempre que possível',                    consequence: 'Porosidade, delaminação' },
-    { n: 6,  rule: 'Cura com manta térmica',                     detail: 'Seguir 0042-5383. Sensor térmico sob a manta recomendado',    consequence: 'Cura incompleta (<95%)' },
-    { n: 7,  rule: 'Molhar superfície com resina antes da fibra',detail: 'Wet-out do substrato obrigatório',                            consequence: 'Dry spots, delaminação' },
-    { n: 8,  rule: 'Cantos arredondados nos laminados',          detail: 'Cortar a fibra com round corners',                            consequence: 'Concentração de tensão' },
-    { n: 9,  rule: 'Diferença temp. material-superfície ≤5°C',   detail: 'Material e blade devem estar próximos em temperatura',        consequence: 'Cura irregular' },
-    { n: 10, rule: 'Grinding só após cura completa (95%)',       detail: 'Segurança: exposição a químicos não curados',                 consequence: 'Risco à saúde + dano ao reparo' },
+    { n: 1,  rule: 'Clean surface before laminating',           detail: 'After peel-ply removal or abrasion: max 3h exposed to ambient', consequence: 'Contamination → adhesion failure' },
+    { n: 2,  rule: 'Fibre aligned per drawing',                 detail: 'Duplicate the orientation of the removed material, no bumps',   consequence: 'Loss of structural strength' },
+    { n: 3,  rule: 'Minimum overlap',                           detail: '5% of fibre weight (g/m²) in mm. E.g. 600gsm = 30mm',           consequence: 'Weak joint' },
+    { n: 4,  rule: 'First ply = the smallest (multi-layer)',    detail: 'In multi-layer repairs, start with the smallest ply',           consequence: 'Incorrect profile' },
+    { n: 5,  rule: 'Vacuum min. 0.8 bar',                       detail: 'Vacuum consolidation whenever possible',                        consequence: 'Porosity, delamination' },
+    { n: 6,  rule: 'Cure with heating blanket',                 detail: 'Follow 0042-5383. Thermal sensor under the blanket recommended',consequence: 'Incomplete cure (<95%)' },
+    { n: 7,  rule: 'Wet surface with resin before fibre',       detail: 'Substrate wet-out is mandatory',                                consequence: 'Dry spots, delamination' },
+    { n: 8,  rule: 'Rounded corners on laminates',              detail: 'Cut the fibre with round corners',                              consequence: 'Stress concentration' },
+    { n: 9,  rule: 'Material-surface temp. difference ≤5°C',    detail: 'Material and blade must be close in temperature',               consequence: 'Irregular cure' },
+    { n: 10, rule: 'Grinding only after full cure (95%)',       detail: 'Safety: exposure to uncured chemicals',                         consequence: 'Health risk + damage to the repair' },
 ];
 
 // Fiber substitution (945550 §9 Table 9.1).
 const FIBER_SUBSTITUTIONS = [
-    { original: 'Biax 936 g/m²',   alternative: 'Biax 600 + Biax 300 g/m²',    notes: 'Soma = 900 g/m² (equivalente)' },
-    { original: 'UD 1140 g/m²',    alternative: '2 × UD 600 g/m²',             notes: 'Soma = 1200 g/m² (ligeiramente acima)' },
-    { original: 'Triax 1500 g/m²', alternative: 'Biax 936 + UD 600 g/m²',      notes: 'Alternativa 1' },
-    { original: 'Triax 1500 g/m²', alternative: 'Triax 1200 + Biax 300 g/m²',  notes: 'Alternativa 2' },
+    { original: 'Biax 936 g/m²',   alternative: 'Biax 600 + Biax 300 g/m²',    notes: 'Sum = 900 g/m² (equivalent)' },
+    { original: 'UD 1140 g/m²',    alternative: '2 × UD 600 g/m²',             notes: 'Sum = 1200 g/m² (slightly above)' },
+    { original: 'Triax 1500 g/m²', alternative: 'Biax 936 + UD 600 g/m²',      notes: 'Alternative 1' },
+    { original: 'Triax 1500 g/m²', alternative: 'Triax 1200 + Biax 300 g/m²',  notes: 'Alternative 2' },
 ];
 
 // Core substitution (945556 V12).
 const CORE_SUBSTITUTIONS = [
-    { original: 'PET core', alternative: 'PVC core', notes: 'Equivalente aprovado para substituição' },
+    { original: 'PET core', alternative: 'PVC core', notes: 'Approved equivalent for substitution' },
 ];
 
 // Decision tree by damage type (Ref: 945550 V14 + CIM4271).
 const DAMAGE_DECISION_TREE = [
-    { damage: 'Dano em coating/gelcoat', zone: 'Shell (qualquer)', severity: 'Cosmético',            level: 'C',  method: 'Reparo cosmético: lixar + filler + pintura',           ref: '945550',             kit: 'SikaForce 7800 + Topcoat 12',            accept: 'Superfície lisa, sem degraus',              notes: 'Não afeta estrutura' },
-    { damage: 'Dano em coating/gelcoat', zone: 'LE',               severity: 'Cosmético',            level: 'B',  method: 'Lixar + filler + LEP coating',                        ref: '945550 + LEP doc',   kit: 'SikaForce 7800 + ALEXIT LEP 9',          accept: 'LEP 3 camadas 100-125µm cada',              notes: 'LE sempre com LEP, nunca Topcoat' },
-    { damage: 'Crack/delaminação shell', zone: 'Shell SS/PS',      severity: 'Superficial (<1m²)',   level: 'B',  method: 'Remover dano + layup + cura + acabamento',            ref: '945550 / 0116-3896', kit: '899019(PPT) ou 29035992(SST) + Ampreg 30',accept: 'Sem porosidade, overlap correto, Barcol>25',notes: 'Vacuum 0.8bar, cura @70°C' },
-    { damage: 'Crack/delaminação shell', zone: 'Shell SS/PS',      severity: 'Profunda (>1m²)',      level: 'A',  method: 'Remover dano + layup multi-camada + vacuum + cura',   ref: '945550 / 0116-3896', kit: 'Fibra conforme drawing + Ampreg 30',     accept: 'Conforme drawing, Barcol>25',               notes: 'Seguir layup drawing específico' },
-    { damage: 'Erosão/dano LE',          zone: 'LE',               severity: 'Estrutural (≤150cm)',  level: 'B',  method: 'Remover dano + layup + LEP',                          ref: '945550',             kit: 'Fibra + Ampreg 30 + LEP 9',              accept: 'Perfil restaurado + LEP completo',          notes: 'Verificar bond line' },
-    { damage: 'Erosão/dano LE',          zone: 'LE',               severity: 'Estrutural (>150cm)',  level: 'A',  method: 'Remover dano + layup extenso + LEP',                  ref: '945550',             kit: 'Fibra + Ampreg 30 + LEP 9',              accept: 'Perfil restaurado + LEP completo',          notes: 'Contactar suporte técnico' },
-    { damage: 'Crack/debonding TE',      zone: 'TE',               severity: 'Até 150cm',            level: 'B',  method: 'Abrir bond + limpar + re-bond + reforço',             ref: '945550',             kit: 'SikaForce 7818 + fibra biax',            accept: 'Bond sem gaps, reforço conforme',           notes: 'Verificar extensão total antes' },
-    { damage: 'Crack/debonding TE',      zone: 'TE',               severity: 'Acima 150cm',          level: 'A',  method: 'Abrir bond + limpar + re-bond + reforço extenso',     ref: '945550 / TE SST doc',kit: 'SikaForce 7818 + fibra biax',            accept: 'Bond sem gaps, reforço conforme drawing',   notes: 'Pode requerer CIM específico' },
-    { damage: 'Lightning strike',        zone: 'Tip/Receptores',   severity: 'Receptor danificado',  level: 'B',  method: 'Medir continuidade + trocar receptor',               ref: '945550',             kit: 'Receptor novo + ferramentas LPS',        accept: 'Continuidade elétrica OK',                  notes: 'Medir antes e depois' },
-    { damage: 'Lightning strike',        zone: 'Shell (superficial)',severity: 'Dano shell por lightning',level: 'A',method: 'Remover dano + layup + restaurar LPS',              ref: '945550',             kit: 'Fibra + resina + componentes LPS',       accept: 'Estrutura + LPS restaurados',               notes: 'Verificar toda a extensão' },
-    { damage: 'Lightning strike',        zone: 'Carbon spar (PPT)', severity: 'Dano em spar',        level: 'A+', method: 'Reparo carbon spar especializado',                   ref: 'Lightning PPT doc',  kit: 'Carbon prepreg 250g',                    accept: 'Conforme procedimento específico',          notes: 'REPARO AVANÇADO — supervisão' },
-    { damage: 'Abertura bond line',      zone: 'LE/TE/Tip',        severity: '<5mm abertura',        level: 'A',  method: 'Injeção de adesivo + clamp',                          ref: '945550',             kit: 'SikaForce 7818',                         accept: 'Bond preenchido sem gaps',                  notes: 'Delimitar extensão total' },
-    { damage: 'Abertura bond line',      zone: 'LE/TE/Tip',        severity: '>5mm abertura',        level: 'A',  method: 'Abrir + limpar + re-bond + reforço fibra',            ref: '945550',             kit: 'SikaForce 7818 + fibra reforço',         accept: 'Bond + reforço conforme',                   notes: 'Pode requerer CIM' },
-    { damage: 'Dano bond shell-spar',    zone: 'Shell-Spar',       severity: 'Qualquer',             level: '⛔', method: 'NÃO REPARÁVEL — REPORTAR IMEDIATAMENTE',              ref: '945550 §13',         kit: '—',                                      accept: '—',                                         notes: 'RISCO ESTRUTURAL MAIOR — contactar engenharia' },
-    { damage: 'Crack root laminate',     zone: 'Root',             severity: 'Passante',             level: 'A',  method: 'Remover dano + layup UD + cura',                      ref: '945550',             kit: 'Fibra UD + Ampreg 30',                   accept: 'Conforme drawing, Barcol>25',               notes: 'Reparo crítico — documentar tudo' },
-    { damage: 'Dano tip / debonding tip',zone: 'Tip',              severity: 'Variável',             level: 'A',  method: 'Reparo ou troca de tip shell',                        ref: '945550',             kit: 'Adesivo + fibra ou tip shell novo',      accept: 'Perfil restaurado, LPS OK',                 notes: 'Verificar LPS após reparo' },
-    { damage: 'Dano SMT / Implant',      zone: 'Root (SMT)',       severity: 'Variável',             level: 'A',  method: 'Conforme procedimento específico',                    ref: '0073-8810',          kit: 'Conforme procedimento',                  accept: 'Conforme procedimento',                     notes: 'V110/V126/V136 apenas' },
-    { damage: 'Dano em core (sandwich)', zone: 'Shell',            severity: '<25×25cm',             level: 'B',  method: 'Remover core danificado + substituir + laminar',      ref: '945550',             kit: 'Core material + fibra + resina',         accept: 'Core substituído, laminado conforme',       notes: 'Manter espessura original' },
-    { damage: 'Dano em core (sandwich)', zone: 'Shell',            severity: '>25×25cm',             level: 'A',  method: 'Remover core + substituir + layup conforme drawing',  ref: '945550 / 0116-3896', kit: 'Core + fibra conforme drawing + resina', accept: 'Conforme drawing original',                 notes: 'Seguir layup drawing' },
+    { damage: 'Coating/gelcoat damage',  zone: 'Shell (any)',      severity: 'Cosmetic',              level: 'C',  method: 'Cosmetic repair: sand + filler + paint',              ref: '945550',             kit: 'SikaForce 7800 + Topcoat 12',            accept: 'Smooth surface, no steps',                   notes: 'Does not affect the structure' },
+    { damage: 'Coating/gelcoat damage',  zone: 'LE',               severity: 'Cosmetic',              level: 'B',  method: 'Sand + filler + LEP coating',                         ref: '945550 + LEP doc',   kit: 'SikaForce 7800 + ALEXIT LEP 9',          accept: 'LEP 3 coats 100-125µm each',                 notes: 'LE always gets LEP, never Topcoat' },
+    { damage: 'Shell crack/delamination',zone: 'Shell SS/PS',      severity: 'Surface (<1m²)',        level: 'B',  method: 'Remove damage + layup + cure + finishing',            ref: '945550 / 0116-3896', kit: '899019(PPT) or 29035992(SST) + Ampreg 30',accept: 'No porosity, correct overlap, Barcol>25',   notes: 'Vacuum 0.8bar, cure @70°C' },
+    { damage: 'Shell crack/delamination',zone: 'Shell SS/PS',      severity: 'Deep (>1m²)',           level: 'A',  method: 'Remove damage + multi-layer layup + vacuum + cure',   ref: '945550 / 0116-3896', kit: 'Fabric per drawing + Ampreg 30',         accept: 'Per drawing, Barcol>25',                     notes: 'Follow the specific layup drawing' },
+    { damage: 'LE erosion/damage',       zone: 'LE',               severity: 'Structural (≤150cm)',   level: 'B',  method: 'Remove damage + layup + LEP',                         ref: '945550',             kit: 'Fabric + Ampreg 30 + LEP 9',             accept: 'Profile restored + full LEP',                notes: 'Check the bond line' },
+    { damage: 'LE erosion/damage',       zone: 'LE',               severity: 'Structural (>150cm)',   level: 'A',  method: 'Remove damage + extended layup + LEP',                ref: '945550',             kit: 'Fabric + Ampreg 30 + LEP 9',             accept: 'Profile restored + full LEP',                notes: 'Contact technical support' },
+    { damage: 'TE crack/debonding',      zone: 'TE',               severity: 'Up to 150cm',           level: 'B',  method: 'Open bond + clean + re-bond + reinforcement',         ref: '945550',             kit: 'SikaForce 7818 + biax fabric',           accept: 'Bond without gaps, reinforcement as specified', notes: 'Check the full extent first' },
+    { damage: 'TE crack/debonding',      zone: 'TE',               severity: 'Above 150cm',           level: 'A',  method: 'Open bond + clean + re-bond + extended reinforcement',ref: '945550 / TE SST doc',kit: 'SikaForce 7818 + biax fabric',           accept: 'Bond without gaps, reinforcement per drawing', notes: 'May require a specific CIM' },
+    { damage: 'Lightning strike',        zone: 'Tip/Receptors',    severity: 'Damaged receptor',      level: 'B',  method: 'Measure continuity + replace receptor',               ref: '945550',             kit: 'New receptor + LPS tools',               accept: 'Electrical continuity OK',                   notes: 'Measure before and after' },
+    { damage: 'Lightning strike',        zone: 'Shell (surface)',  severity: 'Shell damage from lightning', level: 'A', method: 'Remove damage + layup + restore LPS',           ref: '945550',             kit: 'Fabric + resin + LPS components',        accept: 'Structure + LPS restored',                   notes: 'Check the full extent' },
+    { damage: 'Lightning strike',        zone: 'Carbon spar (PPT)',severity: 'Spar damage',           level: 'A+', method: 'Specialised carbon spar repair',                      ref: 'Lightning PPT doc',  kit: 'Carbon prepreg 250g',                    accept: 'Per the specific procedure',                 notes: 'ADVANCED REPAIR — supervision required' },
+    { damage: 'Bond line opening',       zone: 'LE/TE/Tip',        severity: '<5mm opening',          level: 'A',  method: 'Adhesive injection + clamp',                          ref: '945550',             kit: 'SikaForce 7818',                         accept: 'Bond filled without gaps',                   notes: 'Delimit the full extent' },
+    { damage: 'Bond line opening',       zone: 'LE/TE/Tip',        severity: '>5mm opening',          level: 'A',  method: 'Open + clean + re-bond + fibre reinforcement',        ref: '945550',             kit: 'SikaForce 7818 + reinforcement fabric',  accept: 'Bond + reinforcement as specified',          notes: 'May require a CIM' },
+    { damage: 'Shell-spar bond damage',  zone: 'Shell-Spar',       severity: 'Any',                   level: '⛔', method: 'NOT REPAIRABLE — REPORT IMMEDIATELY',                 ref: '945550 §13',         kit: '—',                                      accept: '—',                                          notes: 'MAJOR STRUCTURAL RISK — contact engineering' },
+    { damage: 'Root laminate crack',     zone: 'Root',             severity: 'Through-thickness',     level: 'A',  method: 'Remove damage + UD layup + cure',                     ref: '945550',             kit: 'UD fabric + Ampreg 30',                  accept: 'Per drawing, Barcol>25',                     notes: 'Critical repair — document everything' },
+    { damage: 'Tip damage / tip debonding', zone: 'Tip',           severity: 'Variable',              level: 'A',  method: 'Repair or replace the tip shell',                     ref: '945550',             kit: 'Adhesive + fabric or new tip shell',     accept: 'Profile restored, LPS OK',                   notes: 'Check LPS after the repair' },
+    { damage: 'SMT / Implant damage',    zone: 'Root (SMT)',       severity: 'Variable',              level: 'A',  method: 'Per the specific procedure',                          ref: '0073-8810',          kit: 'Per the procedure',                      accept: 'Per the procedure',                          notes: 'V110/V126/V136 only' },
+    { damage: 'Core damage (sandwich)',  zone: 'Shell',            severity: '<25×25cm',              level: 'B',  method: 'Remove damaged core + replace + laminate',            ref: '945550',             kit: 'Core material + fabric + resin',         accept: 'Core replaced, laminate as specified',       notes: 'Keep the original thickness' },
+    { damage: 'Core damage (sandwich)',  zone: 'Shell',            severity: '>25×25cm',              level: 'A',  method: 'Remove core + replace + layup per drawing',           ref: '945550 / 0116-3896', kit: 'Core + fabric per drawing + resin',      accept: 'Per the original drawing',                   notes: 'Follow the layup drawing' },
 ];

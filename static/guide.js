@@ -65,7 +65,7 @@ function _guideRepairsBody() {
     const chip = (key, label) => `<button onclick="guideRepairCat('${key}')" style="padding:5px 12px;border-radius:16px;border:1px solid ${_guideRepairCat===key?'#143a5f':'#cbd5e1'};background:${_guideRepairCat===key?'#143a5f':'#fff'};color:${_guideRepairCat===key?'#fff':'#475569'};font-size:0.76rem;font-weight:700;cursor:pointer">${label}</button>`;
     return `
         <input id="guide-repair-input" type="text" value="${_guideRepairQuery.replace(/"/g,'&quot;')}"
-            placeholder="Buscar: código, nome ou palavra (ex: upstand, void, TE, 6.4.3)…"
+            placeholder="Search: code, name or keyword (e.g. upstand, void, TE, 6.4.3)…"
             oninput="guideRepairSearch(this.value)"
             style="width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:0.9rem;margin-bottom:10px">
         <div style="display:flex;gap:6px;margin-bottom:12px">${chip('all','Todos')}${chip('Reparo','Reparos')}${chip('Guideline','Guidelines')}</div>
@@ -91,7 +91,7 @@ function _renderRepairResults() {
         box.innerHTML = `<div style="padding:18px;text-align:center;color:#94a3b8">Nenhum reparo encontrado para “${_guideRepairQuery}”.</div>`;
         return;
     }
-    const head = `<div style="font-size:0.75rem;color:#94a3b8;margin-bottom:8px">${list.length} de ${total} reparos${list.length > 60 ? ' (mostrando 60 — refine a busca)' : ''}</div>`;
+    const head = `<div style="font-size:0.75rem;color:#94a3b8;margin-bottom:8px">${list.length} of ${total} repairs${list.length > 60 ? ' (showing 60 — refine the search)' : ''}</div>`;
     box.innerHTML = head + shown.map(r => {
         const open = _guideRepairOpen === r.code;
         const bodyHtml = open
@@ -117,14 +117,14 @@ const PROFILE_COLORS = ['#2563eb', '#f59e0b', '#16a34a', '#dc2626', '#7c3aed'];
 
 function _guideProfileBody() {
     if (typeof window.CIM_PROFILES === 'undefined') {
-        return `<div style="padding:20px;text-align:center;color:#94a3b8">Dados de perfil indisponíveis.</div>`;
+        return `<div style="padding:20px;text-align:center;color:#94a3b8">Profile data unavailable.</div>`;
     }
     const keys = Object.keys(window.CIM_PROFILES);
     if (!_guideProfileKey || !window.CIM_PROFILES[_guideProfileKey]) _guideProfileKey = keys[0];
     const sel = `<select onchange="guideProfileSelect(this.value)" style="width:100%;padding:9px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:0.9rem;margin-bottom:12px">` +
         keys.map(k => `<option value="${k}"${k === _guideProfileKey ? ' selected' : ''}>${k.trim()}</option>`).join('') + `</select>`;
     return sel + `<div>${_profileChartSVG(window.CIM_PROFILES[_guideProfileKey])}</div>
-        <div style="font-size:0.72rem;color:#94a3b8;margin-top:8px">Nº de camadas (plies) × raio da pá. Fonte: CIM4271 Preform Repair calculator v2.0.</div>`;
+        <div style="font-size:0.72rem;color:#94a3b8;margin-top:8px">Ply count × blade radius. Source: CIM4271 Preform Repair calculator v2.0.</div>`;
 }
 function guideProfileSelect(k) { _guideProfileKey = k; renderRepairGuide(); }
 
@@ -154,7 +154,7 @@ function _profileChartSVG(profile) {
         svg += `<text x="${x.toFixed(1)}" y="${H - B + 14}" font-size="8.5" fill="#94a3b8" text-anchor="middle" font-family="Inter">${(r / 1000).toFixed(1)}</text>`;
     }
     svg += `<text x="${(L + W - R) / 2}" y="${H - 4}" font-size="9.5" fill="#64748b" text-anchor="middle" font-family="Inter">Raio (m) →</text>`;
-    svg += `<text x="12" y="${(H) / 2}" font-size="9.5" fill="#64748b" text-anchor="middle" font-family="Inter" transform="rotate(-90 12 ${H / 2})">Nº de camadas ↑</text>`;
+    svg += `<text x="12" y="${(H) / 2}" font-size="9.5" fill="#64748b" text-anchor="middle" font-family="Inter" transform="rotate(-90 12 ${H / 2})">Ply count ↑</text>`;
     // series lines
     series.forEach((s, si) => {
         const color = PROFILE_COLORS[si % PROFILE_COLORS.length];
@@ -185,14 +185,14 @@ function _guideTreeBody() {
         <div style="border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:10px;background:#fff">
             <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
                 <div style="font-weight:700;color:#0f172a">${d.damage}</div>
-                <div style="white-space:nowrap">Nível ${_guideBadge(d.level)}</div>
+                <div style="white-space:nowrap">Level ${_guideBadge(d.level)}</div>
             </div>
             <div style="font-size:0.8rem;color:#475569;margin:4px 0 8px">Zona: <b>${d.zone}</b> · Severidade: <b>${d.severity}</b></div>
-            <div style="font-size:0.86rem;color:#0f172a;margin-bottom:6px"><b>Método:</b> ${d.method}</div>
+            <div style="font-size:0.86rem;color:#0f172a;margin-bottom:6px"><b>Method:</b> ${d.method}</div>
             <div style="display:grid;grid-template-columns:1fr;gap:3px;font-size:0.8rem;color:#475569">
                 <div><b>Kit/Materiais:</b> ${d.kit}</div>
-                <div><b>Critério de aceite:</b> ${d.accept}</div>
-                <div><b>Doc. referência:</b> ${d.ref}</div>
+                <div><b>Acceptance criteria:</b> ${d.accept}</div>
+                <div><b>Reference doc:</b> ${d.ref}</div>
                 ${d.notes ? `<div style="color:#b45309"><b>Nota:</b> ${d.notes}</div>` : ''}
             </div>
         </div>`).join('');
@@ -201,7 +201,7 @@ function _guideTreeBody() {
             <select onchange="guideSetDamage(this.value)" style="width:100%;padding:9px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:0.9rem">${options}</select>
         </div>
         ${cards}
-        <div style="font-size:0.72rem;color:#94a3b8;margin-top:8px">Níveis: C cosmético · B intermediário · A avançado · A+ avançado c/ supervisão · ⛔ não reparável (reportar). Ref: 945550 V14 + CIM4271.</div>`;
+        <div style="font-size:0.72rem;color:#94a3b8;margin-top:8px">Levels: C cosmetic · B intermediate · A advanced · A+ advanced w/ supervision · ⛔ not repairable (report). Ref: 945550 V14 + CIM4271.</div>`;
 }
 
 function _guideSubsBody() {
@@ -225,13 +225,13 @@ function _guideSubsBody() {
                 <thead><tr style="background:#f1f5f9">
                     <th style="padding:8px 10px;text-align:left">Original</th>
                     <th style="padding:8px 10px;text-align:left">Alternativa aprovada</th>
-                    <th style="padding:8px 10px;text-align:left">Observações</th>
+                    <th style="padding:8px 10px;text-align:left">Notes</th>
                 </tr></thead>
                 <tbody>${body}</tbody>
             </table>
         </div>`;
-    return table('Substituição de fibras', '945550 §9 Table 9.1', fib) +
-           table('Substituição de core', '945556 V12', core);
+    return table('Fibre substitution', '945550 §9 Table 9.1', fib) +
+           table('Core substitution', '945556 V12', core);
 }
 
 function _guideRulesBody() {
@@ -242,7 +242,7 @@ function _guideRulesBody() {
             <div style="flex:1">
                 <div style="font-weight:700;color:#0f172a;font-size:0.88rem">${r.rule}</div>
                 <div style="font-size:0.82rem;color:#475569;margin-top:2px">${r.detail}</div>
-                <div style="font-size:0.76rem;color:#b91c1c;margin-top:2px">Se não cumprir: ${r.consequence}</div>
+                <div style="font-size:0.76rem;color:#b91c1c;margin-top:2px">If not followed: ${r.consequence}</div>
             </div>
         </div>`).join('') + `</div>`;
 }
@@ -251,11 +251,11 @@ function renderRepairGuide() {
     const host = document.getElementById('repair-guide-modal');
     if (!host) return;
     const tabs = [
-        { key: 'tree',    label: 'Árvore de decisão' },
+        { key: 'tree',    label: 'Decision tree' },
         { key: 'repairs', label: 'Reparos (SST)' },
         { key: 'profile', label: 'Perfil por raio' },
-        { key: 'subs',    label: 'Substituições' },
-        { key: 'rules',   label: 'Regras de campo' },
+        { key: 'subs',    label: 'Substitutions' },
+        { key: 'rules',   label: 'Field rules' },
     ];
     const tabBtns = tabs.map(t => `
         <button onclick="guideTab('${t.key}')" style="flex:1;padding:9px 6px;border:none;cursor:pointer;font-size:0.82rem;font-weight:700;
@@ -269,7 +269,7 @@ function renderRepairGuide() {
     host.innerHTML = `
         <div style="background:#f8fafc;max-width:720px;width:100%;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,0.3);margin:auto 0">
             <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:#143a5f;color:#fff;border-radius:14px 14px 0 0;position:sticky;top:0">
-                <div style="font-weight:800;font-size:1rem"><i class="bi bi-clipboard2-pulse"></i> Guia de Reparo</div>
+                <div style="font-weight:800;font-size:1rem"><i class="bi bi-clipboard2-pulse"></i> Repair Guide</div>
                 <button onclick="closeRepairGuide()" aria-label="Fechar" style="background:rgba(255,255,255,0.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:1rem">✕</button>
             </div>
             <div style="padding:14px 16px">

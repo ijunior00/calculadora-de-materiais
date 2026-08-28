@@ -28,8 +28,8 @@
     </div>
     <h1>Blade Repair<br>Materials Planner</h1>
     <div class="subtitle">VESTAS BLADES · Materials &amp; Tools Estimate</div>
-    <button class="start-btn" style="background:#1f5285;margin-bottom:10px" onclick="openSpecialKits()">Reparos especiais (kits)</button>
-    <button class="start-btn" style="background:#0e7490;margin-bottom:10px" onclick="openImportPicker()">Reabrir de Excel</button>
+    <button class="start-btn" style="background:#1f5285;margin-bottom:10px" onclick="openSpecialKits()">Special repairs (kits)</button>
+    <button class="start-btn" style="background:#0e7490;margin-bottom:10px" onclick="openImportPicker()">Reopen from Excel</button>
     <input type="file" id="m-import-file" accept=".xlsx" style="display:none" onchange="importFromExcel(this)">
     <button class="start-btn" onclick="startApp()">
         <i class="bi bi-play-fill"></i> Start estimate
@@ -166,16 +166,16 @@
                 </div>
             </div>
 
-            <div class="m-section-title">Pintura da pá</div>
+            <div class="m-section-title">Blade paint</div>
             <div class="m-card">
                 <div class="m-field">
-                    <label>Cor base (cor única)</label>
+                    <label>Base colour (single colour)</label>
                     <div class="m-segmented" id="m-paint-base"></div>
                 </div>
                 <div class="m-field" style="margin-bottom:0">
-                    <label>Faixas coloridas</label>
+                    <label>Coloured stripes</label>
                     <div class="m-segmented" id="m-paint-stripe"></div>
-                    <div class="hint" style="margin-top:6px">Define quais top coats entram na lista. Só afeta o BOM quando a etapa Painting está ativa.</div>
+                    <div class="hint" style="margin-top:6px">Sets which top coats enter the list. Only affects the BOM when the Painting step is active.</div>
                 </div>
             </div>
 
@@ -213,7 +213,7 @@
             <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:0.85rem;color:var(--text)">
                 <input type="checkbox" id="m-field-rules"> Incluir regras de campo no PDF
             </label>
-            <button class="m-add-btn" style="margin-top:10px" onclick="openScarf()"><i class="bi bi-bounding-box"></i> Scarfing drawing (escalonamento)</button>
+            <button class="m-add-btn" style="margin-top:10px" onclick="openScarf()"><i class="bi bi-bounding-box"></i> Scarfing drawing (staggering)</button>
         </div>
 
         <!-- ===== STEP 5: SCARFING / ESCALONAMENTO ===== -->
@@ -221,7 +221,7 @@
             <div class="m-section-title">Repair drawing mode</div>
             <div class="m-card">
                 <div class="m-field" style="margin-bottom:0">
-                    <label>Escalonamento</label>
+                    <label>Staggering</label>
                     <div class="m-segmented" id="m-scarf-mode"></div>
                     <div id="m-scarf-ramp-inputs"></div>
                 </div>

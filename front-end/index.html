@@ -91,8 +91,8 @@
             </div>
         </div>
         <div style="display:flex;gap:10px;align-items:center">
-            <button class="nav-reset" onclick="openRepairGuide()" title="Guia de reparo (árvore de decisão, substituições, regras de campo)"><i class="bi bi-clipboard2-pulse"></i> Guia</button>
-            <button class="nav-reset" onclick="openSpecialKits()" title="Reparos especiais de kit fixo (serration, blade collar)"><i class="bi bi-box-seam"></i> Kits</button>
+            <button class="nav-reset" onclick="openRepairGuide()" title="Repair guide (decision tree, substitutions, field rules)"><i class="bi bi-clipboard2-pulse"></i> Guide</button>
+            <button class="nav-reset" onclick="openSpecialKits()" title="Fixed-kit special repairs (serration, blade collar)"><i class="bi bi-box-seam"></i> Kits</button>
             <a href="/m" class="nav-reset" style="text-decoration:none" title="Open the mobile version"><i class="bi bi-phone"></i> Mobile</a>
             <button class="nav-reset" onclick="resetApp()"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
         </div>
@@ -290,10 +290,10 @@
                 </table>
                 <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
                     <button id="addLayerBtn" class="btn-secondary" style="margin-top:0" onclick="addLayerRow()"><i class="bi bi-plus-circle"></i> Add Layer</button>
-                    <label style="display:flex;align-items:center;gap:6px;font-size:0.82rem;color:#475569" title="Quantas camadas adicionar/duplicar por clique">
+                    <label style="display:flex;align-items:center;gap:6px;font-size:0.82rem;color:#475569" title="How many layers to add/duplicate per click">
                         ×<input type="number" id="layerAddQty" value="1" min="1" max="20" style="width:56px;padding:6px 8px;border:1px solid #cbd5e1;border-radius:6px;text-align:center">
                     </label>
-                    <span style="font-size:0.75rem;color:#94a3b8">vale para "Add Layer" e para o botão duplicar <i class="bi bi-copy"></i> de cada linha</span>
+                    <span style="font-size:0.75rem;color:#94a3b8">applies to "Add Layer" and to each row's duplicate <i class="bi bi-copy"></i> button</span>
                 </div>
             </div>
 
@@ -424,18 +424,18 @@
                         </select>
                     </div>
                     <div class="repair-step-row">
-                        <label>Paint — base colour <span class="step-info" tabindex="0" data-note="A pá é de cor única (cinza ou branco). Define qual top coat entra na lista."><i class="bi bi-info-circle"></i></span></label>
+                        <label>Paint — base colour <span class="step-info" tabindex="0" data-note="The blade is a single colour (grey or white). Sets which top coat enters the list."><i class="bi bi-info-circle"></i></span></label>
                         <select id="paintBase" class="form-input" onchange="onRepairStepsChange()">
-                            <option value="RAL7035" selected>Cinza (RAL7035)</option>
-                            <option value="RAL9010">Branco (RAL9010)</option>
+                            <option value="RAL7035" selected>Grey (RAL7035)</option>
+                            <option value="RAL9010">White (RAL9010)</option>
                         </select>
                     </div>
                     <div class="repair-step-row">
-                        <label>Paint — stripes <span class="step-info" tabindex="0" data-note="Faixas coloridas sobre a cor base. Escolha 'Sem faixa' para pá de cor única."><i class="bi bi-info-circle"></i></span></label>
+                        <label>Paint — stripes <span class="step-info" tabindex="0" data-note="Coloured stripes over the base colour. Choose 'No stripe' for a single-colour blade."><i class="bi bi-info-circle"></i></span></label>
                         <select id="paintStripe" class="form-input" onchange="onRepairStepsChange()">
-                            <option value="RAL3020" selected>Vermelho (RAL3020)</option>
-                            <option value="RAL2009">Laranja (RAL2009)</option>
-                            <option value="">Sem faixa</option>
+                            <option value="RAL3020" selected>Red (RAL3020)</option>
+                            <option value="RAL2009">Orange (RAL2009)</option>
+                            <option value="">No stripe</option>
                         </select>
                     </div>
                     <div class="repair-step-row">

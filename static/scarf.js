@@ -164,7 +164,7 @@ function openScarf() {
     ['s1', 's2', 's3', 's4'].forEach(id => document.getElementById(id).classList.add('hidden'));
     document.getElementById('s5').classList.remove('hidden');
     document.getElementById('m-step-name').textContent = 'Scarfing drawing';
-    document.getElementById('m-step-count').textContent = 'Escalonamento';
+    document.getElementById('m-step-count').textContent = 'Staggering';
     document.getElementById('m-scarf-z0').value = SCARF.z0 || '';
     // Pre-compose the header line (editable) from what the user already typed.
     if (!SCARF.title) {
@@ -213,7 +213,7 @@ function renderScarfMode() {
     if (!wrap) return;
     const opts = [
         { key: 'normal', label: 'Normal' },
-        { key: 'ramp', label: 'Rampa (ângulo)' },
+        { key: 'ramp', label: 'Ramp (angle)' },
     ];
     wrap.innerHTML = opts.map(o =>
         `<div class="seg${SCARF.mode === o.key ? ' active' : ''}" onclick="setScarfMode('${o.key}')">${o.label}</div>`
@@ -295,7 +295,7 @@ function renderScarfTable(rows) {
     }).join('');
     wrap.innerHTML = `
         <input type="text" class="sct-title" value="${esc(SCARF.title)}" onchange="onScarfTitle(this.value)"
-            placeholder="Título do reparo (blade / dano / ticket)…" title="Linha de título do relatório — editável">
+            placeholder="Repair title (blade / damage / ticket)…" title="Report title line — editable">
         <div class="sct-wrap">
             <table class="sct">
                 <thead>${headHtml}</thead>
@@ -457,7 +457,7 @@ function downloadCadScript() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Escalonamento_${M.blade}_${M.so || 'UNKNOWN'}.scr`;
+    a.download = `Staggering_${M.blade}_${M.so || 'UNKNOWN'}.scr`;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
     toast('CAD script (.scr) downloaded.', 'ok');
@@ -513,7 +513,7 @@ async function scarfExport(kind) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `Escalonamento_${M.blade}_${M.so || 'UNKNOWN'}.${kind === 'pdf' ? 'pdf' : 'xlsx'}`;
+        a.download = `Staggering_${M.blade}_${M.so || 'UNKNOWN'}.${kind === 'pdf' ? 'pdf' : 'xlsx'}`;
         document.body.appendChild(a); a.click(); a.remove();
         setTimeout(() => URL.revokeObjectURL(url), 4000);
         toast(`${kind.toUpperCase()} downloaded.`, 'ok');

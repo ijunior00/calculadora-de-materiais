@@ -8,13 +8,13 @@
 
 const KITS_CAT_TO_PHASE = {
     'Kit': 'Fabrics',
-    'Químicos': 'Chemicals',
-    'Ferramentas consumíveis': 'Consumable Tools',
-    'Consumíveis': 'Consumables',
-    'Ferramentas': 'Tools',
-    'EPI': 'Consumable Protection Equipment',
+    'Chemicals': 'Chemicals',
+    'Consumable tools': 'Consumable Tools',
+    'Consumables': 'Consumables',
+    'Tools': 'Tools',
+    'PPE': 'Consumable Protection Equipment',
 };
-const KITS_CAT_ORDER = ['Kit', 'Químicos', 'Ferramentas consumíveis', 'Consumíveis', 'Ferramentas', 'EPI'];
+const KITS_CAT_ORDER = ['Kit', 'Chemicals', 'Consumable tools', 'Consumables', 'Tools', 'PPE'];
 
 const KITS = { repair: null, variant: null, blades: 1 };
 
@@ -73,17 +73,17 @@ function renderKitsPanel() {
     <div style="background:#fff;border-radius:14px;max-width:760px;width:100%;box-shadow:0 18px 50px rgba(0,0,0,0.3);overflow:hidden" onclick="event.stopPropagation()">
         <div style="background:#143A5F;color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center">
             <div>
-                <div style="font-weight:800;font-size:1rem">Reparos especiais — kit fixo por pá</div>
-                <div style="font-size:0.74rem;opacity:0.8">Fonte: work instruction ${esc(variant.doc || rep.doc)}</div>
+                <div style="font-weight:800;font-size:1rem">Special repairs — fixed kit per blade</div>
+                <div style="font-size:0.74rem;opacity:0.8">Source: work instruction ${esc(variant.doc || rep.doc)}</div>
             </div>
             <button onclick="closeSpecialKits()" style="background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer">×</button>
         </div>
         <div style="padding:14px 18px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-            <label style="font-size:0.78rem;font-weight:600">Reparo<br>
+            <label style="font-size:0.78rem;font-weight:600">Repair<br>
                 <select onchange="kitsSetRepair(this.value)" style="padding:7px;border:1px solid #cbd5e1;border-radius:8px;min-width:210px">${repOpts}</select></label>
-            <label style="font-size:0.78rem;font-weight:600">Variante / kit<br>
+            <label style="font-size:0.78rem;font-weight:600">Variant / kit<br>
                 <select onchange="kitsSetVariant(this.value)" style="padding:7px;border:1px solid #cbd5e1;border-radius:8px;min-width:150px">${varOpts}</select></label>
-            <label style="font-size:0.78rem;font-weight:600">Nº de pás<br>
+            <label style="font-size:0.78rem;font-weight:600">No. of blades<br>
                 <input type="number" min="1" max="999" value="${Math.max(1, KITS.blades | 0)}" onchange="kitsSetBlades(this.value)"
                     style="padding:7px;border:1px solid #cbd5e1;border-radius:8px;width:80px;text-align:center"></label>
             <div style="flex:1"></div>
@@ -91,12 +91,12 @@ function renderKitsPanel() {
             <button onclick="exportSpecialKit('pdf')" style="padding:9px 14px;border:none;border-radius:8px;background:#143A5F;color:#fff;font-weight:700;cursor:pointer">PDF</button>
         </div>
         ${rep.note ? `<div style="font-size:0.72rem;color:#92400e;background:#fef3c7;margin:0 18px 8px;padding:7px 10px;border-radius:8px">${esc(rep.note)}</div>` : ''}
-        <div style="font-size:0.72rem;color:#64748b;padding:0 18px 8px">Consumíveis e EPI multiplicam pelo nº de pás; ferramentas são reutilizáveis e ficam fixas.</div>
+        <div style="font-size:0.72rem;color:#64748b;padding:0 18px 8px">Consumables and PPE multiply by the number of blades; tools are reusable and stay fixed.</div>
         <div style="max-height:52vh;overflow:auto;border-top:1px solid #e2e8f0">
             <table style="border-collapse:collapse;width:100%;font-size:0.78rem">
                 <thead><tr style="background:#f8fafc;text-align:left">
-                    <th style="padding:6px 8px">SAP</th><th style="padding:6px 8px">Descrição</th>
-                    <th style="padding:6px 8px;text-align:center">Qty</th><th style="padding:6px 8px;text-align:center">Unid</th>
+                    <th style="padding:6px 8px">SAP</th><th style="padding:6px 8px">Description</th>
+                    <th style="padding:6px 8px;text-align:center">Qty</th><th style="padding:6px 8px;text-align:center">Unit</th>
                 </tr></thead>
                 <tbody>${body}</tbody>
             </table>
@@ -118,10 +118,10 @@ async function exportSpecialKit(kind) {
     const payload = {
         turbine_model: variant.label, blade_type: '', damage_cat: rep.label, blade_zone: '-',
         rstart: 0, rend: 0, length: 0, width: 0, days: 1,
-        report_title: `${rep.label} — ${variant.label} — ${n} pá(s) — WI ${rep.doc}`,
+        report_title: `${rep.label} — ${variant.label} — ${n} blade(s) — WI ${rep.doc}`,
         include_field_rules: false, total_brl: 0, total_eur: 0,
         blade_sn: '', service_order: '', cir_number: '',
-        damage_description: `Kit fixo (work instruction ${rep.doc}) × ${n} pá(s)`,
+        damage_description: `Fixed kit (work instruction ${rep.doc}) × ${n} blade(s)`,
         chord_ref: 'LE', x1: 0, items,
     };
     const endpoint = kind === 'pdf' ? '/api/generate-pdf' : '/api/generate-excel';
@@ -134,6 +134,6 @@ async function exportSpecialKit(kind) {
         a.download = `${rep.id.toUpperCase()}_${variant.id}_x${n}.${kind === 'pdf' ? 'pdf' : 'xlsx'}`;
         document.body.appendChild(a); a.click(); a.remove();
     } catch (e) {
-        alert('Export falhou: ' + e.message);
+        alert('Export failed: ' + e.message);
     }
 }
