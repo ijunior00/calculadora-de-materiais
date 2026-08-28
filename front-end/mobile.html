@@ -29,6 +29,8 @@
     <h1>Blade Repair<br>Materials Planner</h1>
     <div class="subtitle">VESTAS BLADES · Materials &amp; Tools Estimate</div>
     <button class="start-btn" style="background:#1f5285;margin-bottom:10px" onclick="openSpecialKits()">Reparos especiais (kits)</button>
+    <button class="start-btn" style="background:#0e7490;margin-bottom:10px" onclick="openImportPicker()">Reabrir de Excel</button>
+    <input type="file" id="m-import-file" accept=".xlsx" style="display:none" onchange="importFromExcel(this)">
     <button class="start-btn" onclick="startApp()">
         <i class="bi bi-play-fill"></i> Start estimate
     </button>

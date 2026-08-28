@@ -1,11 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import Response
 from pydantic import BaseModel
 from fpdf import FPDF
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from io import BytesIO
@@ -549,6 +549,80 @@ async def generate_pdf(data: BOMPayload):
     )
 
 
+@app.post("/api/import-bom-excel")
+async def import_bom_excel(request: Request):
+    """Lê a aba INPUTS de um Excel gerado pelo app (marcador BRMP_REEDIT_V1) e
+    devolve as entradas do cálculo em JSON, para o front reabrir e reeditar.
+    Recebe os bytes crus do arquivo (sem multipart — sem dependência extra)."""
+    raw = await request.body()
+    if not raw:
+        return Response(content='{"error":"arquivo vazio"}', media_type="application/json", status_code=400)
+    try:
+        wb = load_workbook(BytesIO(raw), data_only=True)
+    except Exception:
+        return Response(content='{"error":"arquivo não é um .xlsx válido"}', media_type="application/json", status_code=400)
+    if "INPUTS" not in wb.sheetnames:
+        return Response(content='{"error":"sem aba INPUTS — o arquivo não foi gerado por uma versão do app com reedição"}',
+                        media_type="application/json", status_code=422)
+    ws = wb["INPUTS"]
+    if str(ws.cell(1, 1).value or "").strip() != "BRMP_REEDIT_V1":
+        return Response(content='{"error":"marcador BRMP_REEDIT_V1 ausente na aba INPUTS"}',
+                        media_type="application/json", status_code=422)
+
+    meta, layers, steps = {}, [], {}
+    section = "meta"
+    for r in range(2, ws.max_row + 1):
+        a = ws.cell(r, 1).value
+        if a is None or str(a).strip() == "":
+            continue
+        a = str(a).strip()
+        if a == "[LAYERS]":
+            section = "layers_header"; continue
+        if a == "[STEPS]":
+            section = "steps_header"; continue
+        if section == "meta":
+            meta[a] = ws.cell(r, 2).value
+        elif section == "layers_header":
+            section = "layers"  # pula a linha de cabeçalho (#, Material, ...)
+        elif section == "layers":
+            def _num(c):
+                v = ws.cell(r, c).value
+                return None if v is None or str(v).strip() == "" else float(v)
+            layers.append({
+                "materialType": str(ws.cell(r, 2).value or "").strip(),
+                "gsm": str(ws.cell(r, 3).value or "").strip(),
+                "ovR1": _num(4), "ovR2": _num(5), "ovX1": _num(6), "ovX2": _num(7),
+            })
+        elif section == "steps_header":
+            section = "steps"  # pula a linha Step | Qty
+        elif section == "steps":
+            try:
+                steps[a] = int(ws.cell(r, 2).value or 0)
+            except (TypeError, ValueError):
+                steps[a] = 0
+
+    def _s(key, default=""):
+        v = meta.get(key)
+        return default if v is None or str(v).strip() in ("", "-") else str(v).strip()
+    def _f(key, default=0):
+        try:
+            return float(meta.get(key))
+        except (TypeError, ValueError):
+            return default
+
+    out = {
+        "blade": _s("Blade"), "region": _s("Region", "Middle"),
+        "length": _f("Length (mm)"), "width": _f("Width (mm)"),
+        "days": int(_f("Days", 5) or 5),
+        "isExternal": _s("External", "no").lower() == "yes",
+        "paint": {"base": _s("Paint base", "RAL7035"), "stripe": _s("Paint stripe") or None},
+        "so": _s("SO"), "cir": _s("CIR"), "title": _s("Title"),
+        "layers": [l for l in layers if l["materialType"]],
+        "steps": steps,
+    }
+    return Response(content=json.dumps(out), media_type="application/json")
+
+
 @app.post("/api/generate-excel")
 async def generate_excel(data: BOMPayload):
     """Generate an .xlsx bill of materials mirroring the PDF layout.
@@ -668,6 +742,55 @@ async def generate_excel(data: BOMPayload):
             ws.cell(r, 2, str(data.doc_refs.get(key) or "-")).font = normal
             r += 1
         r += 1
+
+    # ── Aba INPUTS: entradas completas do cálculo, para reedição ─────────────
+    # Formato estável (marcador BRMP_REEDIT_V1) que /api/import-bom-excel lê de
+    # volta — o Excel entregue vira também o "arquivo de projeto" do reparo.
+    if data.audit_inputs:
+        ai = data.audit_inputs
+        ws2 = wb.create_sheet("INPUTS")
+        ws2.cell(1, 1, "BRMP_REEDIT_V1").font = bold
+        meta_rows = [
+            ("Blade", data.turbine_model), ("Region", data.blade_zone),
+            ("Length (mm)", data.length), ("Width (mm)", data.width),
+            ("Days", data.days), ("External", "yes" if data.is_external else "no"),
+            ("Paint base", (ai.get("paint") or {}).get("base") or "-"),
+            ("Paint stripe", (ai.get("paint") or {}).get("stripe") or "-"),
+            ("SO", data.service_order or "-"), ("CIR", data.cir_number or "-"),
+            ("Title", data.report_title or "-"),
+        ]
+        r2 = 2
+        for k, v in meta_rows:
+            ws2.cell(r2, 1, k).font = bold
+            ws2.cell(r2, 2, v).font = normal
+            r2 += 1
+        r2 += 1
+        ws2.cell(r2, 1, "[LAYERS]").font = bold
+        r2 += 1
+        for j, h in enumerate(["#", "Material", "GSM", "ovR1", "ovR2", "ovX1", "ovX2"], 1):
+            ws2.cell(r2, j, h).font = bold
+        r2 += 1
+        for ly in (ai.get("layers") or []):
+            ws2.cell(r2, 1, ly.get("order"))
+            ws2.cell(r2, 2, ly.get("materialType"))
+            ws2.cell(r2, 3, ly.get("gsm") or "")
+            for j, k in enumerate(["ovR1", "ovR2", "ovX1", "ovX2"], 4):
+                v = ly.get(k)
+                if v is not None and v != "":
+                    ws2.cell(r2, j, v)
+            r2 += 1
+        r2 += 1
+        ws2.cell(r2, 1, "[STEPS]").font = bold
+        r2 += 1
+        ws2.cell(r2, 1, "Step").font = bold
+        ws2.cell(r2, 2, "Qty").font = bold
+        r2 += 1
+        for k, v in (ai.get("repair_steps") or {}).items():
+            ws2.cell(r2, 1, k)
+            ws2.cell(r2, 2, v)
+            r2 += 1
+        ws2.column_dimensions["A"].width = 16
+        ws2.column_dimensions["B"].width = 22
 
     # ── Write to in-memory buffer ───────────────────────────────
     buf = BytesIO()
