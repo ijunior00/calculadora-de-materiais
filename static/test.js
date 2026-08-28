@@ -601,7 +601,7 @@
             DAMAGE_DECISION_TREE.every(d => d.damage && d.zone && d.severity && d.level && d.method)
                 ? pass('every decision-tree row has damage/zone/severity/level/method')
                 : fail('decision-tree row missing required field', ''),
-            DAMAGE_DECISION_TREE.some(d => d.level === '⛔' && /REPORTAR/i.test(d.method))
+            DAMAGE_DECISION_TREE.some(d => d.level === '⛔' && /REPORT IMMEDIATELY/i.test(d.method))
                 ? pass('non-repairable shell-spar case present (report immediately)')
                 : fail('missing non-repairable case', ''),
         ];
@@ -710,7 +710,7 @@
         for (const rep of SPECIAL_REPAIRS) {
             const ruins = rep.items.filter(i => !i.cat || !i.desc || !i.unit || !(i.qty > 0));
             r.push(ruins.length === 0 ? pass(`${rep.id}: ${rep.items.length} itens válidos`) : fail(`${rep.id}: itens inválidos`, String(ruins.length)));
-            const ferrSemFlag = rep.items.filter(i => i.cat === 'Ferramentas' && i.perBlade !== false);
+            const ferrSemFlag = rep.items.filter(i => i.cat === 'Tools' && i.perBlade !== false);
             r.push(ferrSemFlag.length === 0 ? pass(`${rep.id}: ferramentas todas perBlade:false`) : fail(`${rep.id}: ferramenta multiplicando por pá`, ferrSemFlag.map(i=>i.sap).join(',')));
         }
         console.groupEnd();

@@ -189,7 +189,7 @@ function renderLayers() {
             return `
             <div class="m-layer">
                 <div class="l-num">${i + 1}</div>
-                <div class="l-info" onclick="openLayerSheet(${i})" style="cursor:pointer" title="Tocar para trocar o material desta camada">
+                <div class="l-info" onclick="openLayerSheet(${i})" style="cursor:pointer" title="Tap to replace this layer's material">
                     <div class="l-name">${labelFor(l)} <i class="bi bi-arrow-repeat" style="font-size:0.72rem;color:var(--text-faint)"></i></div>
                     <div class="l-sub">${gsm} · ${ovTxt}</div>
                 </div>
@@ -258,12 +258,12 @@ function openLayerSheet(replaceIdx) {
     sheet.onclick = (e) => { if (e.target === sheet) closeLayerSheet(); };
     sheet.innerHTML = `
         <div class="m-sheet">
-            <h3>${_replaceIdx !== null ? `Trocar camada ${_replaceIdx + 1}` : `Add layer — ${M.blade}`}</h3>
+            <h3>${_replaceIdx !== null ? `Replace layer ${_replaceIdx + 1}` : `Add layer — ${M.blade}`}</h3>
             <div class="sheet-sub">${_replaceIdx !== null
-                ? `Escolha o material novo — a camada mantém a posição ${_replaceIdx + 1} na pilha.`
+                ? `Pick the new material — the layer keeps position ${_replaceIdx + 1} in the stack.`
                 : 'Materials filtered for this blade model (REV05).'}</div>
             <div class="m-row-between" style="margin:4px 0 10px;padding:8px 10px;background:#f1f5f9;border-radius:10px${_replaceIdx !== null ? ';display:none' : ''}">
-                <span style="font-size:0.84rem;font-weight:600">Quantidade <span class="hint">(camadas por toque)</span></span>
+                <span style="font-size:0.84rem;font-weight:600">Quantity <span class="hint">(layers per tap)</span></span>
                 <div class="m-stepper">
                     <button class="s-btn" onclick="changeLayerQty(-1)" aria-label="decrease">−</button>
                     <span class="s-val" id="m-layer-qty">1</span>
@@ -295,7 +295,7 @@ function addLayer(allowedIdx) {
             // que o usuário escolheu); só o material muda.
             layer.materialType = m.materialType;
             layer.gsm = m.gsm;
-            toast(`Camada ${_replaceIdx + 1} → ${m.label}.`, 'ok');
+            toast(`Layer ${_replaceIdx + 1} → ${m.label}.`, 'ok');
         }
         _replaceIdx = null;
         closeLayerSheet();
@@ -308,7 +308,7 @@ function addLayer(allowedIdx) {
     }
     closeLayerSheet();
     renderLayers();
-    if (n > 1) toast(`${n} camadas de ${m.label} adicionadas.`, 'ok');
+    if (n > 1) toast(`${n} layers of ${m.label} added.`, 'ok');
 }
 function removeLayer(i) {
     M.layers.splice(i, 1);
@@ -438,7 +438,7 @@ function renderPaintScheme() {
         .join('');
     base.innerHTML = opts('base', M.paint.base, 'setPaintBase');
     stripe.innerHTML =
-        `<div class="seg${!M.paint.stripe ? ' active' : ''}" onclick="setPaintStripe('')">Sem faixa</div>` +
+        `<div class="seg${!M.paint.stripe ? ' active' : ''}" onclick="setPaintStripe('')">No stripe</div>` +
         opts('stripe', M.paint.stripe, 'setPaintStripe');
 }
 function setPaintBase(ral) { M.paint.base = ral; renderPaintScheme(); }
@@ -808,8 +808,8 @@ async function importFromExcel(fileInput) {
     try {
         const res = await fetch('/api/import-bom-excel', { method: 'POST', body: f });
         const data = await res.json();
-        if (!res.ok) { toast(data.error || ('Import falhou (HTTP ' + res.status + ')'), 'err'); return; }
-        if (!BLADE_MODELS.includes(data.blade)) { toast('Blade "' + data.blade + '" não existe no app.', 'err'); return; }
+        if (!res.ok) { toast(data.error || ('Import failed (HTTP ' + res.status + ')'), 'err'); return; }
+        if (!BLADE_MODELS.includes(data.blade)) { toast('Blade "' + data.blade + '" does not exist in the app.', 'err'); return; }
 
         M.blade = data.blade;
         M.region = BLADE_REGIONS.includes(data.region) ? data.region : 'Middle';
@@ -834,8 +834,8 @@ async function importFromExcel(fileInput) {
         }
         startApp();
         renderStep1();
-        toast('Excel importado — ' + M.layers.length + ' camadas. Revise e recalcule.', 'ok');
+        toast('Excel imported — ' + M.layers.length + ' layers. Review and recalculate.', 'ok');
     } catch (e) {
-        toast('Import falhou: ' + e.message, 'err');
+        toast('Import failed: ' + e.message, 'err');
     }
 }

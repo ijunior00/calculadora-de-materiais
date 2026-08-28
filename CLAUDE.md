@@ -63,8 +63,9 @@ Não "conserte" escondendo — pergunte ao usuário.
 normal quando a fórmula mudou de propósito — mas cada mudança leva comentário
 explicando a origem. Se você não consegue explicar o número novo, achou um bug.
 
-**Idioma.** Documentação e comentários de contexto em português; nomes de
-código e termos técnicos de material em inglês (como na lista de SAP).
+**Idioma.** A interface do app é 100% em **inglês** (idioma comum do time e
+da lista de SAP) — qualquer texto novo visível ao usuário nasce em inglês.
+Documentação e comentários de contexto seguem em português.
 
 ## Fluxo de trabalho
 
