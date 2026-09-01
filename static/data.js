@@ -505,6 +505,28 @@ function findSerrationByRadius(variantId, radiusMm) {
     return t.parts.filter(p => p.ranges.some(([a, b]) => radiusMm >= a && radiusMm <= b));
 }
 
+// Agrega vários raios em linhas de pedido: cada raio soma 1 peça na posição
+// onde cai (dois raios na mesma posição → qty 2). Raio exatamente no limite
+// entre faixas conta nas DUAS peças vizinhas e entra em `ambiguous` para o
+// usuário decidir; raio fora do span coberto vai para `unmatched` — nada é
+// descartado em silêncio.
+function serrationPartsForRadii(variantId, radiiMm) {
+    const out = { parts: [], unmatched: [], ambiguous: [] };
+    const byPos = {};
+    for (const mm of (radiiMm || [])) {
+        const hits = findSerrationByRadius(variantId, mm);
+        if (hits.length === 0) { out.unmatched.push(mm); continue; }
+        if (hits.length > 1) out.ambiguous.push(mm);
+        for (const h of hits) {
+            if (!byPos[h.pos]) byPos[h.pos] = { part: h, count: 0, radii: [] };
+            byPos[h.pos].count += 1;
+            byPos[h.pos].radii.push(mm);
+        }
+    }
+    out.parts = Object.values(byPos).sort((a, b) => a.part.pos - b.part.pos);
+    return out;
+}
+
 const SPECIAL_REPAIRS = [
     {
         id: 'serration',
