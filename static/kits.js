@@ -16,7 +16,7 @@ const KITS_CAT_TO_PHASE = {
 };
 const KITS_CAT_ORDER = ['Kit', 'Chemicals', 'Consumable tools', 'Consumables', 'Tools', 'PPE'];
 
-const KITS = { repair: null, variant: null, blades: 1 };
+const KITS = { repair: null, variant: null, blades: 1, radius: '' };
 
 function openSpecialKits() {
     if (typeof SPECIAL_REPAIRS === 'undefined' || !SPECIAL_REPAIRS.length) return;
@@ -91,6 +91,7 @@ function renderKitsPanel() {
             <button onclick="exportSpecialKit('pdf')" style="padding:9px 14px;border:none;border-radius:8px;background:#143A5F;color:#fff;font-weight:700;cursor:pointer">PDF</button>
         </div>
         ${rep.note ? `<div style="font-size:0.72rem;color:#92400e;background:#fef3c7;margin:0 18px 8px;padding:7px 10px;border-radius:8px">${esc(rep.note)}</div>` : ''}
+        ${kitsRadiusBox(variant)}
         <div style="font-size:0.72rem;color:#64748b;padding:0 18px 8px">Consumables and PPE multiply by the number of blades; tools are reusable and stay fixed.</div>
         <div style="max-height:52vh;overflow:auto;border-top:1px solid #e2e8f0">
             <table style="border-collapse:collapse;width:100%;font-size:0.78rem">
@@ -136,4 +137,53 @@ async function exportSpecialKit(kind) {
     } catch (e) {
         alert('Export failed: ' + e.message);
     }
+}
+
+
+// ── Busca de peça por raio (serration) ──────────────────────────────────────
+// Aceita metros ou mm: valor < 100 é tratado como metros (ex.: 50.5 → 50500).
+function kitsParseRadius(v) {
+    const n = parseFloat(String(v).replace(',', '.'));
+    if (!(n > 0)) return null;
+    return n < 100 ? Math.round(n * 1000) : Math.round(n);
+}
+function kitsRadiusBox(variant) {
+    if (typeof SERRATION_POSITIONS === 'undefined' || !SERRATION_POSITIONS[variant.id]) return '';
+    const t = SERRATION_POSITIONS[variant.id];
+    const mm = kitsParseRadius(KITS.radius);
+    let result = '';
+    if (KITS.radius !== '' && mm) {
+        const hits = findSerrationByRadius(variant.id, mm);
+        const dist = t.tipR - mm;
+        if (!hits.length) {
+            result = `<div style="margin-top:6px;color:#b91c1c;font-size:0.78rem">R ${(mm/1000).toFixed(1)} m is outside the serration span (${(Math.min(...t.parts.flatMap(p=>p.ranges.flat()))/1000).toFixed(0)}–${(Math.max(...t.parts.flatMap(p=>p.ranges.flat()))/1000).toFixed(1)} m).</div>`;
+        } else {
+            result = hits.map(h => `
+                <div style="margin-top:6px;padding:8px 10px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;font-size:0.8rem">
+                    <b>Pos ${h.pos} — ${h.desc}</b><br>
+                    Item no: <b>${h.sap}</b> · ${h.kg} kg/pc · ${h.pcs} pcs/blade total<br>
+                    <span style="color:#64748b">R ${(mm/1000).toFixed(2)} m · ${dist} mm from TIP · range${h.ranges.length>1?'s':''}: ${h.ranges.map(([a,b])=>`${a}–${b}`).join(' and ')} mm</span>
+                </div>`).join('') +
+                (hits.length > 1 ? `<div style="margin-top:4px;font-size:0.72rem;color:#92400e">Radius is exactly on a range boundary — both adjacent parts match.</div>` : '');
+        }
+    }
+    return `
+        <div style="margin:0 18px 8px;padding:10px;background:#f1f5f9;border-radius:10px">
+            <label style="font-size:0.78rem;font-weight:600">Find serration part by radius
+                <input type="text" inputmode="decimal" value="${String(KITS.radius).replace(/"/g,'')}" placeholder="e.g. 50.5 (m) or 50500 (mm)"
+                    oninput="kitsSetRadius(this.value)"
+                    style="margin-left:8px;padding:7px 9px;border:1px solid #cbd5e1;border-radius:8px;width:150px">
+            </label>
+            <span style="font-size:0.7rem;color:#94a3b8;margin-left:6px">Source: ${t.source}</span>
+            ${result}
+        </div>`;
+}
+function kitsSetRadius(v) {
+    KITS.radius = v;
+    // atualiza só o bloco de resultado re-renderizando o painel, preservando o foco
+    const inp = document.activeElement;
+    const pos = inp && inp.selectionStart;
+    renderKitsPanel();
+    const again = document.querySelector('#kits-overlay input[inputmode="decimal"]');
+    if (again) { again.focus(); if (pos != null) try { again.setSelectionRange(pos, pos); } catch (e) {} }
 }

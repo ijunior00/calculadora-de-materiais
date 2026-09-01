@@ -461,3 +461,19 @@ o Excel entregue vira o arquivo de projeto do reparo.
 Na etapa de camadas, tocar no corpo de uma camada abre o seletor em **modo
 troca**: o material muda mantendo a posição na pilha, o nome e os overrides de
 geometria.
+
+
+### Serration: peça por raio
+
+`SERRATION_POSITIONS` (data.js) guarda, por variante do kit, a tabela do
+desenho de montagem: Pos, Item no, faixas de raio (mm), pcs/pá e kg/pç. No
+painel de kits, quando a variante tem tabela (hoje: V136 V2.1), aparece a
+busca **"Find serration part by radius"** — digite o raio em metros (ex.
+`50.5`) ou mm (`50500`; valor < 100 é tratado como metros) e o app devolve a
+peça: ex. R 50,5 m → Pos 5, `29063747`, com a distância a partir do TIP
+(tipR − r). Raio exatamente no limite entre faixas devolve as **duas** peças
+vizinhas em vez de escolher em silêncio; fora do span coberto, avisa.
+
+Para adicionar outro modelo: criar a entrada em `SERRATION_POSITIONS` com o id
+da variante e as faixas do desenho daquele modelo — a UI e o teste de sanidade
+(faixas válidas, min<max ≤ tipR) já cobrem.
