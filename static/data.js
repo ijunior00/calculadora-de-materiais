@@ -338,7 +338,8 @@ const PPE_ITEMS = [
 // ============================================================
 const CONSUMABLE_TOOLS = [
     { sap: '229600',   desc: 'SCISSOR FOR GLASS FIBER',               unit: 'EA', calcQty: (s) => s.Lamination > 0 ? 2 : 0 },
-    { sap: '234630',   desc: 'BLUE PLASTIC SPATTLE (FLEXIBLE)',       unit: 'EA', calcQty: (s) => Math.ceil((s.HLU * 1.1) + s.Painting) },
+    // Lista SAP "Item remplazo" (set/2026): 29196732 substitui 234630.
+    { sap: '29196732', desc: 'FILLING KNIFE SOFT',                    unit: 'EA', calcQty: (s) => Math.ceil((s.HLU * 1.1) + s.Painting) },
     { sap: '234615',   desc: 'PLASTIC PUTTY KNIFE BLACK (STIFF)',     unit: 'EA', calcQty: (s) => Math.ceil(((s.HLU * 1.1) + s.Painting) / 3) },
     // MX catalog (Formato_consumos_palas): 29196703 replaces BR 233875.
     { sap: '29196703', desc: 'REAR DISK RUBBER 125mm (Backing pad)',  unit: 'EA', calcQty: (s) => s.Grinding > 0 ? 2 : 0 },
@@ -362,14 +363,17 @@ const CONSUMABLE_TOOLS = [
     { sap: '293610',   desc: '4 INCH FOAM ROLLER',                    unit: 'EA', calcQty: (s) => Math.ceil(1.2 * s.Painting + 3 * s.LEP) },
     // Handle roller: Excel H35 = ROUNDDOWN(H33/2 + H34/2, 0)
     // H33 = ceil(HLU * 1.2) = paint roller qty; H34 = ceil(1.2*Painting + 3*LEP) = foam roller qty
-    { sap: '60059474', desc: 'HANDLE, PAINT RLR 11CM / 4 INCH',       unit: 'EA', calcQty: (s) => {
+    // Lista SAP "Item remplazo" (set/2026): 29454065 substitui 60059474 (PhaseOut).
+    { sap: '29454065', desc: 'HANDLE,ROLLER,270 mm,PLASTIC',          unit: 'EA', calcQty: (s) => {
           const h33 = Math.ceil(s.HLU * 1.2);
           const h34 = Math.ceil(1.2 * s.Painting + 3 * s.LEP);
           return Math.floor(h33 / 2 + h34 / 2);
       } },
     { sap: '233861',   desc: 'DIAMOND CUTTING-OFF WHEEL 125',         unit: 'EA', calcQty: (s) => s.Grinding > 0 ? 1 : 0 },
-    { sap: '233228',   desc: 'GRINDING WHEEL 125MM',                  unit: 'EA', calcQty: (s) => s.Grinding > 0 ? 1 : 0 },
-    { sap: '215860',   desc: 'Disposable syringe 60ml',               unit: 'EA', calcQty: (s) => s.Cleaning > 0 ? 3 : 0 },
+    // Lista SAP "Item remplazo" (set/2026): 29453650 substitui 233228 (PhaseOut)
+    // e 29453137 substitui 215860 (PhaseOut).
+    { sap: '29453650', desc: 'DISK,ABRASIVE,GRINDING,125 mm,60',      unit: 'EA', calcQty: (s) => s.Grinding > 0 ? 1 : 0 },
+    { sap: '29453137', desc: 'SYRINGE,HYPODERMIC,PLASTIC,60 ml',      unit: 'EA', calcQty: (s) => s.Cleaning > 0 ? 3 : 0 },
 ];
 
 // ============================================================
@@ -574,7 +578,8 @@ const SPECIAL_REPAIRS = [
             { cat: 'Chemicals', sap: '29035856', desc: 'THINNER 1kg FOR TOP COAT 12',                unit: 'EA',  qty: 1 },
             // Ferramentas consumíveis
             { cat: 'Consumable tools', sap: '29057162', desc: 'DISTANCE CLIPS FOR SERRATIONS', unit: 'EA', qty: 1 },
-            { cat: 'Consumable tools', sap: '234630',   desc: 'BLUE PLASTIC SPATTLE (FLEXIBLE)', unit: 'EA', qty: 4 },
+            // Lista SAP "Item remplazo" (set/2026): 29196732 substitui 234630.
+            { cat: 'Consumable tools', sap: '29196732', desc: 'FILLING KNIFE SOFT',              unit: 'EA', qty: 4 },
             { cat: 'Consumable tools', sap: '60059473', desc: 'PAINT ROLLER, SUPER SMOOTH, 11in', unit: 'EA', qty: 4 },
             { cat: 'Consumable tools', sap: '234615',   desc: 'PLASTIC PUTTY KNIFE BLACK (STIFF)', unit: 'EA', qty: 2 },
             { cat: 'Consumable tools', sap: '29196727', desc: 'PADDLE STIRRERS (wood stick)',  unit: 'EA', qty: 4 },
@@ -731,9 +736,10 @@ const CONSUMABLES = [
     // MX: 29227309 (roll 400mm×50m = 20 m², 32 uses) replaces BR S096512 (M2).
     { sap: '29227309',  desc: 'BREATEX 150 GSM 400MM/50M (roll 20m2)', unit: 'EA',  calcQty: (s, d, lay) => s.Vacuum > 0 ? Math.max(1, Math.ceil(lay.maxAreaM2 * s.Vacuum * 1.4 / 20)) : 0 },
     // Bagging film: REV05 unit=M², ROUNDUP(splAreaM2 * Vacuum*1.4, 0)
-    // MX: 29232949 (465B 1350mm wide, sold per LINEAR METRE; 24 uses) replaces
-    // BR 29017040 (3000mm, M2). Metres = m² ÷ 1.35 m width. Wide alt: S096507.
-    { sap: '29232949',  desc: 'BAGGING FILM 465B 50Mx1350MM',          unit: 'M',   calcQty: (s, d, lay) => s.Vacuum > 0 ? Math.ceil(lay.splAreaM2 * s.Vacuum * 1.4 / 1.35) : 0 },
+    // S096503 (925mm, 50 µm, vendido por M²) substitui o 29232949 (465B 1350mm,
+    // metro linear ÷1,35) — pedido do usuário set/2026. Vendido por m², a fórmula
+    // volta à original do REV05: área do splay × Vacuum × 1,4 (sem ÷ largura).
+    { sap: 'S096503',   desc: 'BAGGING FILM PA 6 925MM 50MY',          unit: 'M2',  calcQty: (s, d, lay) => s.Vacuum > 0 ? Math.ceil(lay.splAreaM2 * s.Vacuum * 1.4) : 0 },
     // Peel ply: maxAreaM2 × Vacuum × 1.4
     // MX: 29232947 (450mm repair-width roll, 50m ≈ 22.5 m²; 11 uses) replaces
     // BR 29232963 (1500mm, M2). Alts in MX: 29232948, S096044.

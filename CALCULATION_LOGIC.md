@@ -384,11 +384,15 @@ A operação migrou do Brasil para o México; o log de consumo MX (2.223 linhas,
 | HM UD1200 | 29110162 (KG) | **29234519** (rolo 13m ≈20kg; alt 29305383) | EA |
 | SPL patch | 29180313 (5m, 5,75 m²) | **29180312** (10m, **11,5 m²**) | EA |
 | Breathing cloth | S096512 (M2) | **29227309** Breatex 400mm/50m (rolo 20 m²) | EA |
-| Bagging film | 29017040 (M2) | **29232949** 465B 1350mm (por metro linear ÷1,35) | M |
+| Bagging film | 29017040 (M2) → 29232949 (M linear) | **S096503** PA 6 925mm 50µm (por m², set/2026) | M2 |
 | Release film | 300023948 (M2) | **S096521** 360mm (por metro linear ÷0,36) | M |
 | Transport mesh | 260710 (M2) | **29225928** (rolo 155 m²) | EA |
 | Peel ply | 29232963 (M2) | **29232947** 450mm (rolo 22,5 m²) | EA |
 | Prato K220 acabamento | 233015 | **29196720** ø150 K220 9 furos | EA |
+| Espátula flexível | 234630 | **29196732** FILLING KNIFE SOFT (set/2026) | EA |
+| Cabo de rolo | 60059474 (PhaseOut) | **29454065** HANDLE,ROLLER,270 mm,PLASTIC | EA |
+| Disco de desbaste 125 | 233228 (PhaseOut) | **29453650** DISK,ABRASIVE,GRINDING,125 mm,60 | EA |
+| Seringa 60 ml | 215860 (PhaseOut) | **29453137** SYRINGE,HYPODERMIC,PLASTIC,60 ml | EA |
 
 > Rolos HM ≈20 kg calculados por dimensão × gsm (13×1,26×1,2 = 19,7 etc.). **Flag de campo:** o log MX chama 29238494 de "TELAS BX600", mas a lista oficial fev/2026 diz Biax 220 — verificar no almoxarifado. Itens só-México sem fórmula no BOM (esponja roller 298024, PVC core kit 881865, kits LPS etc.) não foram adicionados.
 

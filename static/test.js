@@ -236,7 +236,10 @@
         const r = [
             assertItemPresent('Release film → S096521 (MX)',    cons, 'S096521'),
             assertItemPresent('Breatex → 29227309 (MX)',        cons, '29227309'),
-            assertItemPresent('Bagging film → 29232949 (MX)',   cons, '29232949'),
+            // Re-baseline set/2026: S096503 (925mm, por M²) substitui o 29232949
+            // (465B por metro linear) — troca pedida pelo usuário na lista SAP.
+            assertItemPresent('Bagging film → S096503',         cons, 'S096503'),
+            assertItemAbsent('Old bagging film 29232949 absent', cons, '29232949'),
             assertItemPresent('Transport mesh → 29225928 (MX)', cons, '29225928'),
             assertItemPresent('Peel ply → 29232947 (MX)',       cons, '29232947'),
             // Old BR numbers must be gone
@@ -260,7 +263,9 @@
         for (const [sap, name, unit] of [
             ['S096521', 'Release film', 'M'],
             ['29227309', 'Breatex', 'EA'],
-            ['29232949', 'Bagging film', 'M'],
+            // Re-baseline set/2026: bagging film S096503 é vendido por M² —
+            // fórmula voltou à do REV05 (área × Vacuum × 1,4, sem ÷ largura).
+            ['S096503', 'Bagging film', 'M2'],
             ['29225928', 'Transport mesh', 'EA'],
             ['29232947', 'Peel ply', 'EA'],
         ]) {
