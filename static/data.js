@@ -419,6 +419,69 @@ function topcoatQty(lay, s) {
 // usado para mostrar a distância a partir do TIP (dist = tipR − r).
 // Faixas em mm, normalizadas [min, max]; posições 5 e 7 têm duas faixas.
 const SERRATION_POSITIONS = {
+    // V90/V100 usam as peças 10A–6A; V110/V112/V117 usam 1A–6A (família ver. 2).
+    // tipR conferido contra a coluna "Distance from TIP" de cada tabela
+    // (tipR = R start + dist start) e bate com rotor/2 de cada modelo.
+    'V90v2': {
+        tipR: 45000,
+        source: 'V90 serration assembly drawing table',
+        parts: [
+            { pos: 1, sap: '29060536', desc: 'SERRATED TRAILING EDGE 10A', pcs: 8, kg: 0.083, ranges: [[42500, 44500]] },
+            { pos: 2, sap: '29060535', desc: 'SERRATED TRAILING EDGE 9A',  pcs: 3, kg: 0.197, ranges: [[41000, 42500]] },
+            { pos: 3, sap: '29060534', desc: 'SERRATED TRAILING EDGE 8A',  pcs: 6, kg: 0.215, ranges: [[38000, 41000]] },
+            { pos: 4, sap: '29060533', desc: 'SERRATED TRAILING EDGE 7A',  pcs: 7, kg: 0.234, ranges: [[34500, 38000]] },
+            { pos: 5, sap: '29058914', desc: 'SERRATED TRAILING EDGE 5A',  pcs: 6, kg: 0.251, ranges: [[31500, 34500]] },
+            { pos: 6, sap: '29058915', desc: 'SERRATED TRAILING EDGE 6A',  pcs: 7, kg: 0.273, ranges: [[28000, 31500]] },
+        ],
+    },
+    'V100v2': {
+        tipR: 50000,
+        source: 'V100 serration assembly drawing table',
+        parts: [
+            { pos: 1, sap: '29060536', desc: 'SERRATED TRAILING EDGE 10A', pcs: 6, kg: 0.083, ranges: [[48000, 49500]] },
+            { pos: 2, sap: '29060535', desc: 'SERRATED TRAILING EDGE 9A',  pcs: 4, kg: 0.197, ranges: [[46000, 48000]] },
+            { pos: 3, sap: '29060534', desc: 'SERRATED TRAILING EDGE 8A',  pcs: 4, kg: 0.215, ranges: [[44000, 46000]] },
+            { pos: 4, sap: '29060533', desc: 'SERRATED TRAILING EDGE 7A',  pcs: 7, kg: 0.234, ranges: [[40500, 44000]] },
+            { pos: 5, sap: '29058914', desc: 'SERRATED TRAILING EDGE 5A',  pcs: 8, kg: 0.251, ranges: [[36500, 40500]] },
+            { pos: 6, sap: '29058915', desc: 'SERRATED TRAILING EDGE 6A',  pcs: 9, kg: 0.273, ranges: [[32000, 36500]] },
+        ],
+    },
+    'V110v2': {
+        tipR: 55000,
+        source: 'V110 serration assembly drawing table',
+        parts: [
+            { pos: 1, sap: '29058910', desc: 'SERRATED TRAILING EDGE 1A', pcs: 14, kg: 0.080, ranges: [[51000, 54500]] },
+            { pos: 2, sap: '29058911', desc: 'SERRATED TRAILING EDGE 2A', pcs: 6,  kg: 0.192, ranges: [[48000, 51000]] },
+            { pos: 3, sap: '29058912', desc: 'SERRATED TRAILING EDGE 3A', pcs: 7,  kg: 0.210, ranges: [[44500, 48000]] },
+            { pos: 4, sap: '29058913', desc: 'SERRATED TRAILING EDGE 4A', pcs: 8,  kg: 0.233, ranges: [[40500, 44500]] },
+            { pos: 5, sap: '29058914', desc: 'SERRATED TRAILING EDGE 5A', pcs: 6,  kg: 0.251, ranges: [[37500, 40500]] },
+            { pos: 6, sap: '29058915', desc: 'SERRATED TRAILING EDGE 6A', pcs: 7,  kg: 0.273, ranges: [[34000, 37500]] },
+        ],
+    },
+    'V112v2': {
+        tipR: 56000,
+        source: 'V112 serration assembly drawing table',
+        parts: [
+            { pos: 1, sap: '29058910', desc: 'SERRATED TRAILING EDGE 1A', pcs: 8,  kg: 0.080, ranges: [[53500, 55500]] },
+            { pos: 2, sap: '29058911', desc: 'SERRATED TRAILING EDGE 2A', pcs: 3,  kg: 0.192, ranges: [[52000, 53500]] },
+            { pos: 3, sap: '29058912', desc: 'SERRATED TRAILING EDGE 3A', pcs: 8,  kg: 0.210, ranges: [[48000, 52000]] },
+            { pos: 4, sap: '29058913', desc: 'SERRATED TRAILING EDGE 4A', pcs: 6,  kg: 0.233, ranges: [[45000, 48000]] },
+            { pos: 5, sap: '29058914', desc: 'SERRATED TRAILING EDGE 5A', pcs: 10, kg: 0.251, ranges: [[40000, 45000]] },
+            { pos: 6, sap: '29058915', desc: 'SERRATED TRAILING EDGE 6A', pcs: 8,  kg: 0.273, ranges: [[36000, 40000]] },
+        ],
+    },
+    'V117v2': {
+        tipR: 58500,
+        source: 'V117 serration assembly drawing table',
+        parts: [
+            { pos: 1, sap: '29058910', desc: 'SERRATED TRAILING EDGE 1A', pcs: 8,  kg: 0.080, ranges: [[56000, 58000]] },
+            { pos: 2, sap: '29058911', desc: 'SERRATED TRAILING EDGE 2A', pcs: 3,  kg: 0.192, ranges: [[54500, 56000]] },
+            { pos: 3, sap: '29058912', desc: 'SERRATED TRAILING EDGE 3A', pcs: 8,  kg: 0.210, ranges: [[50500, 54500]] },
+            { pos: 4, sap: '29058913', desc: 'SERRATED TRAILING EDGE 4A', pcs: 6,  kg: 0.233, ranges: [[47500, 50500]] },
+            { pos: 5, sap: '29058914', desc: 'SERRATED TRAILING EDGE 5A', pcs: 10, kg: 0.251, ranges: [[42500, 47500]] },
+            { pos: 6, sap: '29058915', desc: 'SERRATED TRAILING EDGE 6A', pcs: 8,  kg: 0.273, ranges: [[38500, 42500]] },
+        ],
+    },
     'V136': {
         tipR: 68000,
         source: 'V136 serration V2.1 assembly drawing table',
@@ -458,7 +521,14 @@ const SPECIAL_REPAIRS = [
             { id: 'V90v2',    label: 'V90 — version 2',        doc: '0061-8905 V06', kit: { sap: '29085790', desc: 'SERRATED TE KIT V90 (ver. 2)',     unit: 'EA', qty: 1 } },
             { id: 'V100v2',   label: 'V100 — version 2',       doc: '0061-8905 V06', kit: { sap: '29085789', desc: 'SERRATED TE KIT V100 (ver. 2)',    unit: 'EA', qty: 1 } },
             { id: 'V105v2',   label: 'V105 — version 2',       doc: '0061-8905 V06', kit: { sap: '29080160', desc: 'SERRATED TE KIT V105 (ver. 2)',    unit: 'EA', qty: 1 } },
-            { id: 'V112_117v2',  label: 'V112/V117 — version 2',   doc: '0061-8905 V06', kit: { sap: '29079918', desc: 'SERRATED TE KIT V112/V117 (ver. 2)', unit: 'EA', qty: 1 } },
+            // V112 e V117 compartilham o kit v2 (29079918) mas têm tabelas de
+            // posição diferentes — por isso variantes separadas.
+            { id: 'V112v2',   label: 'V112 — version 2',      doc: '0061-8905 V06', kit: { sap: '29079918', desc: 'SERRATED TE KIT V112/V117 (ver. 2)', unit: 'EA', qty: 1 } },
+            { id: 'V117v2',   label: 'V117 — version 2',      doc: '0061-8905 V06', kit: { sap: '29079918', desc: 'SERRATED TE KIT V112/V117 (ver. 2)', unit: 'EA', qty: 1 } },
+            // V110 tem desenho de serration (tabela de posições acima), mas o
+            // número do KIT não consta em nenhuma das duas WIs — pendente de
+            // confirmação no SAP (o usuário tem o número; ver PENDING_REV06).
+            { id: 'V110v2',   label: 'V110 — version 2 (kit no. pending)', doc: 'V110 serration assembly drawing', kit: { sap: '-', desc: 'V110 SERRATION KIT — item number pending SAP confirmation', unit: 'EA', qty: 1 } },
             { id: 'V112_117v21', label: 'V112/V117 — version 2.1', doc: '0061-8905 V06', kit: { sap: '29197722', desc: 'SERRATED TE KIT V117 (ver. 2.1)',    unit: 'EA', qty: 1 } },
             { id: 'V116',     label: 'V116',                  doc: '0061-8905 V06', kit: { sap: '29104664', desc: 'SERRATED TE KIT V116',            unit: 'EA', qty: 1 } },
             { id: 'V120',     label: 'V120',                  doc: '0061-8905 V06', kit: { sap: '29104665', desc: 'SERRATED TE KIT V120',            unit: 'EA', qty: 1 } },

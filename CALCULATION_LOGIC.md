@@ -474,6 +474,12 @@ peça: ex. R 50,5 m → Pos 5, `29063747`, com a distância a partir do TIP
 (tipR − r). Raio exatamente no limite entre faixas devolve as **duas** peças
 vizinhas em vez de escolher em silêncio; fora do span coberto, avisa.
 
+Modelos cobertos: **V90, V100, V110, V112, V117** (peças família ver. 2, dos
+desenhos de montagem; tipR conferido contra rotor/2 de cada modelo) e **V136**
+(V2.1). V112 e V117 compartilham o kit (29079918) mas têm tabelas de posição
+diferentes — por isso viraram variantes separadas no dropdown. O V110 tem
+tabela mas o kit está pendente de número (ver PENDING_REV06.md).
+
 Para adicionar outro modelo: criar a entrada em `SERRATION_POSITIONS` com o id
 da variante e as faixas do desenho daquele modelo — a UI e o teste de sanidade
 (faixas válidas, min<max ≤ tipR) já cobrem.

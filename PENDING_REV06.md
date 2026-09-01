@@ -189,3 +189,15 @@ Se aparecer pá com serration **versão 1** nesses três modelos, buscar o núme
 no SAP antes do pedido (ou tratar por componente individual — tabela 8-2 da
 mesma WI, SAPs 29037908–29043964). Lembrete da WI 0061-8905: versões 2 e 2.1
 não são intercambiáveis com a 1.
+
+
+---
+
+## Kit de serration V110 — aguardando número de item
+
+O desenho de montagem do V110 existe (tabela de posições no app, peças
+1A–6A, tipR 55 m), mas **nenhuma das duas WIs traz o número do kit** V110. A
+variante está no dropdown como "V110 — version 2 (kit no. pending)" com SAP
+`-`: a **busca de peça por raio já funciona**; só a linha do kit fica sem
+número no export. O usuário informou que tem o número — ao confirmar no SAP,
+substituir o `-` em `SPECIAL_REPAIRS` → serration → variante `V110v2`.
