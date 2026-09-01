@@ -525,10 +525,10 @@ const SPECIAL_REPAIRS = [
             // posição diferentes — por isso variantes separadas.
             { id: 'V112v2',   label: 'V112 — version 2',      doc: '0061-8905 V06', kit: { sap: '29079918', desc: 'SERRATED TE KIT V112/V117 (ver. 2)', unit: 'EA', qty: 1 } },
             { id: 'V117v2',   label: 'V117 — version 2',      doc: '0061-8905 V06', kit: { sap: '29079918', desc: 'SERRATED TE KIT V112/V117 (ver. 2)', unit: 'EA', qty: 1 } },
-            // V110 tem desenho de serration (tabela de posições acima), mas o
-            // número do KIT não consta em nenhuma das duas WIs — pendente de
-            // confirmação no SAP (o usuário tem o número; ver PENDING_REV06).
-            { id: 'V110v2',   label: 'V110 — version 2 (kit no. pending)', doc: 'V110 serration assembly drawing', kit: { sap: '-', desc: 'V110 SERRATION KIT — item number pending SAP confirmation', unit: 'EA', qty: 1 } },
+            // V110: NÃO existe kit fechado (confirmado pelo usuário, ago/2026).
+            // As peças são pedidas individualmente (1A–6A) — use a busca por
+            // raio para identificar cada posição e monte o pedido por peça.
+            { id: 'V110v2',   label: 'V110 — version 2 (no kit — order parts by radius)', doc: 'V110 serration assembly drawing', kit: { sap: '-', desc: 'V110 serration has no kit item number — order individual parts (1A–6A) via the radius lookup below', unit: 'EA', qty: 1 } },
             { id: 'V112_117v21', label: 'V112/V117 — version 2.1', doc: '0061-8905 V06', kit: { sap: '29197722', desc: 'SERRATED TE KIT V117 (ver. 2.1)',    unit: 'EA', qty: 1 } },
             { id: 'V116',     label: 'V116',                  doc: '0061-8905 V06', kit: { sap: '29104664', desc: 'SERRATED TE KIT V116',            unit: 'EA', qty: 1 } },
             { id: 'V120',     label: 'V120',                  doc: '0061-8905 V06', kit: { sap: '29104665', desc: 'SERRATED TE KIT V120',            unit: 'EA', qty: 1 } },

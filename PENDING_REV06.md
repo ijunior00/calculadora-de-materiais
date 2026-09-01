@@ -193,11 +193,10 @@ não são intercambiáveis com a 1.
 
 ---
 
-## Kit de serration V110 — aguardando número de item
+## Kit de serration V110 — RESOLVIDO: não existe kit fechado
 
-O desenho de montagem do V110 existe (tabela de posições no app, peças
-1A–6A, tipR 55 m), mas **nenhuma das duas WIs traz o número do kit** V110. A
-variante está no dropdown como "V110 — version 2 (kit no. pending)" com SAP
-`-`: a **busca de peça por raio já funciona**; só a linha do kit fica sem
-número no export. O usuário informou que tem o número — ao confirmar no SAP,
-substituir o `-` em `SPECIAL_REPAIRS` → serration → variante `V110v2`.
+Confirmado pelo usuário (ago/2026): o V110 **não tem número de kit** — as
+peças de serration (1A–6A, SAPs 29058910–29058915) são pedidas
+**individualmente**. A variante no dropdown reflete isso ("no kit — order
+parts by radius") e a busca por raio identifica a peça de cada posição. Não
+há pendência.
