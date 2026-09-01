@@ -683,14 +683,18 @@
         r.push(ser ? pass('serration presente') : fail('serration ausente', ''));
         r.push(col ? pass('collar presente') : fail('collar ausente', ''));
         if (ser) {
-            // Todas as versões dos dois WIs (0052-7690 v1; 0061-8905 v2/2.1) + V162
-            r.push(assertEq('serration: 13 variantes de kit', ser.variants.length, 13));
+            // Todas as versões dos dois WIs + V162 + V112/V117 v2 separados
+            // (tabelas de posição diferentes) + V110 (kit pendente de SAP)
+            r.push(assertEq('serration: 15 variantes de kit', ser.variants.length, 15));
             const kitOf = (id) => (ser.variants.find(v => v.id === id) || { kit: {} }).kit.sap;
             for (const [id, sap] of [['V90v1','29058631'],['V100v1','29057488'],['V90v2','29085790'],
+                                     ['V112v2','29079918'],['V117v2','29079918'],
                                      ['V112_117v21','29197722'],['V126v21','29186328'],
                                      ['V136','29082248'],['V162','29183278']]) {
                 r.push(assertEq(`serration kit ${id} = ${sap}`, kitOf(id) === sap ? 1 : 0, 1));
             }
+            // V110 existe para a busca por raio; o kit está explicitamente pendente
+            r.push(kitOf('V110v2') === '-' ? pass('V110: kit marcado pendente (sap -)') : fail('V110 kit', kitOf('V110v2')));
             // Nenhum kit com número placeholder (os V112/V117/V126 v1 são TBC no doc e ficam fora)
             const semNum = ser.variants.filter(v => !v.kit.sap || /TBC|TBD/i.test(v.kit.sap));
             r.push(semNum.length === 0 ? pass('nenhum kit TBC/sem número') : fail('kit com placeholder', semNum.map(v=>v.id).join(',')));
@@ -736,10 +740,17 @@
         // Fora do span coberto e variante inexistente
         r.push(assertEq('40000 (fora) -> vazio', one(40000).length, 0));
         r.push(assertEq('variante sem tabela -> vazio', findSerrationByRadius('V90v1', 50500).length, 0));
-        // Sanidade da tabela: faixas válidas e dentro do tipR
-        const t = SERRATION_POSITIONS['V136'];
-        const ruins = t.parts.filter(p => p.ranges.some(([a, bb]) => !(a < bb) || bb > t.tipR));
-        r.push(ruins.length === 0 ? pass('faixas válidas (min<max ≤ tipR)') : fail('faixa inválida', ruins.map(p=>p.pos).join(',')));
+        // Tabelas novas (desenhos de montagem V90–V117): um acerto em cada
+        r.push(assertEq('V90 43000 -> 10A (29060536)', findSerrationByRadius('V90v2', 43000)[0].sap === '29060536' ? 1 : 0, 1));
+        r.push(assertEq('V100 33000 -> 6A (29058915)', findSerrationByRadius('V100v2', 33000)[0].sap === '29058915' ? 1 : 0, 1));
+        r.push(assertEq('V110 50000 -> 2A (29058911)', findSerrationByRadius('V110v2', 50000)[0].sap === '29058911' ? 1 : 0, 1));
+        r.push(assertEq('V112 41000 -> 5A (29058914)', findSerrationByRadius('V112v2', 41000)[0].sap === '29058914' ? 1 : 0, 1));
+        r.push(assertEq('V117 57000 -> 1A (29058910)', findSerrationByRadius('V117v2', 57000)[0].sap === '29058910' ? 1 : 0, 1));
+        // Sanidade de TODAS as tabelas: faixas válidas e dentro do tipR
+        for (const [vid, t] of Object.entries(SERRATION_POSITIONS)) {
+            const ruins = t.parts.filter(p => p.ranges.some(([a, bb]) => !(a < bb) || bb > t.tipR));
+            r.push(ruins.length === 0 ? pass(`${vid}: faixas válidas (min<max ≤ tipR)`) : fail(`${vid}: faixa inválida`, ruins.map(p=>p.pos).join(',')));
+        }
         console.groupEnd();
         return tally(r);
     }

@@ -189,3 +189,14 @@ Se aparecer pá com serration **versão 1** nesses três modelos, buscar o núme
 no SAP antes do pedido (ou tratar por componente individual — tabela 8-2 da
 mesma WI, SAPs 29037908–29043964). Lembrete da WI 0061-8905: versões 2 e 2.1
 não são intercambiáveis com a 1.
+
+
+---
+
+## Kit de serration V110 — RESOLVIDO: não existe kit fechado
+
+Confirmado pelo usuário (ago/2026): o V110 **não tem número de kit** — as
+peças de serration (1A–6A, SAPs 29058910–29058915) são pedidas
+**individualmente**. A variante no dropdown reflete isso ("no kit — order
+parts by radius") e a busca por raio identifica a peça de cada posição. Não
+há pendência.
