@@ -456,6 +456,54 @@ function computeRepairDays(layers, isExternal) {
 }
 
 /**
+ * Sanity check of the inputs — never changes a quantity, only flags
+ * combinations that multiply the BOM far beyond what the stack needs.
+ *
+ * Origem: revisão das listas de Reynosa (ago/2026). Listas de erosão de
+ * 30×20 mm saíram com 25 m de release film e 15 placas por grão porque o
+ * empilhamento de 12 camadas + HLU=5 da lesão anterior ficou carregado na
+ * sessão. A calculadora estava certa para aquelas entradas; faltava o aviso.
+ *
+ * Regra usada: REPAIR_DAY_RULES — cada ciclo de laminação (até 6 camadas)
+ * leva uma bolsa de vácuo; HLU + Infusion acima disso multiplica todos os
+ * consumíveis de vácuo (bagging, release film, breather, peel ply, spiral,
+ * sealant/flash tape) sem uma camada que justifique.
+ *
+ * @returns {{ plies:number, laminationCycles:number, vacuum:number, warnings:Array<{code:string, message:string}> }}
+ */
+/** Short human-readable stack, e.g. "6× BIAX 600 · 4× BIAX 1000 · CORE · SPL". */
+function describeStack(layers) {
+    const counts = new Map();
+    for (const l of (layers || [])) {
+        if (!l || !l.materialType) continue;
+        const key = l.materialType + (l.gsm ? ' ' + l.gsm : '');
+        counts.set(key, (counts.get(key) || 0) + 1);
+    }
+    return [...counts].map(([k, n]) => (n > 1 ? `${n}× ${k}` : k)).join(' · ') || 'no layers';
+}
+
+function checkRepairInputs(layers, repairSteps) {
+    const stack = (layers || []).filter(l => l && l.materialType);
+    const plies = stack.filter(l => l.materialType !== 'CORE').length;
+    const days = computeRepairDays(stack, false).breakdown;
+    const laminationCycles = days.laminationBeforeCore + days.laminationAfterCore;
+    const hlu = (repairSteps && repairSteps.HLU) || 0;
+    const infusion = (repairSteps && repairSteps.Infusion) || 0;
+    const vacuum = hlu + infusion;
+    const per = (typeof REPAIR_DAY_RULES !== 'undefined') ? REPAIR_DAY_RULES.LAYERS_PER_LAM_DAY : 6;
+    const warnings = [];
+    if (plies > 0 && vacuum > laminationCycles) {
+        warnings.push({
+            code: 'VACUUM_EXCEEDS_CYCLES',
+            message: `HLU ${hlu} + Infusion ${infusion} = ${vacuum} vacuum bags, but ${plies} plies need ` +
+                `${laminationCycles} lamination cycle${laminationCycles > 1 ? 's' : ''} (max ${per} plies each). ` +
+                `Every vacuum consumable is multiplied by ${vacuum} — check the repair steps.`,
+        });
+    }
+    return { plies, laminationCycles, vacuum, warnings };
+}
+
+/**
  * Compute full BOM given all inputs.
  */
 // paintScheme: { base: 'RAL7035'|'RAL9010', stripe: 'RAL3020'|'RAL2009'|null }
@@ -541,6 +589,7 @@ function computeFullBOM(damageData, layers, repairSteps, bladeModel, bladeRegion
         consumItems,
         toolItems,
         steps,
+        warnings: checkRepairInputs(layers, steps).warnings,
         summary: {
             totalFabricItems: fabricItems.length,
             totalChemItems: chemItems.length,

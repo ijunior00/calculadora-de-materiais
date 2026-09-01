@@ -64,6 +64,7 @@ function goStep(n) {
     if (n >= 3 && M.layers.length === 0) { toast('Add at least one layer first.', 'err'); return; }
     if (n >= 4) { if (!doCalculate()) return; }
 
+    const from = M.step;
     M.step = n;
     M.maxStepReached = Math.max(M.maxStepReached, n);
 
@@ -74,7 +75,7 @@ function goStep(n) {
     renderActionBar();
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    if (n === 2) renderLayers();
+    if (n === 2) { renderLayers(); if (from === 1) warnCarriedInputs(); }
     if (n === 3) renderSteps();
     if (n === 4) { renderResults(); updateEditButtons(); }
 }
@@ -505,6 +506,27 @@ function updateVacuumInfo() {
     const vac = (M.steps.HLU || 0) + (M.steps.Infusion || 0);
     document.getElementById('m-vacuum-info').textContent =
         `Vacuum is calculated automatically: HLU + Infusion = ${vac}`;
+    const box = document.getElementById('m-steps-warning');
+    if (box) box.innerHTML = renderInputWarnings(checkRepairInputs(M.layers, M.steps).warnings);
+}
+
+// Avisos do checkRepairInputs (engine.js) — mesmo bloco nos passos e no resultado.
+function renderInputWarnings(warnings) {
+    return (warnings || []).map(w =>
+        `<div class="m-info-box warn"><i class="bi bi-exclamation-triangle-fill"></i><span>${w.message}</span></div>`
+    ).join('');
+}
+
+// Camadas e etapas ficam na sessão entre uma lesão e outra (de propósito —
+// lesões parecidas repetem o empilhamento). Quando a lesão muda depois de um
+// cálculo, lembra o usuário do que está carregado antes de recalcular.
+function warnCarriedInputs() {
+    const prev = M.lastCalcInputs;
+    if (!prev || !M.lastBOM) return;
+    if (prev.length === M.length && prev.width === M.width && prev.blade === M.blade) return;
+    const chk = checkRepairInputs(M.layers, M.steps);
+    toast(`New damage — the stack (${describeStack(M.layers)}) and repair steps (Vacuum ×${chk.vacuum}) ` +
+        `of the previous damage were kept. Review them before calculating.`, 'err', 6000);
 }
 
 // ============================================================
@@ -532,6 +554,7 @@ function doCalculate() {
         toast('Calculation error: ' + e.message, 'err');
         return false;
     }
+    M.lastCalcInputs = { length: M.length, width: M.width, blade: M.blade };
     M.editedBOM = null;
     M.editMode = false;
     return true;
@@ -567,6 +590,15 @@ function renderResults() {
         <div class="m-stat"><div class="st-label">Fabric weight</div><div class="st-value">${s.totalFabricWeight.toFixed(2)}<span class="st-unit"> kg</span></div></div>
         <div class="m-stat"><div class="st-label">Max layup</div><div class="st-value">${fmt(s.maxLayupLength)}<span class="st-unit"> ×${fmt(s.maxLayupWidth)} mm</span></div></div>
         <div class="m-stat"><div class="st-label">Max area</div><div class="st-value">${s.maxAreaM2.toFixed(2)}<span class="st-unit"> m²</span></div></div>`;
+
+    // Recap of what multiplied this list — the reader must see "Vacuum ×6"
+    // next to the totals, not discover it item by item.
+    const st = bom.steps;
+    const stepBits = [`Vacuum ×${st.Vacuum} (HLU ${st.HLU} + Infusion ${st.Infusion})`];
+    for (const k of ['Weighing', 'Painting', 'Bonding', 'LEP', 'Grinding', 'Cleaning']) if (st[k]) stepBits.push(`${k} ×${st[k]}`);
+    document.getElementById('m-input-recap').innerHTML =
+        `<b>Stack:</b> ${describeStack(M.layers)}<br><b>Steps:</b> ${stepBits.join(' · ')}`;
+    document.getElementById('m-result-warnings').innerHTML = renderInputWarnings(bom.warnings);
 
     // groups
     const wrap = document.getElementById('m-bom-groups');
@@ -775,7 +807,7 @@ function fmtQty(n) {
     return Number.isInteger(n) ? String(n) : parseFloat(n.toFixed(2)).toString();
 }
 let _toastTimer = null;
-function toast(msg, kind) {
+function toast(msg, kind, ms) {
     const existing = document.getElementById('m-toast');
     if (existing) existing.remove();
     const t = document.createElement('div');
@@ -784,7 +816,7 @@ function toast(msg, kind) {
     t.textContent = msg;
     document.body.appendChild(t);
     clearTimeout(_toastTimer);
-    _toastTimer = setTimeout(() => t.remove(), 2800);
+    _toastTimer = setTimeout(() => t.remove(), ms || 2800);
 }
 
 // Initialize landing/step-1 content on load

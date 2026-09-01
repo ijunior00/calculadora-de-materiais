@@ -671,6 +671,25 @@ async def generate_excel(data: BOMPayload):
             "Estimated duration", f"{data.estimated_days} day(s)",
             "Repair type", "External" if data.is_external else "Internal",
         ))
+    # Empilhamento e etapas na cara da lista: quem revisa vê "Vacuum 6" sem
+    # abrir a aba INPUTS (revisão Reynosa ago/2026 — listas de erosão de 30×20
+    # mm saíram com 12 camadas e HLU=5 carregados da lesão anterior).
+    if data.audit_inputs:
+        ai = data.audit_inputs
+        stack_counts: dict = {}
+        for ly in (ai.get("layers") or []):
+            if not ly.get("materialType"):
+                continue
+            key = ly["materialType"] + (f" {ly['gsm']}" if ly.get("gsm") else "")
+            stack_counts[key] = stack_counts.get(key, 0) + 1
+        stack_txt = " · ".join(f"{n}× {k}" if n > 1 else k for k, n in stack_counts.items()) or "-"
+        st = ai.get("repair_steps") or {}
+        hlu, inf = int(st.get("HLU") or 0), int(st.get("Infusion") or 0)
+        step_bits = [f"Vacuum {hlu + inf} (HLU {hlu} + Infusion {inf})"]
+        for k in ("Weighing", "Painting", "Bonding", "LEP", "Grinding", "Cleaning"):
+            if int(st.get(k) or 0):
+                step_bits.append(f"{k} {int(st[k])}")
+        info_rows.append(("Layup stack", stack_txt, "Repair steps", " · ".join(step_bits)))
     r = 3
     for k1, v1, k2, v2 in info_rows:
         ws.cell(r, 1, k1).font = bold

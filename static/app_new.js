@@ -636,6 +636,15 @@ function onRepairStepsChange() {
     const s = getRepairSteps();
     document.getElementById('stepVacuum').textContent = s.HLU + s.Infusion;
     updateEstimatedDays();
+    const box = document.getElementById('stepsWarning');
+    if (box) box.innerHTML = renderInputWarnings(checkRepairInputs(layerRows, s).warnings);
+}
+
+// Avisos do checkRepairInputs (engine.js) — mesmo bloco no Step 3 e no resultado.
+function renderInputWarnings(warnings) {
+    return (warnings || []).map(w =>
+        `<div class="info-callout warn"><i class="bi bi-exclamation-triangle-fill"></i><span>${w.message}</span></div>`
+    ).join('');
 }
 
 // Repair type: external repairs add a painting day to the schedule estimate.
@@ -724,6 +733,15 @@ function renderSummary() {
             <div class="sc-value" style="font-size:1.3rem">${s.totalFabricWeight.toFixed(3)} kg</div>
         </div>
     `;
+    // Recap of what multiplied this list — "Vacuum ×6" has to be visible next
+    // to the totals, not discovered item by item.
+    const st = lastBOM.steps;
+    const stepBits = [`Vacuum ×${st.Vacuum} (HLU ${st.HLU} + Infusion ${st.Infusion})`];
+    for (const k of ['Weighing', 'Painting', 'Bonding', 'LEP', 'Grinding', 'Cleaning']) if (st[k]) stepBits.push(`${k} ×${st[k]}`);
+    const recap = document.getElementById('inputRecap');
+    if (recap) recap.innerHTML = `<b>Stack:</b> ${describeStack(layerRows)} &nbsp;·&nbsp; <b>Steps:</b> ${stepBits.join(' · ')}`;
+    const warn = document.getElementById('resultWarnings');
+    if (warn) warn.innerHTML = renderInputWarnings(lastBOM.warnings);
 }
 
 function showResultTab(tabName, btnEl) {
