@@ -42,10 +42,23 @@ function kitsCurrent() {
     return { rep, variant };
 }
 // Kit + itens, com o multiplicador aplicado (ferramentas não multiplicam).
+// Com raio(s) informado(s) numa variante que tem tabela de posições, as peças
+// encontradas SUBSTITUEM a linha do kit inteiro (pedido por posição); campo
+// vazio mantém o comportamento original (kit completo).
 function kitsRows() {
     const { rep, variant } = kitsCurrent();
     const n = Math.max(1, KITS.blades | 0);
-    const rows = [{ cat: 'Kit', sap: variant.kit.sap, desc: variant.kit.desc, unit: variant.kit.unit, qty: variant.kit.qty * n }];
+    const rows = [];
+    const sel = kitsSelectedParts(variant);
+    if (sel) {
+        for (const p of sel.parts) {
+            rows.push({ cat: 'Kit', sap: p.part.sap, desc: `${p.part.desc} (Pos ${p.part.pos})`, unit: 'EA', qty: p.count * n });
+        }
+        // sel.parts vazio (todos os raios fora do span) → nenhuma linha de kit;
+        // o aviso vermelho no box de raio explica, nada entra em silêncio.
+    } else {
+        rows.push({ cat: 'Kit', sap: variant.kit.sap, desc: variant.kit.desc, unit: variant.kit.unit, qty: variant.kit.qty * n });
+    }
     for (const it of rep.items) {
         rows.push({ cat: it.cat, sap: it.sap, desc: it.desc, unit: it.unit, qty: it.perBlade === false ? it.qty : it.qty * n });
     }
@@ -104,13 +117,17 @@ function renderKitsPanel() {
         </div>
     </div>`;
 }
-function kitsSetRepair(id) { KITS.repair = id; KITS.variant = null; renderKitsPanel(); }
-function kitsSetVariant(id) { KITS.variant = id; renderKitsPanel(); }
+// Trocar reparo/variante limpa o raio: cada modelo tem tabela própria e um raio
+// herdado poderia casar peça errada em silêncio.
+function kitsSetRepair(id) { KITS.repair = id; KITS.variant = null; KITS.radius = ''; renderKitsPanel(); }
+function kitsSetVariant(id) { KITS.variant = id; KITS.radius = ''; renderKitsPanel(); }
 function kitsSetBlades(v) { KITS.blades = Math.max(1, Math.min(999, parseInt(v) || 1)); renderKitsPanel(); }
 
 async function exportSpecialKit(kind) {
     const { rep, variant } = kitsCurrent();
     const n = Math.max(1, KITS.blades | 0);
+    const sel = kitsSelectedParts(variant);
+    const radiiTxt = sel ? ` — radius ${sel.parts.flatMap(p => p.radii).map(mm => (mm/1000).toFixed(2)).join(' / ')} m (parts by position, not full kit)` : '';
     const items = kitsRows().map(r => ({
         sap: r.sap, desc: r.desc, qty: r.qty, unit: r.unit,
         phase: KITS_CAT_TO_PHASE[r.cat] || 'Other', material: null, cost_brl: 0,
@@ -122,7 +139,7 @@ async function exportSpecialKit(kind) {
         report_title: `${rep.label} — ${variant.label} — ${n} blade(s) — WI ${rep.doc}`,
         include_field_rules: false, total_brl: 0, total_eur: 0,
         blade_sn: '', service_order: '', cir_number: '',
-        damage_description: `Fixed kit (work instruction ${rep.doc}) × ${n} blade(s)`,
+        damage_description: `Fixed kit (work instruction ${rep.doc}) × ${n} blade(s)${radiiTxt}`,
         chord_ref: 'LE', x1: 0, items,
     };
     const endpoint = kind === 'pdf' ? '/api/generate-pdf' : '/api/generate-excel';
@@ -147,34 +164,70 @@ function kitsParseRadius(v) {
     if (!(n > 0)) return null;
     return n < 100 ? Math.round(n * 1000) : Math.round(n);
 }
+// Vários raios separados por vírgula/ponto-e-vírgula/espaço → { mms, bad }.
+// Cuidado: "50,5" sozinho é decimal com vírgula (kitsParseRadius troca , por .),
+// mas numa lista "50.5, 57.2" a vírgula é separador — dividimos primeiro e cada
+// token ainda aceita vírgula decimal ("50,5 57,2" também funciona via espaço).
+function kitsParseRadiiList(v) {
+    const s = String(v || '').trim();
+    const out = { mms: [], bad: [] };
+    if (!s) return out;
+    // "50,5" (uma vírgula, sem outro separador) → decimal, não lista
+    const toks = /^\d+,\d+$/.test(s) ? [s] : s.split(/[;,\s]+/).filter(t => t !== '');
+    for (const t of toks) {
+        const mm = kitsParseRadius(t);
+        if (mm) out.mms.push(mm); else out.bad.push(t);
+    }
+    return out;
+}
+// Peças que substituem o kit na lista. null = sem tabela ou campo vazio/ilegível
+// (mantém o kit inteiro); objeto = modo por posição (mesmo com parts vazio).
+function kitsSelectedParts(variant) {
+    if (typeof SERRATION_POSITIONS === 'undefined' || !SERRATION_POSITIONS[variant.id]) return null;
+    const parsed = kitsParseRadiiList(KITS.radius);
+    if (!parsed.mms.length) return null;
+    const agg = serrationPartsForRadii(variant.id, parsed.mms);
+    agg.bad = parsed.bad;
+    return agg;
+}
 function kitsRadiusBox(variant) {
     if (typeof SERRATION_POSITIONS === 'undefined' || !SERRATION_POSITIONS[variant.id]) return '';
     const t = SERRATION_POSITIONS[variant.id];
-    const mm = kitsParseRadius(KITS.radius);
+    const sel = kitsSelectedParts(variant);
     let result = '';
-    if (KITS.radius !== '' && mm) {
-        const hits = findSerrationByRadius(variant.id, mm);
-        const dist = t.tipR - mm;
-        if (!hits.length) {
-            result = `<div style="margin-top:6px;color:#b91c1c;font-size:0.78rem">R ${(mm/1000).toFixed(1)} m is outside the serration span (${(Math.min(...t.parts.flatMap(p=>p.ranges.flat()))/1000).toFixed(0)}–${(Math.max(...t.parts.flatMap(p=>p.ranges.flat()))/1000).toFixed(1)} m).</div>`;
-        } else {
-            result = hits.map(h => `
+    if (sel) {
+        result = sel.parts.map(p => {
+            const h = p.part;
+            return `
                 <div style="margin-top:6px;padding:8px 10px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;font-size:0.8rem">
-                    <b>Pos ${h.pos} — ${h.desc}</b><br>
+                    <b>Pos ${h.pos} — ${h.desc}</b> — <b>qty ${p.count}</b> (R ${p.radii.map(mm => (mm/1000).toFixed(2)).join(' / ')} m)<br>
                     Item no: <b>${h.sap}</b> · ${h.kg} kg/pc · ${h.pcs} pcs/blade total<br>
-                    <span style="color:#64748b">R ${(mm/1000).toFixed(2)} m · ${dist} mm from TIP · range${h.ranges.length>1?'s':''}: ${h.ranges.map(([a,b])=>`${a}–${b}`).join(' and ')} mm</span>
-                </div>`).join('') +
-                (hits.length > 1 ? `<div style="margin-top:4px;font-size:0.72rem;color:#92400e">Radius is exactly on a range boundary — both adjacent parts match.</div>` : '');
+                    <span style="color:#64748b">range${h.ranges.length>1?'s':''}: ${h.ranges.map(([a,b])=>`${a}–${b}`).join(' and ')} mm · ${t.tipR - Math.max(...p.radii)}–${t.tipR - Math.min(...p.radii)} mm from TIP</span>
+                </div>`;
+        }).join('');
+        if (sel.unmatched.length) {
+            const span = t.parts.flatMap(p => p.ranges.flat());
+            result += `<div style="margin-top:6px;color:#b91c1c;font-size:0.78rem">R ${sel.unmatched.map(mm=>(mm/1000).toFixed(2)).join(', ')} m outside the serration span (${(Math.min(...span)/1000).toFixed(0)}–${(Math.max(...span)/1000).toFixed(1)} m) — not added to the list.</div>`;
+        }
+        if (sel.ambiguous.length) {
+            result += `<div style="margin-top:4px;font-size:0.72rem;color:#92400e">R ${sel.ambiguous.map(mm=>(mm/1000).toFixed(2)).join(', ')} m ${sel.ambiguous.length>1?'are':'is'} exactly on a range boundary — both adjacent parts were added; remove the one that does not apply.</div>`;
+        }
+        if (sel.bad.length) {
+            result += `<div style="margin-top:4px;font-size:0.72rem;color:#b91c1c">Could not read: ${sel.bad.map(b=>String(b).replace(/</g,'&lt;')).join(', ')}</div>`;
+        }
+        if (sel.parts.length) {
+            result += `<div style="margin-top:6px;font-size:0.72rem;color:#166534;font-weight:600">These parts REPLACE the full kit in the list below. Clear the field to order the full kit.</div>`;
         }
     }
     return `
         <div style="margin:0 18px 8px;padding:10px;background:#f1f5f9;border-radius:10px">
             <label style="font-size:0.78rem;font-weight:600">Find serration part by radius
-                <input type="text" inputmode="decimal" value="${String(KITS.radius).replace(/"/g,'')}" placeholder="e.g. 50.5 (m) or 50500 (mm)"
+                <input type="text" inputmode="decimal" value="${String(KITS.radius).replace(/"/g,'')}" placeholder="e.g. 50.5, 57.2 — empty = full kit"
                     oninput="kitsSetRadius(this.value)"
-                    style="margin-left:8px;padding:7px 9px;border:1px solid #cbd5e1;border-radius:8px;width:150px">
+                    style="margin-left:8px;padding:7px 9px;border:1px solid #cbd5e1;border-radius:8px;width:190px">
             </label>
             <span style="font-size:0.7rem;color:#94a3b8;margin-left:6px">Source: ${t.source}</span>
+            <div style="font-size:0.7rem;color:#64748b;margin-top:4px">Enter one or more radii (comma-separated) to order individual parts instead of the full kit; leave empty for the full kit.</div>
             ${result}
         </div>`;
 }

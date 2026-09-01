@@ -474,11 +474,24 @@ peça: ex. R 50,5 m → Pos 5, `29063747`, com a distância a partir do TIP
 (tipR − r). Raio exatamente no limite entre faixas devolve as **duas** peças
 vizinhas em vez de escolher em silêncio; fora do span coberto, avisa.
 
+**O raio muda a lista de materiais, não só a descrição.** Campo vazio = pedido
+do **kit inteiro** (linha `Kit` com o SAP do kit). Raio(s) preenchido(s) = as
+peças encontradas **substituem** a linha do kit na lista e no export — pedido
+por posição. Aceita **vários raios** separados por vírgula/espaço (ex.
+`50.5, 50.6, 66`): cada raio soma 1 peça na posição onde cai, então dois raios
+na mesma posição viram qty 2 (`serrationPartsForRadii` em data.js, agregado por
+Pos). Multiplicador de pás se aplica às peças como ao kit. Raio no limite entre
+faixas adiciona as duas vizinhas e avisa para remover a que não se aplica; raio
+fora do span vai para o aviso vermelho e **não** entra na lista — nada é
+descartado nem incluído em silêncio. Trocar de reparo/variante limpa o campo
+(cada modelo tem tabela própria).
+
 Modelos cobertos: **V90, V100, V110, V112, V117** (peças família ver. 2, dos
 desenhos de montagem; tipR conferido contra rotor/2 de cada modelo) e **V136**
 (V2.1). V112 e V117 compartilham o kit (29079918) mas têm tabelas de posição
-diferentes — por isso viraram variantes separadas no dropdown. O V110 tem
-tabela mas o kit está pendente de número (ver PENDING_REV06.md).
+diferentes — por isso viraram variantes separadas no dropdown. O V110 não tem
+número de kit inteiro — o pedido é sempre por peça via raio (variante marcada
+"no kit — order parts by radius").
 
 Para adicionar outro modelo: criar a entrada em `SERRATION_POSITIONS` com o id
 da variante e as faixas do desenho daquele modelo — a UI e o teste de sanidade

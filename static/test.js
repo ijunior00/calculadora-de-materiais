@@ -755,6 +755,36 @@
         return tally(r);
     }
 
+    function testSerrationPartsForRadii() {
+        console.group('Test 24: multiple radii aggregate into part order lines');
+        const r = [];
+        const agg = (mms) => serrationPartsForRadii('V136', mms);
+        // Um raio -> uma linha, qty 1
+        let a = agg([50500]);
+        r.push(assertEq('1 raio -> 1 linha', a.parts.length, 1));
+        r.push(assertEq('1 raio -> qty 1', a.parts[0].count, 1));
+        r.push(assertEq('1 raio -> 29063747', a.parts[0].part.sap === '29063747' ? 1 : 0, 1));
+        // Dois raios na mesma posição somam qty; terceiro em outra posição vira 2ª linha
+        a = agg([50500, 50600, 66000]);
+        r.push(assertEq('3 raios / 2 posições -> 2 linhas', a.parts.length, 2));
+        r.push(a.parts.map(p => `${p.part.pos}:${p.count}`).join(',') === '2:1,5:2'
+            ? pass('agregado Pos2 x1 + Pos5 x2, ordenado por pos') : fail('agregado errado', a.parts.map(p=>`${p.part.pos}:${p.count}`).join(',')));
+        r.push(assertEq('sem unmatched/ambiguous', a.unmatched.length + a.ambiguous.length, 0));
+        // Limite exato entra nas duas vizinhas E é sinalizado como ambíguo
+        a = agg([60000]);
+        r.push(assertEq('limite 60000 -> 2 linhas (Pos 4 e 5)', a.parts.length, 2));
+        r.push(assertEq('limite 60000 -> ambiguous', a.ambiguous.length, 1));
+        // Fora do span vai para unmatched, nada é descartado em silêncio
+        a = agg([40000, 50500]);
+        r.push(assertEq('fora do span -> unmatched', a.unmatched.length === 1 && a.unmatched[0] === 40000 ? 1 : 0, 1));
+        r.push(assertEq('o raio válido ainda entra', a.parts.length, 1));
+        // Vazio e null não quebram
+        r.push(assertEq('lista vazia -> sem linhas', agg([]).parts.length, 0));
+        r.push(assertEq('null -> sem linhas', agg(null).parts.length, 0));
+        console.groupEnd();
+        return tally(r);
+    }
+
     // ── Main runner ───────────────────────────────────────────────────────────
 
     window.runBOMTests = function () {
@@ -784,6 +814,7 @@
             testPaintScheme,
             testSpecialRepairs,
             testSerrationRadiusLookup,
+            testSerrationPartsForRadii,
         ];
         let total = { pass: 0, fail: 0 };
         for (const suite of suites) {
