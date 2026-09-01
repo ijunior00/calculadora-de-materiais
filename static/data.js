@@ -411,6 +411,37 @@ function topcoatQty(lay, s) {
 // (233015→29196720, 233875→29196703, 224010→29196727). Itens do documento sem
 // número de item entram com sap '-' — política de zero-mock, nada inventado.
 // perBlade:false = ferramenta reutilizável, não multiplica pelo nº de pás.
+// ── Serration: peça por raio ────────────────────────────────────────────────
+// Tabela de posições dos componentes de serration por faixa de raio, extraída
+// da tabela do desenho de montagem (V136 serration V2.1). Chaveada pelo id da
+// variante em SPECIAL_REPAIRS.serration — para adicionar outro modelo, basta
+// criar a entrada com as faixas do desenho dele. tipR = raio da ponta (mm),
+// usado para mostrar a distância a partir do TIP (dist = tipR − r).
+// Faixas em mm, normalizadas [min, max]; posições 5 e 7 têm duas faixas.
+const SERRATION_POSITIONS = {
+    'V136': {
+        tipR: 68000,
+        source: 'V136 serration V2.1 assembly drawing table',
+        parts: [
+            { pos: 1, sap: '29063743', desc: 'SERRATED TRAILING EDGE 1 V2.1', pcs: 4,  kg: 0.093, ranges: [[66500, 67500]] },
+            { pos: 2, sap: '29063744', desc: 'SERRATED TRAILING EDGE 2 V2.1', pcs: 2,  kg: 0.225, ranges: [[65500, 66500]] },
+            { pos: 3, sap: '29063745', desc: 'SERRATED TRAILING EDGE 3 V2.1', pcs: 3,  kg: 0.243, ranges: [[64000, 65500]] },
+            { pos: 4, sap: '29063746', desc: 'SERRATED TRAILING EDGE 4 V2.1', pcs: 8,  kg: 0.273, ranges: [[60000, 64000]] },
+            { pos: 5, sap: '29063747', desc: 'SERRATED TRAILING EDGE 5 V2.1', pcs: 12, kg: 0.307, ranges: [[56000, 60000], [49000, 51000]] },
+            { pos: 6, sap: '29063748', desc: 'SERRATED TRAILING EDGE 6 V2.1', pcs: 8,  kg: 0.336, ranges: [[52000, 56000]] },
+            { pos: 7, sap: '29080870', desc: 'SERRATED TRAILING EDGE 7 V2.1', pcs: 4,  kg: 0.368, ranges: [[51000, 52000], [48000, 49000]] },
+        ],
+    },
+};
+
+// Peças cuja faixa contém o raio (mm). Limite exato de faixa pertence às duas
+// peças vizinhas — devolve as duas em vez de escolher em silêncio.
+function findSerrationByRadius(variantId, radiusMm) {
+    const t = SERRATION_POSITIONS[variantId];
+    if (!t || !(radiusMm > 0)) return [];
+    return t.parts.filter(p => p.ranges.some(([a, b]) => radiusMm >= a && radiusMm <= b));
+}
+
 const SPECIAL_REPAIRS = [
     {
         id: 'serration',

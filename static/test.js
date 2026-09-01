@@ -717,6 +717,33 @@
         return tally(r);
     }
 
+    function testSerrationRadiusLookup() {
+        console.group('Test 23: serration part lookup by radius (V136 V2.1 table)');
+        const r = [];
+        const one = (mm) => findSerrationByRadius('V136', mm);
+        // Exemplo do usuário: 50.5 m -> Pos 5 / 29063747 (2ª faixa 49000-51000)
+        r.push(assertEq('50500 -> 1 peça', one(50500).length, 1));
+        r.push(assertEq('50500 -> 29063747 (Pos 5)', one(50500)[0].sap === '29063747' ? 1 : 0, 1));
+        // Faixa contígua: 66000 cai na Pos 2 (65500-66500)
+        r.push(assertEq('66000 -> 29063744 (Pos 2)', one(66000)[0].sap === '29063744' ? 1 : 0, 1));
+        // Segunda faixa da Pos 7 (48000-49000)
+        r.push(assertEq('48500 -> 29080870 (Pos 7)', one(48500)[0].sap === '29080870' ? 1 : 0, 1));
+        // Limite exato pertence às duas vizinhas (não escolher em silêncio)
+        const b = one(60000);
+        r.push(assertEq('60000 (limite) -> 2 peças', b.length, 2));
+        r.push(b.map(x => x.pos).join(',') === '4,5'
+            ? pass('limite 60000 -> Pos 4 e Pos 5') : fail('limite errado', b.map(x=>x.pos).join(',')));
+        // Fora do span coberto e variante inexistente
+        r.push(assertEq('40000 (fora) -> vazio', one(40000).length, 0));
+        r.push(assertEq('variante sem tabela -> vazio', findSerrationByRadius('V90v1', 50500).length, 0));
+        // Sanidade da tabela: faixas válidas e dentro do tipR
+        const t = SERRATION_POSITIONS['V136'];
+        const ruins = t.parts.filter(p => p.ranges.some(([a, bb]) => !(a < bb) || bb > t.tipR));
+        r.push(ruins.length === 0 ? pass('faixas válidas (min<max ≤ tipR)') : fail('faixa inválida', ruins.map(p=>p.pos).join(',')));
+        console.groupEnd();
+        return tally(r);
+    }
+
     // ── Main runner ───────────────────────────────────────────────────────────
 
     window.runBOMTests = function () {
@@ -745,6 +772,7 @@
             testScarfHonorsOverrides,
             testPaintScheme,
             testSpecialRepairs,
+            testSerrationRadiusLookup,
         ];
         let total = { pass: 0, fail: 0 };
         for (const suite of suites) {
