@@ -447,6 +447,10 @@ body {
     border-radius: 6px;
     margin-top: 10px;
 }
+.info-callout.warn { background: #fff4e5; border-left-color: var(--danger); color: #7c2d12; }
+.info-callout.warn > i { color: var(--danger); font-size: 1.15rem; flex-shrink: 0; }
+.input-recap { text-align: center; font-size: 0.85rem; color: var(--text-light); margin: 10px 0 4px; line-height: 1.6; }
+.input-recap b { color: var(--text); }
 .info-callout .bi-info-circle, .info-callout > i.bi-info-circle-fill {
     color: var(--warning);
     font-size: 1.15rem;

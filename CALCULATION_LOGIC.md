@@ -148,6 +148,20 @@ Cada etapa ativada inclui um conjunto de materiais no BOM. A quantidade é ajust
 | **Painting** | TopCoat, SikaForce 7800, rolos de pintura |
 | **LEP** | Alexit LEP (3 cores), Scotch Brite, endurecedor |
 
+### Aviso de sanidade — bolsas de vácuo × ciclos de laminação
+
+`checkRepairInputs(layers, steps)` (engine.js) não altera quantidade nenhuma;
+só compara **HLU + Infusion** (= Vacuum) com o número de ciclos de laminação
+que a pilha exige pela regra do estimador de prazo (`REPAIR_DAY_RULES`: até 6
+camadas por ciclo, núcleo separa ciclos). Se Vacuum for maior, o app mostra o
+aviso no Step 3, no resultado, e o Excel traz a linha *Layup stack / Repair
+steps* no cabeçalho para quem revisa a lista.
+
+Origem: revisão das listas de Reynosa (ago/2026). As listas de erosão saíram
+com 12 camadas + HLU 5 carregados da lesão anterior na mesma sessão — uma
+erosão de 30×20 mm virou 25 m de release film e 15 placas por grão. As
+fórmulas estavam certas para aquelas entradas; faltava o aviso.
+
 ---
 
 ## Fórmulas por Categoria de Material

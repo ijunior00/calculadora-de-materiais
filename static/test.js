@@ -790,6 +790,46 @@
         return tally(r);
     }
 
+    function testInputSanityWarnings() {
+        console.group('Test 25: input sanity — vacuum bags vs lamination cycles (Reynosa review, Aug 2026)');
+        const r = [];
+        const ply = (gsm) => ({ layerName: 'L', materialType: 'BIAX', gsm });
+        const core = { layerName: 'C', materialType: 'CORE', gsm: '' };
+        const spl = { layerName: 'S', materialType: 'SPL', gsm: '' };
+        // Empilhamento reproduzido das listas de erosão de Reynosa (12 camadas):
+        // 6× BIAX600 + 4× BIAX1000 + CORE + SPL, HLU=5 + Infusion=1 → Vacuum 6
+        const reynosa = [ply('1000'), ply('600'), ply('600'), ply('600'), core,
+            ply('1000'), ply('1000'), ply('1000'), ply('600'), ply('600'), ply('600'), spl];
+        const stepsReynosa = { Cleaning: 1, Grinding: 1, Bonding: 1, Lamination: 1, HLU: 5, Infusion: 1, Weighing: 6, Painting: 1, LEP: 0 };
+        let c = checkRepairInputs(reynosa, stepsReynosa);
+        r.push(assertEq('11 plies counted (core excluded)', c.plies, 11));
+        r.push(assertEq('lamination cycles = ceil(4/6) + ceil(7/6) = 3', c.laminationCycles, 3));
+        r.push(assertEq('vacuum = HLU + Infusion = 6', c.vacuum, 6));
+        r.push(assertEq('Vacuum 6 > 3 cycles → 1 warning', c.warnings.length, 1));
+        r.push(c.warnings[0].code === 'VACUUM_EXCEEDS_CYCLES' ? pass('warning code VACUUM_EXCEEDS_CYCLES') : fail('wrong code', c.warnings[0].code));
+        r.push(assertEq('describeStack mentions SPL', describeStack(reynosa).includes('SPL') ? 1 : 0, 1));
+        r.push(describeStack(reynosa) === '4× BIAX 1000 · 6× BIAX 600 · CORE · SPL'
+            ? pass('describeStack text') : fail('describeStack text', describeStack(reynosa)));
+        // Mesma pilha com HLU=2 + Infusion=1 = 3 bolsas → sem aviso
+        c = checkRepairInputs(reynosa, { ...stepsReynosa, HLU: 2 });
+        r.push(assertEq('Vacuum 3 = 3 cycles → no warning', c.warnings.length, 0));
+        // Reparo simples: 3 camadas, HLU 1 → sem aviso; HLU 2 → aviso
+        c = checkRepairInputs([ply('600'), ply('600'), ply('600')], { HLU: 1, Infusion: 0 });
+        r.push(assertEq('3 plies, HLU 1 → no warning', c.warnings.length, 0));
+        c = checkRepairInputs([ply('600'), ply('600'), ply('600')], { HLU: 2, Infusion: 0 });
+        r.push(assertEq('3 plies, HLU 2 → warning', c.warnings.length, 1));
+        // Sem camadas não avisa (a validação de "add a layer" é da UI)
+        c = checkRepairInputs([], { HLU: 5, Infusion: 1 });
+        r.push(assertEq('no layers → no warning', c.warnings.length, 0));
+        // computeFullBOM expõe o mesmo resultado em bom.warnings
+        const bom = computeFullBOM({ rstart: 0, rend: 30, x1: 0, x2: 20, chordRef: 'LE' }, reynosa, stepsReynosa, 'V136', 'Tip', 6);
+        r.push(assertEq('computeFullBOM.warnings carries the vacuum warning', bom.warnings.length, 1));
+        // Ancora a reprodução da lista WTG 11 R66.2 (30×20 mm): release film 25 m vem do Vacuum 6
+        r.push(assertItemQty('30×20 mm + Vacuum 6 → release film 25 m (as exported)', bom.consumItems, 'S096521', 25));
+        console.groupEnd();
+        return tally(r);
+    }
+
     // ── Main runner ───────────────────────────────────────────────────────────
 
     window.runBOMTests = function () {
@@ -820,6 +860,7 @@
             testSpecialRepairs,
             testSerrationRadiusLookup,
             testSerrationPartsForRadii,
+            testInputSanityWarnings,
         ];
         let total = { pass: 0, fail: 0 };
         for (const suite of suites) {

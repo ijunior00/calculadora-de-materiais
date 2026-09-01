@@ -404,6 +404,7 @@
                         <label>LEP <span class="step-info" tabindex="0" data-note="Consider 3 LEP colors application as 1 step."><i class="bi bi-info-circle"></i></span></label>
                         <input type="number" id="stepLEP" class="form-input-sm" value="0" min="0" oninput="onRepairStepsChange()">
                     </div>
+                    <div id="stepsWarning"></div>
                 </div>
 
                 <div class="repair-steps-card">
@@ -469,6 +470,8 @@
             </div>
 
             <div class="summary-cards" id="summaryCards" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center"></div>
+            <div class="input-recap" id="inputRecap"></div>
+            <div id="resultWarnings"></div>
 
             <div class="results-tabs">
                 <button class="results-tab active" data-tab="consumable_protection" onclick="showResultTab('consumable_protection', this)">Consumable Protection Equipment</button>

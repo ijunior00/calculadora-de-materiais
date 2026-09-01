@@ -18,14 +18,14 @@ static/engine.js    cálculo: computeLayup() e computeFullBOM()
 static/scarf.js     escalonamento e desenho (SVG)
 static/mobile.js    UI mobile  (/m)     ← controller M
 static/app_new.js   UI desktop (/)
-static/test.js      suíte de 120 testes (runBOMTests)
+static/test.js      suíte de 203 testes (runBOMTests)
 backend/backend.py  FastAPI: serve as páginas, gera PDF/Excel
 ```
 
 ## Comandos
 
 ```bash
-npm test              # 120 testes de BOM em Node, sem navegador (~1s)
+npm test              # 203 testes de BOM em Node, sem navegador (~1s)
 npm run test:verbose  # o mesmo, com log completo
 npm run lint:skills   # valida .claude/skills/
 npm run check         # tudo acima + sintaxe do backend
@@ -38,9 +38,9 @@ no console. Sem `?debug`, o harness não carrega.
 
 | Página | Resultado | Por quê |
 |---|---|---|
-| `/m?debug=1` (mobile) | **120** | carrega `scarf.js`; cobre o escalonamento |
-| `/?debug=1` (desktop) | **118** | não carrega `scarf.js`; aqueles 3 testes se auto-pulam |
-| `npm test` (Node) | **120** | carrega `scarf.js` com stubs de DOM |
+| `/m?debug=1` (mobile) | **203** | carrega `scarf.js`; cobre o escalonamento |
+| `/?debug=1` (desktop) | **201** | não carrega `scarf.js`; aqueles 2 testes se auto-pulam |
+| `npm test` (Node) | **203** | carrega `scarf.js` com stubs de DOM |
 
 Verificado asserção por asserção: as execuções são idênticas nas asserções em
 comum. A diferença do desktop é só cobertura menor, não divergência.
