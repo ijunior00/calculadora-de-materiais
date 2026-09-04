@@ -711,39 +711,72 @@ async def generate_excel(data: BOMPayload):
     ordered = [p for p in CATEGORY_ORDER if p in phases]
     ordered += [p for p in phases if p not in CATEGORY_ORDER]
 
-    for phase in ordered:
-        # Category header
-        ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=4)
-        cell = ws.cell(r, 1, phase.upper())
+    def _write_phase(sheet, row, phase, items):
+        """Escreve um bloco de categoria (cabeçalho + colunas + linhas) e
+        devolve a próxima linha livre, já com a linha de espaço."""
+        sheet.merge_cells(start_row=row, start_column=1, end_row=row, end_column=4)
+        cell = sheet.cell(row, 1, phase.upper())
         cell.fill = cat_fill
         cell.font = bold
         cell.alignment = left
         for col in range(1, 5):
-            ws.cell(r, col).border = border
-        r += 1
+            sheet.cell(row, col).border = border
+        row += 1
 
-        # Column headers
         for col, label in enumerate(["SAP IN", "DESCRIPTION", "QTY", "UNIT"], start=1):
-            cell = ws.cell(r, col, label)
+            cell = sheet.cell(row, col, label)
             cell.fill = hdr_fill
             cell.font = bold
             cell.alignment = center
             cell.border = border
-        r += 1
+        row += 1
 
-        # Rows
-        for item in phases[phase]:
-            ws.cell(r, 1, str(item.get("sap", "-"))).alignment = center
-            ws.cell(r, 2, str(item.get("desc", ""))).alignment = left
-            qcell = ws.cell(r, 3, item.get("qty", 0))
+        for item in items:
+            sheet.cell(row, 1, str(item.get("sap", "-"))).alignment = center
+            sheet.cell(row, 2, str(item.get("desc", ""))).alignment = left
+            qcell = sheet.cell(row, 3, item.get("qty", 0))
             qcell.alignment = center
-            ws.cell(r, 4, str(item.get("unit", ""))).alignment = center
+            sheet.cell(row, 4, str(item.get("unit", ""))).alignment = center
             for col in range(1, 5):
-                cell = ws.cell(r, col)
+                cell = sheet.cell(row, col)
                 cell.font = normal
                 cell.border = border
-            r += 1
-        r += 1  # blank spacer row
+            row += 1
+        return row + 1  # blank spacer row
+
+    # Ferramentas (equipamento durável — esmerilhadeira, aspirador, balança…)
+    # vão para a aba TOOLS, separada do material de compra. "Consumable Tools"
+    # (lixas, pratos, discos) é consumível comprado por reparo e fica no BOM.
+    # Pedido do time em set/2026: a lista de compra não deve misturar
+    # ferramenta com material.
+    TOOLS_SHEET_PHASES = ("Tools",)
+    for phase in ordered:
+        if phase in TOOLS_SHEET_PHASES:
+            continue
+        r = _write_phase(ws, r, phase, phases[phase])
+
+    tools_phases = [p for p in ordered if p in TOOLS_SHEET_PHASES]
+    if tools_phases:
+        wt = wb.create_sheet("TOOLS")
+        for i, w in enumerate(widths, start=1):
+            wt.column_dimensions[get_column_letter(i)].width = w
+        wt.merge_cells("A1:D1")
+        ct = wt["A1"]
+        ct.value = "VESTAS BLADES  |  Blade Repair Materials Planner  —  TOOLS"
+        ct.fill = blue_fill
+        ct.font = white_font
+        ct.alignment = Alignment(horizontal="center", vertical="center")
+        wt.row_dimensions[1].height = 24
+        rt = 3
+        for k1, v1, k2, v2 in info_rows[:2]:  # Turbine/Region, SO/CIR
+            wt.cell(rt, 1, k1).font = bold
+            wt.cell(rt, 2, str(v1)).font = normal
+            wt.cell(rt, 3, k2).font = bold
+            wt.cell(rt, 4, str(v2)).font = normal
+            rt += 1
+        rt += 1
+        for phase in tools_phases:
+            rt = _write_phase(wt, rt, phase, phases[phase])
 
     # ── Drawing references (optional) ───────────────────────────
     if data.doc_refs:
