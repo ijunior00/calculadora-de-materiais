@@ -463,6 +463,18 @@ do RAL2009); o "cleaning agent 0,5 l" do doc do collar (sem número) fica
 mapeado para o álcool 93% ½ L (`234900`).
 
 
+### Aba TOOLS no Excel
+
+Desde set/2026 o Excel gerado por `/api/generate-excel` separa as
+**ferramentas** (categoria `Tools`: esmerilhadeiras, mantas térmicas,
+aspirador, balança…) numa aba **TOOLS** própria. A aba **BOM** fica só com
+material de compra: Fabrics, Chemicals, Consumable Tools (lixas, pratos,
+discos — consumidos por reparo), Consumables e PPE. Motivo: a lista de
+compra não deve misturar equipamento durável com material. A aba TOOLS repete
+o cabeçalho (turbina/região, SO/CIR) e só é criada quando há item de
+ferramenta; o export de Kits usa o mesmo endpoint e ganha a mesma separação.
+O PDF continua em documento único. Na UI nada muda — a divisão é só no Excel.
+
 ### Reedição pelo próprio Excel (aba INPUTS)
 
 Todo Excel gerado no mobile ganha uma aba **INPUTS** (marcador
