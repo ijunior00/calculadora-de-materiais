@@ -263,8 +263,12 @@ function computeFabricsBOM(layupResult, bladeModel, repairSteps, bladeRegion) {
     // Fabric types iterated in BOM emission. Source: REV05 Fabrics_aux!G17:G29
     // (10 fabric SUMIF rows) — exactly the fabrics REV05 has formulas for.
     // Order is for repeatable BOM output; presence is what matters.
+    // BIAX1800 entrou em set/2026 como camada exclusiva da V112 (catálogo em
+    // BLADE_FABRIC_OVERRIDES). Sem estar nesta lista, o peso seria calculado no
+    // layup mas o item nunca sairia no BOM.
     const fabricTypes = [
         'BIAX200', 'BIAX450', 'BIAX600', 'BIAX1200', 'BIAX936', 'BIAX1000',
+        'BIAX1800',
         'UD1200', 'UD1140', 'UD900', 'UD600',
         'TRIAX1200', 'TRIAX1500'
     ];
@@ -273,9 +277,15 @@ function computeFabricsBOM(layupResult, bladeModel, repairSteps, bladeRegion) {
         const weightKg = (fabricWeights[fKey] || 0) * factor;
         if (weightKg <= 0) continue;
 
-        // Look up fabric in the appropriate catalog for this blade model
+        // Look up fabric in the appropriate catalog for this blade model.
+        // Ordem: número próprio da pá (BLADE_FABRIC_OVERRIDES) → catálogo do
+        // modelo. V150/V162 (HM) substituem o catálogo inteiro; o override só
+        // troca o item daquela chave.
         let fabricInfo;
-        if (isV150) {
+        const bladeOverride = (typeof BLADE_FABRIC_OVERRIDES !== 'undefined' && BLADE_FABRIC_OVERRIDES[bladeModel]) || null;
+        if (bladeOverride && bladeOverride[fKey]) {
+            fabricInfo = bladeOverride[fKey];
+        } else if (isV150) {
             fabricInfo = FABRICS_DB.V150[fKey];
         } else {
             fabricInfo = FABRICS_DB.standard[fKey];

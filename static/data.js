@@ -44,6 +44,7 @@ const STANDARD_OVERLAPS = {
     'BIAX936':   { span: 47,  chord: 47 },   // 5% × 936  = 46.8 → 47  (REV05 had 50)
     'BIAX1000':  { span: 50,  chord: 50 },   // 5% × 1000 = 50
     'BIAX1200':  { span: 60,  chord: 60 },   // 5% × 1200 = 60
+    'BIAX1800':  { span: 90,  chord: 90 },   // 5% × 1800 = 90  (V112, set/2026)
     'UD600':     { span: 60,  chord: 12 },   // span 10%×600=60 ; chord 2%×600=12  (field team keeps 2%, not norm's 5%)
     'UD900':     { span: 90,  chord: 18 },   // span 10%×900=90 ; chord 2%×900=18
     'UD1140':    { span: 114, chord: 23 },   // span 10%×1140=114 ; chord 2%×1140=22.8→23
@@ -60,7 +61,7 @@ const STANDARD_OVERLAPS = {
 // Source: REV05 Lists!E2:E7 (BIAX/UD/TRIAX/CORE/SPL/CFM50) and Lists!G2:G8 (GSM).
 // BALSA is intentionally tracked separately as a special fabric (no GSM, no overlap).
 const MATERIAL_TYPES = ['BIAX', 'UD', 'TRIAX', 'CORE', 'BALSA', 'SPL', 'CFM50'];
-const GSM_OPTIONS = [200, 450, 600, 900, 936, 1000, 1140, 1200, 1500];
+const GSM_OPTIONS = [200, 450, 600, 900, 936, 1000, 1140, 1200, 1500, 1800];
 
 // ============================================================
 // BLADE-SPECIFIC MATERIAL CONFIGURATION
@@ -93,6 +94,12 @@ const BLADE_MATERIAL_MAP = {
         { materialType: 'TRIAX', gsm: '1200', label: 'TRIAX 1200' },
         { materialType: 'BIAX',  gsm: '600',  label: 'BIAX 600' },
         { materialType: 'UD',    gsm: '1200', label: 'UD 1200' },
+        // Camadas que faltavam na V112 (informadas pelo usuário, set/2026). As
+        // duas usam número de item próprio da V112 — ver BLADE_FABRIC_OVERRIDES.
+        // O overlap sai da regra da norma (biax = 5% do gsm), não de valor
+        // inventado: 450 → 23 mm, 1800 → 90 mm.
+        { materialType: 'BIAX',  gsm: '450',  label: 'BIAX ±45° 450' },
+        { materialType: 'BIAX',  gsm: '1800', label: 'BIAX 1800' },
         { materialType: 'CORE',  gsm: '',     label: 'CORE' },
     ],
     'V110': [
@@ -306,6 +313,30 @@ const FABRICS_DB = {
         'UD1200':    { sap: '29234519',  desc: 'FABRIC HM UD0 1200G 13Mx1260MM (roll ~20kg)', unit: 'EA', kgPerUnit: 20 },
         'TRIAX1200': { sap: '29234528',  desc: 'FABRIC HM TRIAX 1200 13Mx1260MM (roll ~20kg)', unit: 'EA', kgPerUnit: 20 },
     }
+};
+
+// ── BLADE_FABRIC_OVERRIDES ────────────────────────────────────────────────────
+// Itens com número PRÓPRIO de um modelo de pá. Diferente de FABRICS_DB.V150,
+// que SUBSTITUI o catálogo inteiro (pás HM têm outra família de tecidos), aqui
+// a entrada só SOBREPÕE o item daquela chave — o resto do modelo continua vindo
+// de FABRICS_DB.standard.
+// Fonte: números informados pelo usuário em set/2026 para as camadas que
+// faltavam na V112.
+const BLADE_FABRIC_OVERRIDES = {
+    'V112': {
+        // Mesmo tecido biax ±45 450 do 29219676, com o número de item da V112
+        // ("55M" na descrição é a pá de ~54,65 m, não o comprimento do rolo).
+        // Por isso herda unit/kgPerUnit do standard (rolo 35 m / 20 kg) em vez
+        // de repetir um tamanho de rolo — o peso do rolo do 78000366 ainda não
+        // foi conferido no almoxarifado (ver PENDING_REV06.md).
+        'BIAX450':  { ...FABRICS_DB.standard['BIAX450'], sap: '78000366', desc: '55M DRY BIAX SHELL' },
+        // Exclusivo da V112: não existe em FABRICS_DB.standard, então qualquer
+        // outra pá que receba uma camada BIAX 1800 cai em CATALOG MISMATCH —
+        // que é o comportamento desejado.
+        // Vendido em rolo fechado de 20,1 kg (confirmado pelo usuário set/2026);
+        // qty = ceil(peso / 20.1). Descrição oficial do item ainda pendente.
+        'BIAX1800': { sap: '78000311', desc: 'BIAX 1800 G/M2 (roll 20.1 kg)', unit: 'EA', kgPerUnit: 20.1 },
+    },
 };
 
 const FABRICS_SPECIAL = {
