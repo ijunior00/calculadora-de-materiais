@@ -830,6 +830,60 @@
         return tally(r);
     }
 
+    function testV112MissingLayers() {
+        console.group('Test 26: V112 — BIAX 450 and BIAX 1800 with V112-specific item numbers (Sep 2026)');
+        const r = [];
+        const v112 = BLADE_MATERIAL_MAP['V112'];
+        // As duas camadas entraram no dropdown da V112…
+        r.push(v112.some(m => m.materialType === 'BIAX' && m.gsm === '450')
+            ? pass('V112 map includes BIAX 450') : fail('V112 map missing BIAX 450', ''));
+        r.push(v112.some(m => m.materialType === 'BIAX' && m.gsm === '1800')
+            ? pass('V112 map includes BIAX 1800') : fail('V112 map missing BIAX 1800', ''));
+        // …e TRIAX 1200 continua sendo a primeira fabric (Test 14 usa a primeira).
+        r.push(v112[0].materialType === 'TRIAX'
+            ? pass('TRIAX 1200 still first in the V112 map') : fail('V112 first fabric changed', v112[0].materialType));
+        // Overlap do 1800 vem da regra da norma (5% do gsm), não de valor inventado.
+        r.push(assertEq('BIAX1800 overlap span = 90 (5% × 1800)', STANDARD_OVERLAPS['BIAX1800'].span, 90));
+        r.push(assertEq('BIAX1800 overlap chord = 90 (5% × 1800)', STANDARD_OVERLAPS['BIAX1800'].chord, 90));
+        const norm = computeFiberOverlap('BIAX', 1800);
+        r.push(assertEq('computeFiberOverlap agrees with the table', norm.span, 90));
+
+        // Catálogo: número próprio da V112, rolo de 20,1 kg no 1800.
+        const ov = BLADE_FABRIC_OVERRIDES['V112'];
+        r.push(ov['BIAX450'].sap === '78000366' && ov['BIAX450'].desc === '55M DRY BIAX SHELL'
+            ? pass('V112 BIAX450 = 78000366 / 55M DRY BIAX SHELL') : fail('V112 BIAX450 wrong', JSON.stringify(ov['BIAX450'])));
+        r.push(ov['BIAX450'].unit === 'EA' && ov['BIAX450'].kgPerUnit === 20
+            ? pass('V112 BIAX450 inherits the roll from 29219676 (EA, 20 kg)') : fail('V112 BIAX450 roll wrong', JSON.stringify(ov['BIAX450'])));
+        r.push(ov['BIAX1800'].sap === '78000311' && ov['BIAX1800'].unit === 'EA' && ov['BIAX1800'].kgPerUnit === 20.1
+            ? pass('V112 BIAX1800 = 78000311, EA, 20.1 kg/roll') : fail('V112 BIAX1800 wrong', JSON.stringify(ov['BIAX1800'])));
+        // BIAX 1800 é exclusivo da V112 — não pode vazar para o catálogo comum.
+        r.push(!FABRICS_DB.standard['BIAX1800'] && !FABRICS_DB.V150['BIAX1800']
+            ? pass('BIAX1800 absent from the standard/HM catalogs (V112-only)') : fail('BIAX1800 leaked into a shared catalog', ''));
+
+        // Ponta a ponta: o override vale na V112 e NÃO vaza para as outras pás.
+        const dmg = { rstart: 10000, rend: 12000, x1: 0, x2: 500, chordRef: 'LE' };
+        const steps = { Cleaning: 1, Grinding: 1, Bonding: 1, Lamination: 1, HLU: 1, Infusion: 1, Weighing: 1, Painting: 1, LEP: 0 };
+        const layers = [
+            { layerName: 'L1', materialType: 'BIAX', gsm: '450' },
+            { layerName: 'L2', materialType: 'BIAX', gsm: '1800' },
+        ];
+        const sapOf = (bom, key) => (bom.fabricItems.find(i => i.material === key) || {}).sap;
+        const b112 = computeFullBOM(dmg, layers, steps, 'V112', 'Middle', 3);
+        r.push(sapOf(b112, 'BIAX450') === '78000366' ? pass('V112 BOM emits 78000366') : fail('V112 BIAX450 SAP', sapOf(b112, 'BIAX450')));
+        r.push(sapOf(b112, 'BIAX1800') === '78000311' ? pass('V112 BOM emits 78000311') : fail('V112 BIAX1800 SAP', sapOf(b112, 'BIAX1800')));
+        const b136 = computeFullBOM(dmg, layers, steps, 'V136', 'Middle', 3);
+        r.push(sapOf(b136, 'BIAX450') === '29219676'
+            ? pass('V136 still emits 29219676 (override did not leak)') : fail('V136 BIAX450 SAP changed', sapOf(b136, 'BIAX450')));
+        r.push(sapOf(b136, 'BIAX1800') === 'CATALOG MISMATCH'
+            ? pass('BIAX 1800 on V136 → CATALOG MISMATCH (by design)') : fail('V136 BIAX1800 should mismatch', sapOf(b136, 'BIAX1800')));
+        // V150/V162 (HM) seguem com o catálogo substituído por inteiro.
+        const b150 = computeFullBOM(dmg, [{ layerName: 'L1', materialType: 'BIAX', gsm: '600' }], steps, 'V150', 'Middle', 3);
+        r.push(sapOf(b150, 'BIAX600') === '29116888'
+            ? pass('V150 HM catalog untouched (BIAX600 = 29116888)') : fail('V150 BIAX600 changed', sapOf(b150, 'BIAX600')));
+        console.groupEnd();
+        return tally(r);
+    }
+
     // ── Main runner ───────────────────────────────────────────────────────────
 
     window.runBOMTests = function () {
@@ -861,6 +915,7 @@
             testSerrationRadiusLookup,
             testSerrationPartsForRadii,
             testInputSanityWarnings,
+            testV112MissingLayers,
         ];
         let total = { pass: 0, fail: 0 };
         for (const suite of suites) {

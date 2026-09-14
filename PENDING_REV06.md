@@ -200,3 +200,25 @@ peças de serration (1A–6A, SAPs 29058910–29058915) são pedidas
 **individualmente**. A variante no dropdown reflete isso ("no kit — order
 parts by radius") e a busca por raio identifica a peça de cada posição. Não
 há pendência.
+
+
+---
+
+## V112 — peso do rolo do item 78000366 (BIAX ±45 450)
+
+As camadas BIAX 450 e BIAX 1800 da V112 entraram em set/2026 com número de item
+próprio da pá (`78000366` e `78000311`), informados pelo time.
+
+**O que está fechado:** `78000311` (BIAX 1800) é rolo fechado de **20,1 kg** —
+confirmado, e é isso que divide o peso calculado para virar quantidade.
+
+**O que falta:** o peso do rolo do **`78000366`**. Como ele é o mesmo tecido
+biax ±45 450 do `29219676`, só que com o número da V112, o catálogo **herda** o
+rolo do item padrão (35 m / 20 kg) via spread em `BLADE_FABRIC_OVERRIDES`, em
+vez de repetir um tamanho de rolo não conferido. Se o almoxarifado confirmar que
+o `78000366` vem em rolo diferente (a descrição *55M DRY BIAX SHELL* foi lida
+como "pá de 55 m", não "rolo de 55 m"), basta trocar `kgPerUnit` na entrada
+`V112.BIAX450` de [data.js](static/data.js) — nada mais muda.
+
+**Também pendente:** a descrição oficial do `78000311`. Hoje o catálogo usa
+`BIAX 1800 G/M2 (roll 20.1 kg)`, montada a partir dos dados informados.

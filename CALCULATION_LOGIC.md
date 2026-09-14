@@ -271,7 +271,7 @@ Qtde = ROUNDUP( pesoTotalTecido × 1,2 / kg_por_rolo )
 
 | Modelo | Catálogo | Tecidos disponíveis |
 |--------|---------|---------------------|
-| V82, V90, V100, V110, V112, V136 | Padrão (vidro E) | BIAX600/936/1000, UD600/900/1140/1200, TRIAX1200/1500 |
+| V82, V90, V100, V110, V112, V136 | Padrão (vidro E) | BIAX600/936/1000, UD600/900/1140/1200, TRIAX1200/1500 (V112 soma BIAX450 e BIAX1800 com item próprio) |
 | **V150** | **HM** | **HM BIAX600/1000/1200, HM UD1200, HM TRIAX1200** |
 
 > Tecidos que não existem no catálogo V150 (ex: BIAX936, TRIAX1500) são ignorados — não há fallback.
@@ -316,10 +316,24 @@ Cada modelo de pá tem um conjunto específico de materiais disponíveis no LAYU
 | V82 | BIAX936, UD600, UD1140, BALSA, CORE |
 | V90 | TRIAX1200, BIAX600, UD1200, CORE |
 | V100 | TRIAX1200, BIAX600, UD1200, CORE |
-| V112 | TRIAX1200, BIAX600, UD1200, CORE |
+| V112 | TRIAX1200, BIAX600, **BIAX450**, **BIAX1800**, UD1200, CORE |
 | V110 | TRIAX1500, BIAX600, BIAX936, UD600, UD900, UD1140, CORE, BALSA, SPL, CFM |
 | V136 | TRIAX1200, BIAX1000, BIAX600, UD1200, UD600, CORE, BALSA, SPL, CFM |
 | V150 (HM) | HM BIAX600, HM BIAX1000, HM BIAX1200, HM UD1200, HM TRIAX1200, CORE, BALSA, SPL, CFM |
+
+> **V112 — BIAX 450 e BIAX 1800 (set/2026).** As duas camadas faltavam no
+> dropdown da V112 e foram informadas pelo time com **número de item próprio da
+> pá**: `78000366` (*55M DRY BIAX SHELL* — "55M" é a pá de ~54,65 m, não o
+> comprimento do rolo) e `78000311` (BIAX 1800, rolo fechado de **20,1 kg**).
+> Por isso existe `BLADE_FABRIC_OVERRIDES` em [`data.js`](static/data.js): ao
+> contrário de `FABRICS_DB.V150`, que **substitui** o catálogo inteiro das pás
+> HM, o override troca **só** o item daquela chave e o resto continua vindo do
+> catálogo padrão. Efeito prático: a V112 pede `78000366`, as demais pás seguem
+> pedindo `29219676` no BIAX 450. O BIAX 1800 é exclusivo da V112 — em qualquer
+> outro modelo ele cai em `CATALOG MISMATCH`, que é o comportamento desejado.
+> Os overlaps saem da regra da norma (biax = 5% do gsm): 450 → 23 mm,
+> 1800 → 90 mm. O peso do rolo do `78000366` é herdado do `29219676`
+> (35 m / 20 kg) e aguarda conferência — ver `PENDING_REV06.md`.
 
 > ⚠️ **Materiais pendentes em REV05 — aguardando REV06**
 >
