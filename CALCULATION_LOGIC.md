@@ -123,7 +123,7 @@ Após o LAYUP, o sistema calcula estas variáveis que alimentam todas as fórmul
 | **cleaningAreaM2** | `(200 + maxLength × (200 + maxWidth)) × 10⁻⁶` (m²) | Cloth harpix, paper tork, rubbish bag |
 | **perimeter** | `(2 × (maxLength + maxWidth) + 400) / 1000` (m) | Fitas, sealant, spirol, vacuum channel |
 | **totalFabricWeightKg** | Soma dos pesos (kg) de todos os tecidos com GSM | AMPREG 30 |
-| **coreWeightKg** | `SUMIF(áreas de CORE) × 10⁻⁶ × 0,4 × 115` (kg) | AMPREG 30, SikaForce 7818 |
+| **coreWeightKg** | `SUMIF(áreas de CORE) × 10⁻⁶ × 0,04 × 115` (kg) — core PVC usa 0,045 × 115 | AMPREG 30, SikaForce 7818 |
 
 > `cleaningAreaM2` usa uma parentização diferente das demais áreas: a multiplicação acontece antes da soma com 200.
 
@@ -282,11 +282,51 @@ Qtde = ROUNDUP( pesoTotalTecido × 1,2 / kg_por_rolo )
 |----------|---------|------------------------------------|
 | CFM50 | 0,1 kg se (splAreaM2 × 1,5 × 0,05) < 0,1, senão 0,5 kg | Apenas se o modelo de pá listar CFM50 em `Blades_Fabrics` **E** o usuário tiver adicionado CFM50 como camada do layup. |
 | SPL | ROUNDUP(splAreaM2 × Infusion × 1,5 / 5,75) rolos | Apenas se o modelo listar SPL em `Blades_Fabrics` **E** o usuário tiver adicionado SPL como camada do layup. |
-| CORE | ROUNDUP(coreAreaM2 / kitAreaM2) kits<br/>onde kitAreaM2 = 2,4 (Grade B) ou 1,0 (Grade F / Root) | Apenas se o modelo listar CORE em `Blades_Fabrics` **E** o usuário tiver adicionado CORE como camada. |
+| CORE | ROUNDUP(coreAreaM2 / kitAreaM2) kits<br/>onde kitAreaM2 = 2,4 (PET Grade B), 1,0 (Grade F / Root) ou 1,21 (PVC Grade A) | Apenas se o modelo listar CORE em `Blades_Fabrics` **E** o usuário tiver adicionado CORE como camada. Uma linha por grade presente na pilha. |
 | BALSA | 1 unidade (compra manual, SAP TBD) | Apenas se o modelo listar BALSA em `Blades_Fabrics` **E** o usuário tiver adicionado BALSA como camada. |
 
 > **Correção REV05 (regressão de REV04):** anteriormente SPL e CFM50 eram emitidos no BOM sempre que `splAreaM2 > 0`, o que causava inclusão indevida em V82, V90, V100 e V112 (que não suportam esses materiais). REV05 introduziu a sheet `Blades_Fabrics` mapeando, por modelo, quais fabrics são válidos. O engine agora replica esse filtro via `bladeSupports(model, materialKey)` em [`engine.js`](static/engine.js).
 >
+### Dois grades de core: PET e Grade A PVC (set/2026)
+
+O app oferece **duas opções de core** no seletor de camadas, em todas as pás
+que têm core:
+
+| Opção na UI | Item | Kit | Espessura × densidade |
+|---|---|---|---|
+| **CORE PET** (o de sempre) | `29114395` | 2,4 m² | 40 mm × 115 kg/m³ (Grade B) |
+| **CORE PVC (Grade A)** | `78000056` | **1,21 m²** (painel 1000×1210 mm) | **45 mm** × 115 kg/m³ |
+| *(automático em Root, sem escolha)* | `29217723` | 1,0 m² | 40 mm × 250 kg/m³ (Grade F) |
+
+A substituição PET→PVC já era aprovada em **945556 V12** (ver
+`CORE_SUBSTITUTIONS`); o que faltava era o item e as medidas do painel, que o
+time forneceu em set/2026.
+
+**Como o grade é representado.** Ele viaja no **mesmo campo de variante** que
+guarda o gsm dos tecidos (`gsm: ''` = PET, `gsm: 'PVC'`). Isso é de propósito:
+todo caminho que trata CORE — overlap, geometria do layup, peso, dias de
+reparo, desenho do escalonamento — **ignora esse campo**, porque as chaves de
+CORE/SPL/CFM50/BALSA são montadas só com o `materialType`. Resultado: a escolha
+do grade não mexe em nenhum desses cálculos, e camada antiga (ou Excel reaberto
+pela aba INPUTS) chega com o campo vazio e continua significando PET.
+
+**Regra do Root.** Escolher PVC é decisão explícita do técnico e vale
+**inclusive no Root**. Sem escolha explícita, Root continua puxando o Grade F
+(`29217723`) como sempre fez. A função é `coreSpecFor(grade, region)` em
+[`data.js`](static/data.js).
+
+**Pilha mista.** Se a pilha tiver camadas dos dois grades, sai **uma linha por
+grade** — os kits têm tamanhos diferentes (2,4 m² contra 1,21 m²) e somar tudo
+pediria a quantidade errada.
+
+**Efeito no AMPREG 30.** O termo `kitsCore` da fórmula da resina é uma
+*contagem de kits*, e o kit de PVC é menor — então a mesma área de core pede
+mais kits e, por tabela, mais resina. Isso é a leitura literal de `H29` da
+REV05 (que só conhecia um tamanho de kit). Está registrado em
+`PENDING_REV06.md` para o time decidir se a resina deve seguir a contagem de
+kits ou a área de core. Pilha sem PVC cai exatamente na conta de antes —
+nenhum número existente muda.
+
 > **Mudança da fórmula CORE:** REV05 substituiu `qty = ceil(weight_kg / kit_kg)` por `qty = ceil(area_m² / kit_area_m²)`. Matematicamente equivalente (kit_area = kit_kg ÷ density ÷ thickness), mas a forma área-based é o que `Materials!H90` lê com `J90 = 2,4` (REV05). O peso do CORE continua disponível em `coreWeightKg` para o cálculo do AMPREG 30.
 
 ### Tools (Ferramentas)
