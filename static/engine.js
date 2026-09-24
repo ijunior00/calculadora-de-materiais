@@ -157,6 +157,8 @@ function computeLayup(damageData, layers) {
     let totalFabricWeightKg = 0;
     let coreWeightKg = 0;
     let coreAreaM2 = 0;
+    const coreAreaByGrade = {};    // { '': m² de PET, 'PVC': m² de PVC }
+    const coreWeightByGrade = {};  // idem, em kg — alimenta o AMPREG 30
 
     for (const row of dataRows) {
         if (row.weight !== null && row.materialType !== 'CORE' && row.materialType !== 'SPL') {
@@ -165,9 +167,20 @@ function computeLayup(damageData, layers) {
         if (row.materialType === 'CORE') {
             const rowAreaM2 = row.area * 1e-6;
             coreAreaM2 += rowAreaM2;
+            // Área separada por grade de core: uma pilha pode misturar PET e
+            // PVC, e cada um tem kit de tamanho diferente. Sem isso a lista
+            // pediria tudo como se fosse um grade só.
+            const grade = String(row.gsm || '').toUpperCase() === 'PVC' ? 'PVC' : '';
+            coreAreaByGrade[grade] = (coreAreaByGrade[grade] || 0) + rowAreaM2;
             // Weight retained for AMPREG 30 calc (mirrors Fabrics_aux pre-REV05).
-            // thickness = 40mm = 0.04m; density Grade B = 115 kg/m³.
-            coreWeightKg += rowAreaM2 * 0.04 * 115;
+            // PET: thickness = 40mm = 0.04m; density Grade B = 115 kg/m³.
+            // PVC Grade A: 45mm × 115 kg/m³ (informado pelo time, set/2026).
+            const spec = FABRICS_SPECIAL.CORE_PVC;
+            const rowKg = grade === 'PVC'
+                ? rowAreaM2 * spec.thicknessM * spec.densityKgM3
+                : rowAreaM2 * 0.04 * 115;
+            coreWeightKg += rowKg;
+            coreWeightByGrade[grade] = (coreWeightByGrade[grade] || 0) + rowKg;
         }
     }
 
@@ -196,6 +209,8 @@ function computeLayup(damageData, layers) {
         totalFabricWeightKg,
         coreWeightKg,
         coreAreaM2,
+        coreAreaByGrade,
+        coreWeightByGrade,
         splAreaM2,
         perimeter,
         areaWithMarginM2,
@@ -384,19 +399,30 @@ function computeFabricsBOM(layupResult, bladeModel, repairSteps, bladeRegion) {
     // Grade F kit (Root) = 1.0 m² (10 kg ÷ 250 kg/m³ ÷ 0.04 m).
     // Pre-REV05 used weight/kitKg — mathematically equivalent but the area-
     // based form is what Materials!H90 reads (J90 = 2.4 in REV05).
+    // Desde set/2026 há dois cores (PET 29114395 e Grade A PVC 78000056), então
+    // sai UMA linha por grade presente na pilha — os kits têm tamanhos
+    // diferentes (2,4 m² contra 1,21 m²) e somar tudo pediria a quantidade
+    // errada. Pilha só de PET (ou reaberta de um Excel antigo) cai no mesmo
+    // caminho de sempre.
     if (bladeSupports(bladeModel, 'CORE') && layupResult.coreAreaM2 > 0) {
-        const isRoot = bladeRegion === 'Root';
-        const coreSpec = isRoot ? FABRICS_SPECIAL.CORE_ROOT : FABRICS_SPECIAL.CORE;
-        const coreQty = Math.ceil(layupResult.coreAreaM2 / coreSpec.kitAreaM2);
-        items.push({
-            sap: coreSpec.sap,
-            desc: coreSpec.desc,
-            material: 'CORE',
-            qty: Math.max(1, coreQty),
-            unit: 'EA',
-            materialUse: 'HLU',
-            note: `Core area: ${layupResult.coreAreaM2.toFixed(3)} m² (${layupResult.coreWeightKg.toFixed(3)} kg)`
-        });
+        const byGrade = layupResult.coreAreaByGrade || { '': layupResult.coreAreaM2 };
+        const weightByGrade = layupResult.coreWeightByGrade || {};
+        for (const grade of Object.keys(byGrade)) {
+            const areaM2 = byGrade[grade];
+            if (!(areaM2 > 0)) continue;
+            const coreSpec = coreSpecFor(grade, bladeRegion);
+            const coreQty = Math.ceil(areaM2 / coreSpec.kitAreaM2);
+            const kg = weightByGrade[grade];
+            items.push({
+                sap: coreSpec.sap,
+                desc: coreSpec.desc,
+                material: 'CORE',
+                qty: Math.max(1, coreQty),
+                unit: 'EA',
+                materialUse: 'HLU',
+                note: `Core area: ${areaM2.toFixed(3)} m²${kg > 0 ? ` (${kg.toFixed(3)} kg)` : ''}`
+            });
+        }
     }
 
     return items;

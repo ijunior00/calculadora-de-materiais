@@ -416,7 +416,7 @@ function renderLayerTable() {
                     ${matOpts}
                 </select>
             </td>
-            <td style="text-align:center;font-weight:500;color:#334155">${row.gsm || '—'}</td>
+            <td style="text-align:center;font-weight:500;color:#334155">${isNaN(String(row.gsm || '')) ? '—' : (row.gsm || '—')}</td>
             <td><input type="text" value="${row.order}" ${isLocked ? 'disabled' : ''} onchange="updateLayer(${idx},'order',this.value)"></td>
             <td>
                 <div class="move-btns">

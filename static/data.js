@@ -72,7 +72,8 @@ const BLADE_MATERIAL_MAP = {
         { materialType: 'UD',      gsm: '600',  label: 'UD 600' },
         { materialType: 'UD',      gsm: '1140', label: 'UD 1140' },
         { materialType: 'BALSA',   gsm: '',     label: 'BALSA' },
-        { materialType: 'CORE',    gsm: '',     label: 'CORE' },
+        { materialType: 'CORE',    gsm: '',     label: 'CORE PET' },
+        { materialType: 'CORE',    gsm: 'PVC',     label: 'CORE PVC (Grade A)' },
         // NOTE: REV05 Blades_Fabrics also lists "Quadrax 850gsm" and "Quadrax 566gsm"
         // for V82 (cells A7, A8) but the rest of REV05 (Layer Data Input, LAYUP overlap
         // table, Fabrics_aux, Fabrics catalog, Materials sheet) does not yet wire these
@@ -82,13 +83,15 @@ const BLADE_MATERIAL_MAP = {
         { materialType: 'TRIAX', gsm: '1200', label: 'TRIAX 1200' },
         { materialType: 'BIAX',  gsm: '600',  label: 'BIAX 600' },
         { materialType: 'UD',    gsm: '1200', label: 'UD 1200' },
-        { materialType: 'CORE',  gsm: '',     label: 'CORE' },
+        { materialType: 'CORE',  gsm: '',     label: 'CORE PET' },
+        { materialType: 'CORE',  gsm: 'PVC',     label: 'CORE PVC (Grade A)' },
     ],
     'V100': [
         { materialType: 'TRIAX', gsm: '1200', label: 'TRIAX 1200' },
         { materialType: 'BIAX',  gsm: '600',  label: 'BIAX 600' },
         { materialType: 'UD',    gsm: '1200', label: 'UD 1200' },
-        { materialType: 'CORE',  gsm: '',     label: 'CORE' },
+        { materialType: 'CORE',  gsm: '',     label: 'CORE PET' },
+        { materialType: 'CORE',  gsm: 'PVC',     label: 'CORE PVC (Grade A)' },
     ],
     'V112': [
         { materialType: 'TRIAX', gsm: '1200', label: 'TRIAX 1200' },
@@ -100,7 +103,8 @@ const BLADE_MATERIAL_MAP = {
         // inventado: 450 → 23 mm, 1800 → 90 mm.
         { materialType: 'BIAX',  gsm: '450',  label: 'BIAX ±45° 450' },
         { materialType: 'BIAX',  gsm: '1800', label: 'BIAX 1800' },
-        { materialType: 'CORE',  gsm: '',     label: 'CORE' },
+        { materialType: 'CORE',  gsm: '',     label: 'CORE PET' },
+        { materialType: 'CORE',  gsm: 'PVC',     label: 'CORE PVC (Grade A)' },
     ],
     'V110': [
         { materialType: 'TRIAX', gsm: '1500', label: 'TRIAX 1500' },
@@ -109,7 +113,8 @@ const BLADE_MATERIAL_MAP = {
         { materialType: 'UD',    gsm: '1140', label: 'UD 1140' },
         { materialType: 'UD',    gsm: '600',  label: 'UD 600' },
         { materialType: 'UD',    gsm: '900',  label: 'UD 900' },
-        { materialType: 'CORE',  gsm: '',     label: 'CORE' },
+        { materialType: 'CORE',  gsm: '',     label: 'CORE PET' },
+        { materialType: 'CORE',  gsm: 'PVC',     label: 'CORE PVC (Grade A)' },
         { materialType: 'BALSA', gsm: '',     label: 'BALSA' },
         { materialType: 'SPL',   gsm: '',     label: 'SPL' },
         { materialType: 'CFM50', gsm: '',     label: 'CFM' },
@@ -120,7 +125,8 @@ const BLADE_MATERIAL_MAP = {
         { materialType: 'BIAX',  gsm: '600',  label: 'BIAX 600' },
         { materialType: 'UD',    gsm: '1200', label: 'UD 1200' },
         { materialType: 'UD',    gsm: '600',  label: 'UD 600' },
-        { materialType: 'CORE',  gsm: '',     label: 'CORE' },
+        { materialType: 'CORE',  gsm: '',     label: 'CORE PET' },
+        { materialType: 'CORE',  gsm: 'PVC',     label: 'CORE PVC (Grade A)' },
         { materialType: 'BALSA', gsm: '',     label: 'BALSA' },
         { materialType: 'SPL',   gsm: '',     label: 'SPL' },
         { materialType: 'CFM50', gsm: '',     label: 'CFM' },
@@ -138,7 +144,8 @@ const BLADE_MATERIAL_MAP = {
         { materialType: 'BIAX',  gsm: '1200', label: 'BIAX 1200' },
         { materialType: 'UD',    gsm: '1200', label: 'UD 1200' },
         { materialType: 'TRIAX', gsm: '1200', label: 'TRIAX 1200' },
-        { materialType: 'CORE',  gsm: '',     label: 'CORE' },
+        { materialType: 'CORE',  gsm: '',     label: 'CORE PET' },
+        { materialType: 'CORE',  gsm: 'PVC',     label: 'CORE PVC (Grade A)' },
         { materialType: 'BALSA', gsm: '',     label: 'BALSA' },
         { materialType: 'SPL',   gsm: '',     label: 'SPL' },
         { materialType: 'CFM50', gsm: '',     label: 'CFM' },
@@ -153,7 +160,8 @@ const BLADE_MATERIAL_MAP = {
         { materialType: 'BIAX',  gsm: '1200', label: 'BIAX 1200' },
         { materialType: 'UD',    gsm: '1200', label: 'UD 1200' },
         { materialType: 'TRIAX', gsm: '1200', label: 'TRIAX 1200' },
-        { materialType: 'CORE',  gsm: '',     label: 'CORE' },
+        { materialType: 'CORE',  gsm: '',     label: 'CORE PET' },
+        { materialType: 'CORE',  gsm: 'PVC',     label: 'CORE PVC (Grade A)' },
         { materialType: 'BALSA', gsm: '',     label: 'BALSA' },
         { materialType: 'SPL',   gsm: '',     label: 'SPL' },
         { materialType: 'CFM50', gsm: '',     label: 'CFM' },
@@ -344,13 +352,46 @@ const FABRICS_SPECIAL = {
     // MX catalog: 10m patch (29180312) replaces the 5m one (BR 29180313).
     // rollArea = 10 × 1.15 = 11.5 m².
     'SPL':       { sap: '29180312', desc: 'SPL REPAIR PATCH 10000 x 1150 MM',  unit: 'EA', rollArea: 11.5 },
-    // CORE Grade B (115 kg/m³). REV05 Materials!J90 = 2.4 m²/kit (11 kg ÷ 115 ÷ 0.04 m thickness).
+    // CORE PET Grade B (115 kg/m³). REV05 Materials!J90 = 2.4 m²/kit (11 kg ÷ 115 ÷ 0.04 m thickness).
     // kitKg retained for AMPREG 30 calc (Fabrics_aux pre-REV05 still uses weight basis).
+    // É o core PET — o rótulo na UI diz "CORE PET" desde set/2026, quando o
+    // Grade A PVC entrou como segunda opção. A descrição oficial do SAP não
+    // muda; quem separa os dois na lista de compra é o número do item.
     'CORE':      { sap: '29114395', desc: 'CORE REPAIR PANEL 40mm BLA 54m',    unit: 'EA', kitKg: 11, kitAreaM2: 2.4 },
+    // CORE PVC Grade A (78000056). Painel 1000×1210 mm → 1,21 m²/kit; 45 mm de
+    // espessura; 115 kg/m³ — todos informados pelo time em set/2026.
+    // kitKg é DERIVADO dessas medidas (1.21 × 0.045 × 115 = 6,262 kg), não
+    // arbitrado. Substituição PET→PVC já aprovada em 945556 V12 (ver
+    // CORE_SUBSTITUTIONS).
+    'CORE_PVC':  { sap: '78000056', desc: 'CORE GRADE A PVC 45mm PANEL 1000x1210', unit: 'EA', kitKg: 6.262, kitAreaM2: 1.21, thicknessM: 0.045, densityKgM3: 115 },
     // CORE_ROOT: Grade F (250 kg/m³), 1.0 m²/kit (10 kg ÷ 250 ÷ 0.04 m). Used for Root region repairs.
     'CORE_ROOT': { sap: '29217723', desc: 'CORE REPAIR PANEL GR250 40mm',      unit: 'EA', kitKg: 10, kitAreaM2: 1.0 },
     'BALSA':     { sap: 'TBD',      desc: 'BALSA WOOD PANEL (SAP TBD)',         unit: 'EA', kitKg: 5 },
 };
+
+// ── Grade do core ─────────────────────────────────────────────────────────────
+// Desde set/2026 existem dois cores: o PET (29114395, o de sempre) e o Grade A
+// PVC (78000056). O grade viaja no MESMO campo de variante que guarda o gsm dos
+// tecidos — de propósito: todo caminho que trata CORE (overlap, geometria do
+// layup, peso, dias de reparo, desenho do escalonamento) ignora esse campo, e
+// as chaves de CORE/SPL/CFM50/BALSA são montadas só com o materialType. Ou
+// seja, acrescentar o grade não altera nenhum desses cálculos.
+// Compatibilidade: camada antiga (ou Excel reaberto) vem com o campo vazio e
+// continua significando PET, exatamente como antes.
+const CORE_GRADE_PVC = 'PVC';
+
+/**
+ * Item de core que deve sair no BOM.
+ * Regra combinada com o time (set/2026): escolher PVC é decisão explícita do
+ * técnico e vale inclusive no Root. Sem escolha explícita, Root continua
+ * puxando o Grade F (29217723), como sempre fez.
+ * @param {string} coreGrade - campo de variante da camada ('' = PET, 'PVC')
+ * @param {string} bladeRegion - 'Root' | 'Middle' | 'Tip'
+ */
+function coreSpecFor(coreGrade, bladeRegion) {
+    if (String(coreGrade || '').toUpperCase() === CORE_GRADE_PVC) return FABRICS_SPECIAL.CORE_PVC;
+    return bladeRegion === 'Root' ? FABRICS_SPECIAL.CORE_ROOT : FABRICS_SPECIAL.CORE;
+}
 
 // ============================================================
 // PPE (Consumable Protection Equipment) — Excel Materials rows 12-16
@@ -683,7 +724,14 @@ const CHEMICALS = [
           // Excel H43: ROUNDUP(SUM(Fabrics_aux!H17:H26, H29) / 1.26, 0) — no HLU condition
           const w = lay.totalFabricWeightKg * 1.2; // Fabrics_aux H17:H26 already have 1.2 factor
           const coreKitKg = reg === 'Root' ? 10 : 11; // Root uses CORE_ROOT (Grade F, 10 kg/kit)
-          const c = lay.coreWeightKg > 0 ? Math.ceil(lay.coreWeightKg / coreKitKg) : 0; // H29 = CORE kits
+          // H29 = CORE kits. O core PVC (set/2026) tem kit próprio (6,262 kg),
+          // então entra com o divisor dele. Pilha sem PVC cai exatamente na
+          // conta de antes — nenhum número existente muda.
+          const byGrade = lay.coreWeightByGrade || {};
+          const pvcKg = byGrade.PVC || 0;
+          const petKg = lay.coreWeightKg - pvcKg;
+          const c = (petKg > 0 ? Math.ceil(petKg / coreKitKg) : 0)
+                  + (pvcKg > 0 ? Math.ceil(pvcKg / FABRICS_SPECIAL.CORE_PVC.kitKg) : 0);
           return Math.ceil((w + c) / 1.26);
       } },
     // MX catalog: 29237987 replaces BR 29276912 (same Prime 37 4kg std kit).

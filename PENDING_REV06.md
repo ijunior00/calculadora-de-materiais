@@ -222,3 +222,29 @@ como "pá de 55 m", não "rolo de 55 m"), basta trocar `kgPerUnit` na entrada
 
 **Também pendente:** a descrição oficial do `78000311`. Hoje o catálogo usa
 `BIAX 1800 G/M2 (roll 20.1 kg)`, montada a partir dos dados informados.
+
+
+---
+
+## AMPREG 30 com core PVC — contagem de kits ou área de core?
+
+Com o Grade A PVC (`78000056`) entrando em set/2026, apareceu uma pergunta que
+a REV05 não tinha como responder: o termo `H29` da fórmula do AMPREG 30 é uma
+**contagem de kits de core**, somada ao peso de tecido antes de dividir por
+1,26. Na REV05 só existia um tamanho de kit, então "contagem de kits" e "área
+de core" davam na mesma. Agora não dão: o kit de PVC tem 1,21 m² contra 2,4 m²
+do PET, então **a mesma área de core vira o dobro de kits** — e, pela fórmula,
+mais resina.
+
+Exemplo real (4,774 m² de core, V136, Middle): PET → 2 kits → 8 EA de AMPREG;
+PVC → 4 kits → 9 EA.
+
+**O que o app faz hoje:** segue a leitura literal da REV05 — conta kits, cada
+grade com o divisor dele. Escolhi esse lado porque erra para cima (sobra
+resina, não falta em campo) e porque não altera nenhum número de pilha sem PVC.
+
+**O que decidir:** se a resina deve acompanhar a **área de core** em vez da
+contagem de kits, a mudança é pequena — trocar o termo `c` no `calcQty` do
+`29157769` em [data.js](static/data.js) por algo baseado em m². Vale confirmar
+com quem consome a resina em campo se 4 painéis menores realmente pedem mais
+resina que 2 painéis maiores da mesma área total.

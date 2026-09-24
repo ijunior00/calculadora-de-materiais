@@ -884,6 +884,79 @@
         return tally(r);
     }
 
+    function testCoreGrades() {
+        console.group('Test 27: CORE PET vs CORE Grade A PVC (Sep 2026)');
+        const r = [];
+        const ply = () => ({ layerName: 'L', materialType: 'BIAX', gsm: '600' });
+        const petCore = { layerName: 'C', materialType: 'CORE', gsm: '' };
+        const pvcCore = { layerName: 'C', materialType: 'CORE', gsm: 'PVC' };
+        const dmg = { rstart: 10000, rend: 13000, x1: 0, x2: 1500, chordRef: 'LE' };
+        const steps = { Cleaning: 1, Grinding: 1, Bonding: 1, Lamination: 1, HLU: 1, Infusion: 1, Weighing: 1, Painting: 1, LEP: 0 };
+        const cores = (layers, region) =>
+            computeFullBOM(dmg, layers, steps, 'V136', region, 3).fabricItems.filter(i => i.material === 'CORE');
+
+        // Catálogo: painel 1000×1210 mm = 1,21 m²; 45 mm × 115 kg/m³;
+        // kitKg derivado dessas medidas (1.21 × 0.045 × 115 = 6,262 kg).
+        const pvc = FABRICS_SPECIAL.CORE_PVC;
+        r.push(pvc.sap === '78000056' ? pass('CORE_PVC = SAP 78000056') : fail('CORE_PVC SAP', pvc.sap));
+        r.push(assertEq('CORE_PVC kit area = 1.21 m² (1000×1210 mm)', pvc.kitAreaM2, 1.21));
+        r.push(assertEq('CORE_PVC thickness = 45 mm', pvc.thicknessM, 0.045));
+        r.push(assertEq('CORE_PVC density = 115 kg/m³', pvc.densityKgM3, 115));
+        r.push(assertEq('CORE_PVC kitKg derives from the panel', pvc.kitKg, 1.21 * 0.045 * 115, 0.01));
+        // O core de sempre continua sendo o PET, com o kit de 2,4 m².
+        r.push(FABRICS_SPECIAL.CORE.sap === '29114395' && FABRICS_SPECIAL.CORE.kitAreaM2 === 2.4
+            ? pass('PET core unchanged (29114395, 2.4 m²/kit)') : fail('PET core changed', JSON.stringify(FABRICS_SPECIAL.CORE)));
+
+        // Toda pá com core passa a oferecer as duas opções.
+        for (const model of BLADE_MODELS) {
+            const coreOpts = (BLADE_MATERIAL_MAP[model] || []).filter(m => m.materialType === 'CORE');
+            if (coreOpts.length === 0) continue;
+            const hasBoth = coreOpts.some(m => m.gsm === '' && m.label === 'CORE PET')
+                && coreOpts.some(m => m.gsm === 'PVC');
+            r.push(hasBoth ? pass(`${model}: CORE PET + CORE PVC in the picker`)
+                : fail(`${model}: missing a core option`, JSON.stringify(coreOpts)));
+        }
+
+        // coreSpecFor — escolher PVC é decisão explícita e vale inclusive no Root.
+        r.push(coreSpecFor('', 'Middle').sap === '29114395' ? pass('no choice + Middle → PET') : fail('default Middle', ''));
+        r.push(coreSpecFor('', 'Root').sap === '29217723' ? pass('no choice + Root → Grade F (unchanged)') : fail('default Root', ''));
+        r.push(coreSpecFor('PVC', 'Middle').sap === '78000056' ? pass('PVC + Middle → 78000056') : fail('PVC Middle', ''));
+        r.push(coreSpecFor('PVC', 'Root').sap === '78000056' ? pass('PVC + Root → 78000056 (choice wins)') : fail('PVC Root', ''));
+
+        // Ponta a ponta. Área de core = 4.774 m² nas duas pilhas.
+        const petItems = cores([ply(), petCore, ply()], 'Middle');
+        r.push(petItems.length === 1 && petItems[0].sap === '29114395'
+            ? pass('PET stack → one line, 29114395') : fail('PET stack', JSON.stringify(petItems)));
+        r.push(assertEq('PET qty = ceil(4.774 / 2.4) = 2', petItems[0].qty, 2));
+        const pvcItems = cores([ply(), pvcCore, ply()], 'Middle');
+        r.push(pvcItems.length === 1 && pvcItems[0].sap === '78000056'
+            ? pass('PVC stack → one line, 78000056') : fail('PVC stack', JSON.stringify(pvcItems)));
+        r.push(assertEq('PVC qty = ceil(4.774 / 1.21) = 4', pvcItems[0].qty, 4));
+        const rootPet = cores([ply(), petCore, ply()], 'Root');
+        r.push(rootPet[0].sap === '29217723' ? pass('Root + PET → Grade F (no behaviour change)') : fail('Root PET', rootPet[0].sap));
+        const rootPvc = cores([ply(), pvcCore, ply()], 'Root');
+        r.push(rootPvc[0].sap === '78000056' ? pass('Root + PVC → 78000056') : fail('Root PVC', rootPvc[0].sap));
+
+        // Pilha mista: uma linha por grade — somar tudo pediria quantidade errada.
+        const mixed = cores([ply(), petCore, pvcCore, ply()], 'Middle');
+        r.push(mixed.length === 2 ? pass('mixed stack → one line per grade') : fail('mixed stack lines', mixed.length));
+        r.push(mixed.some(i => i.sap === '29114395') && mixed.some(i => i.sap === '78000056')
+            ? pass('mixed stack lists both SAPs') : fail('mixed stack SAPs', JSON.stringify(mixed.map(i => i.sap))));
+
+        // AMPREG 30: pilha sem PVC tem de bater exatamente com a conta antiga.
+        const lay = computeLayup(dmg, [ply(), petCore, ply()]);
+        const ampreg = CHEMICALS.find(c => c.sap === '29157769');
+        const legacy = Math.ceil((lay.totalFabricWeightKg * 1.2 + Math.ceil(lay.coreWeightKg / 11)) / 1.26);
+        r.push(assertEq('AMPREG unchanged for a PET stack', ampreg.calcQty(steps, 3, lay, 'Middle'), legacy));
+        // E o grade viaja sem afetar geometria: mesmo layup com PET e com PVC.
+        const layPvc = computeLayup(dmg, [ply(), pvcCore, ply()]);
+        r.push(assertEq('core grade does not change the layup area', layPvc.coreAreaM2, lay.coreAreaM2, 1e-9));
+        r.push(assertEq('core grade does not change max length', layPvc.maxLength, lay.maxLength));
+        r.push(assertEq('PVC core weighs 45 mm × 115 kg/m³', layPvc.coreWeightKg, lay.coreAreaM2 * 0.045 * 115, 0.001));
+        console.groupEnd();
+        return tally(r);
+    }
+
     // ── Main runner ───────────────────────────────────────────────────────────
 
     window.runBOMTests = function () {
@@ -916,6 +989,7 @@
             testSerrationPartsForRadii,
             testInputSanityWarnings,
             testV112MissingLayers,
+            testCoreGrades,
         ];
         let total = { pass: 0, fail: 0 };
         for (const suite of suites) {

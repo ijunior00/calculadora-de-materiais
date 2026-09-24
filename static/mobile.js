@@ -213,6 +213,14 @@ function labelFor(l) {
     return alias ? `${base} · ${alias}` : base;
 }
 
+// Subtítulo da opção de material. O campo de variante guarda o gsm dos tecidos
+// e o grade dos cores (PET/PVC) — só o número leva "g/m²".
+function gsmLabel(gsm) {
+    const v = String(gsm || '');
+    if (!v) return 'core / panel';
+    return isNaN(v) ? v : v + ' g/m²';
+}
+
 function overlapFor(l) {
     let key;
     if (['CORE', 'SPL', 'CFM50', 'BALSA'].includes(l.materialType)) key = l.materialType;
@@ -248,7 +256,7 @@ function openLayerSheet(replaceIdx) {
         <div class="mat-opt" onclick="addLayer(${i})">
             <div>
                 <div class="mo-name">${m.label}${alias ? ` <span class="mo-alias">${alias}</span>` : ''}</div>
-                <div class="mo-gsm">${m.gsm ? m.gsm + ' g/m²' : 'core / panel'}</div>
+                <div class="mo-gsm">${gsmLabel(m.gsm)}</div>
             </div>
             <i class="bi bi-plus-circle" style="color:var(--vestas-blue);font-size:1.2rem"></i>
         </div>`;
