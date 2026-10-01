@@ -262,13 +262,14 @@ def draw_info_block(pdf: FPDF, data: BOMPayload):
     pdf.cell(95, ROW_H, f"  Reference: {data.chord_ref or 'LE'}", 1, 0, 'L', fill=True)
     pdf.cell(95, ROW_H, f"  X: {(data.x1 or 0):.1f} mm",         1, 1, 'L', fill=True)
 
-    two_col(f"Days of Repair: {data.days}",
-            f"Region: {data.blade_zone}", shade=True)
-
-    if data.estimated_days is not None:
-        repair_kind = "External" if data.is_external else "Internal"
-        two_col(f"Estimated Duration: {data.estimated_days} day(s)",
-                f"Repair Type: {repair_kind}", shade=False)
+    # Uma linha só de duração. Mostrar "Days of Repair" e "Estimated Duration"
+    # lado a lado confundia quem lê a lista em campo — ninguém sabia qual dos
+    # dois seguir (pedido do time, out/2026). Sai a duração efetiva: o app
+    # pré-preenche com a estimativa do motor e o planejador ajusta à mão se
+    # precisar, antes de baixar. A região já aparece como "Zone" no título.
+    right = (f"Repair Type: {'External' if data.is_external else 'Internal'}"
+             if data.is_external is not None else f"Region: {data.blade_zone}")
+    two_col(f"Estimated Duration of Repair: {data.days} day(s)", right, shade=True)
 
     # Damage description is ALWAYS rendered, even if empty — placeholder dash
     # keeps the report layout stable for downstream readers.
@@ -664,16 +665,17 @@ async def generate_excel(data: BOMPayload):
         ("Turbine model", data.turbine_model, "Region", data.blade_zone),
         ("Service Order", data.service_order or "-", "CIR Number", data.cir_number or "-"),
         ("Length (mm)", f"{span_length:.0f}", "Width (mm)", f"{data.width:.0f}"),
-        ("Days of repair", str(data.days), "Generated", time.strftime("%d/%m/%Y")),
+        # Só a duração efetiva — ver o comentário em draw_info_block.
+        ("Estimated Duration of Repair", f"{data.days} day(s)", "Generated", time.strftime("%d/%m/%Y")),
     ]
-    if data.estimated_days is not None:
+    if data.is_external is not None:
         info_rows.append((
-            "Estimated duration", f"{data.estimated_days} day(s)",
-            "Repair type", "External" if data.is_external else "Internal",
+            "Repair type", "External" if data.is_external else "Internal", "", "",
         ))
     # Empilhamento e etapas na cara da lista: quem revisa vê "Vacuum 6" sem
     # abrir a aba INPUTS (revisão Reynosa ago/2026 — listas de erosão de 30×20
     # mm saíram com 12 camadas e HLU=5 carregados da lesão anterior).
+    audit_row_idx = None
     if data.audit_inputs:
         ai = data.audit_inputs
         stack_counts: dict = {}
@@ -689,13 +691,19 @@ async def generate_excel(data: BOMPayload):
         for k in ("Weighing", "Painting", "Bonding", "LEP", "Grinding", "Cleaning"):
             if int(st.get(k) or 0):
                 step_bits.append(f"{k} {int(st[k])}")
+        audit_row_idx = len(info_rows)
         info_rows.append(("Layup stack", stack_txt, "Repair steps", " · ".join(step_bits)))
     r = 3
-    for k1, v1, k2, v2 in info_rows:
+    for i, (k1, v1, k2, v2) in enumerate(info_rows):
         ws.cell(r, 1, k1).font = bold
         ws.cell(r, 2, str(v1)).font = normal
         ws.cell(r, 3, k2).font = bold
         ws.cell(r, 4, str(v2)).font = normal
+        # Empilhamento e etapas são informação de sistema: a linha nasce OCULTA
+        # (pedido do time, out/2026). Quem precisa auditar faz Unhide na linha,
+        # como já acontece com a aba INPUTS.
+        if i == audit_row_idx:
+            ws.row_dimensions[r].hidden = True
         r += 1
     r += 1
 

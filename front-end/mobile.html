@@ -105,13 +105,14 @@
             <div class="m-section-title">Repair duration</div>
             <div class="m-card">
                 <div class="m-row-between">
-                    <label style="margin:0;font-size:0.9rem;font-weight:600;color:var(--text)">Days of repair</label>
+                    <label style="margin:0;font-size:0.9rem;font-weight:600;color:var(--text)">Estimated Duration of Repair</label>
                     <div class="m-stepper">
                         <button class="s-btn" onclick="changeDays(-1)" aria-label="decrease">−</button>
                         <span class="s-val" id="m-days-val">5</span>
                         <button class="s-btn" onclick="changeDays(1)" aria-label="increase">+</button>
                     </div>
                 </div>
+                <div class="hint" id="m-days-source" style="margin-top:6px">Calculated from the layup — change it if the job needs another duration.</div>
             </div>
 
             <div class="m-section-title">Reference (optional)</div>
@@ -182,11 +183,12 @@
             <div class="m-section-title">Estimated schedule</div>
             <div class="m-card">
                 <div class="m-row-between">
-                    <label style="margin:0;font-size:0.9rem;font-weight:600;color:var(--text)">Estimated duration</label>
+                    <label style="margin:0;font-size:0.9rem;font-weight:600;color:var(--text)">Estimated Duration of Repair</label>
                     <div class="m-days-estimate" id="m-days-estimate">— days</div>
                 </div>
                 <div class="hint" style="margin-top:6px">Max 6 plies per lamination (one lamination/day due to cure). Includes 1 contingency day.</div>
-                <button class="btn btn-ghost" style="margin-top:10px;padding:8px 12px;font-size:0.8rem" onclick="applyEstimatedDays()"><i class="bi bi-arrow-down-circle"></i> Use as days of repair</button>
+                <div class="hint" id="m-days-estimate-note" style="margin-top:6px"></div>
+                <button class="btn btn-ghost" id="m-days-reset" style="margin-top:10px;padding:8px 12px;font-size:0.8rem;display:none" onclick="resetDaysToEstimate()"><i class="bi bi-arrow-counterclockwise"></i> Reset to the calculated duration</button>
             </div>
 
             <div class="m-section-title">Active repair steps</div>
