@@ -7,6 +7,7 @@ let layerRows = [];
 let lastBOM = null;
 let currentResultTab = 'consumable_protection';
 let lastEstimatedDays = null;
+let daysManualOverride = false;   // true quando o usuário ajusta a duração à mão
 
 // Edit Mode state
 let editModeActive = false;
@@ -662,24 +663,49 @@ function isExternalRepair() {
     return el ? el.value === 'external' : false;
 }
 
+// Mexer no campo marca a duração como manual: a partir daí ela para de seguir
+// a estimativa do motor (out/2026 — o relatório passou a ter uma linha só de
+// duração, e ela precisa ser ajustável antes do download).
+function onDaysEdited() {
+    daysManualOverride = true;
+    renderDaysSource();
+    onRepairStepsChange();
+}
+
+/** Explica de onde veio a duração que está no campo. */
+function renderDaysSource() {
+    const src = document.getElementById('daysSource');
+    if (src) {
+        src.textContent = daysManualOverride
+            ? `Set manually${lastEstimatedDays ? ` — the layup calculates ${lastEstimatedDays} day(s).` : '.'}`
+            : 'Calculated from the layup — edit it if the job needs another duration.';
+    }
+    const reset = document.getElementById('daysReset');
+    if (reset) reset.style.display = daysManualOverride ? 'inline-flex' : 'none';
+}
+
+/** Volta a duração para a estimativa do motor. */
+function resetDaysToEstimate() {
+    daysManualOverride = false;
+    updateEstimatedDays();
+    onRepairStepsChange();
+}
+
 // Compute + display the estimated repair schedule (total days only).
+// Enquanto o usuário não edita o campo, a duração efetiva ACOMPANHA a
+// estimativa — é o que faz o rótulo "Estimated Duration of Repair" ser
+// verdadeiro no app e no relatório.
 function updateEstimatedDays() {
     const el = document.getElementById('estimatedDays');
     if (!el) return;
     const est = computeRepairDays(layerRows.filter(l => l.materialType), isExternalRepair());
     lastEstimatedDays = est.totalDays;
     el.textContent = `${est.totalDays} d`;
+    const input = document.getElementById('daysRepair');
+    if (input && !daysManualOverride && est.totalDays > 0) input.value = Math.max(1, est.totalDays);
+    renderDaysSource();
 }
 
-// Copy the estimate into the PPE-driving "Days of Repair" field.
-function applyEstimatedDays() {
-    updateEstimatedDays();
-    const input = document.getElementById('daysRepair');
-    if (input && lastEstimatedDays) {
-        input.value = Math.max(1, lastEstimatedDays);
-        onRepairStepsChange();
-    }
-}
 
 // ── STEP 4 ────────────────────────────────────────────────────────────
 function calculateAndShow() {

@@ -155,12 +155,39 @@ só compara **HLU + Infusion** (= Vacuum) com o número de ciclos de laminação
 que a pilha exige pela regra do estimador de prazo (`REPAIR_DAY_RULES`: até 6
 camadas por ciclo, núcleo separa ciclos). Se Vacuum for maior, o app mostra o
 aviso no Step 3, no resultado, e o Excel traz a linha *Layup stack / Repair
-steps* no cabeçalho para quem revisa a lista.
+steps* no cabeçalho para quem revisa a lista — numa **linha oculta** desde
+out/2026 (é informação de sistema; quem precisa auditar faz Unhide na linha,
+como já acontece com a aba INPUTS).
 
 Origem: revisão das listas de Reynosa (ago/2026). As listas de erosão saíram
 com 12 camadas + HLU 5 carregados da lesão anterior na mesma sessão — uma
 erosão de 30×20 mm virou 25 m de release film e 15 placas por grão. As
 fórmulas estavam certas para aquelas entradas; faltava o aviso.
+
+---
+
+### Duração do reparo — um número só
+
+Até set/2026 o relatório trazia **duas** linhas de prazo: *Days of repair* (o
+valor que alimenta o PPE) e *Estimated duration* (a estimativa do motor). Quem
+lia a lista em campo não sabia qual dos dois seguir. Desde out/2026 existe
+**uma linha só**, em PDF e Excel: **Estimated Duration of Repair**.
+
+Como funciona nas duas UIs:
+
+- o campo **nasce com a estimativa do motor** (`computeRepairDays`) e
+  acompanha a pilha enquanto ninguém o edita — é o que torna o rótulo
+  verdadeiro;
+- **pode ser ajustado à mão** antes do download; a partir do primeiro ajuste
+  ele para de seguir a estimativa, o app diz que o valor é manual e mostra
+  quanto o motor calculou;
+- um botão **Reset to the calculated duration** devolve o valor à estimativa;
+- reabrir um Excel pela aba INPUTS traz a duração como manual — é uma decisão
+  já tomada, não pode ser sobrescrita pela estimativa.
+
+O valor efetivo é o que continua alimentando as quantidades que dependem de
+dias (PPE, filtros, Tyvek). A estimativa do motor segue indo no payload como
+`estimated_days`, para registro.
 
 ---
 

@@ -14,6 +14,7 @@ const M = {
     length: null,     // mm  (spanwise, = |rend - rstart|)
     width: null,      // mm  (chordwise, = |x2 - x1|)
     days: 5,
+    daysManual: false,   // true quando o usuário ajusta a duração à mão
     isExternal: false, // internal repair by default; external adds a painting day
     // Esquema de pintura: base (cor única) + faixa opcional. Padrão = o que o
     // app emitia fixo antes de a escolha existir (cinza + faixa vermelha).
@@ -104,7 +105,7 @@ function renderStep1() {
     // numeric fields
     document.getElementById('m-length').value = M.length ?? '';
     document.getElementById('m-width').value = M.width ?? '';
-    document.getElementById('m-days-val').textContent = M.days;
+    renderDays();
     document.getElementById('m-so').value = M.so;
     document.getElementById('m-cir').value = M.cir;
     const t = document.getElementById('m-title'); if (t) t.value = M.title;
@@ -154,9 +155,33 @@ function onBladeChange(v) {
     M.blade = v;
 }
 
+// Mexer no stepper marca a duração como manual: a partir daí ela para de
+// seguir a estimativa do motor (out/2026 — o relatório passou a ter uma linha
+// só de duração, e ela precisa ser ajustável antes do download).
 function changeDays(delta) {
     M.days = Math.max(1, Math.min(60, M.days + delta));
-    document.getElementById('m-days-val').textContent = M.days;
+    M.daysManual = true;
+    renderDays();
+}
+
+/** Mostra a duração efetiva no stepper e explica de onde ela veio. */
+function renderDays() {
+    const dv = document.getElementById('m-days-val');
+    if (dv) dv.textContent = M.days;
+    const src = document.getElementById('m-days-source');
+    if (src) {
+        src.textContent = M.daysManual
+            ? `Set manually.${M.estimatedDays ? ` Calculated from the layup: ${M.estimatedDays} day${M.estimatedDays > 1 ? 's' : ''}.` : ''}`
+            : 'Calculated from the layup — change it if the job needs another duration.';
+    }
+    const note = document.getElementById('m-days-estimate-note');
+    if (note) {
+        note.textContent = M.daysManual
+            ? `Using ${M.days} day${M.days > 1 ? 's' : ''} — set manually, not the calculated value.`
+            : '';
+    }
+    const reset = document.getElementById('m-days-reset');
+    if (reset) reset.style.display = M.daysManual ? 'flex' : 'none';
 }
 
 function captureStep1() {
@@ -460,20 +485,23 @@ function setRepairType(isExternal) {
 }
 
 // Compute + display the estimated repair schedule (total days only).
+// Enquanto o usuário não mexe no stepper, a duração efetiva ACOMPANHA a
+// estimativa — é o que faz o rótulo "Estimated Duration of Repair" ser
+// verdadeiro no app e no relatório.
 function updateDaysEstimate() {
     const el = document.getElementById('m-days-estimate');
     if (!el) return;
     const est = computeRepairDays(M.layers.filter(l => l.materialType), M.isExternal);
     M.estimatedDays = est.totalDays;
-    el.textContent = `${est.totalDays} day${est.totalDays > 1 ? 's' : ''}`;
+    if (!M.daysManual && est.totalDays > 0) M.days = Math.max(1, Math.min(60, est.totalDays));
+    el.textContent = `${M.days} day${M.days > 1 ? 's' : ''}`;
+    renderDays();
 }
-// Copy the estimate into the PPE-driving "days of repair" field.
-function applyEstimatedDays() {
-    if (!M.estimatedDays) updateDaysEstimate();
-    M.days = Math.max(1, Math.min(60, M.estimatedDays || M.days));
-    const dv = document.getElementById('m-days-val');
-    if (dv) dv.textContent = M.days;
-    toast(`Days of repair set to ${M.days}.`, 'ok');
+// Volta a duração para a estimativa do motor.
+function resetDaysToEstimate() {
+    M.daysManual = false;
+    updateDaysEstimate();
+    toast(`Duration back to the calculated ${M.days} day${M.days > 1 ? 's' : ''}.`, 'ok');
 }
 
 function renderSteps() {
@@ -856,6 +884,7 @@ async function importFromExcel(fileInput) {
         M.length = data.length || null;
         M.width = data.width || null;
         M.days = data.days || 5;
+        M.daysManual = true;   // duração que veio do Excel é decisão já tomada
         M.isExternal = !!data.isExternal;
         M.paint = {
             base: (typeof TOPCOAT_COLORS !== 'undefined' && TOPCOAT_COLORS[data.paint?.base]) ? data.paint.base : 'RAL7035',
