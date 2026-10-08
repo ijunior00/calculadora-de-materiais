@@ -248,3 +248,29 @@ contagem de kits, a mudança é pequena — trocar o termo `c` no `calcQty` do
 `29157769` em [data.js](static/data.js) por algo baseado em m². Vale confirmar
 com quem consome a resina em campo se 4 painéis menores realmente pedem mais
 resina que 2 painéis maiores da mesma área total.
+
+
+---
+
+## Phase-out "Sep 26" — três pontas soltas
+
+A lista de descontinuação de set/2026 atingiu 5 itens do catálogo. Dois foram
+trocados e o veil ficou com os dois números. Sobraram três pendências:
+
+**1. UD 600 (`29007004`) e UD 1140 (`S096486`)** — a coluna *Followup material*
+diz apenas **"Refer Md04 Text"**, sem número, embora o status seja
+"Replacement Available / Proceed to replace". Ficaram **intocados de propósito**
+(regra: sem ID, não entra). Quando alguém consultar o texto MD04 no SAP e
+trouxer o número, é trocar em `FABRICS_DB.standard` — e, se o substituto vier
+em rolo, pedir também o peso do rolo.
+
+**2. Unidade do veil CFM50** — a planilha marca os substitutos
+(`29264730`/`29264731`) como **EA**, mas não veio tamanho de embalagem. O
+catálogo segue em **KG** (0,05 kg/unidade), que é o que a fórmula usa hoje.
+Quando o tamanho da embalagem aparecer, dá para converter.
+
+**3. Nenhum substituto em KG** — a preferência do time é comprar por quilo, não
+por rolo. Na lista inteira (133 itens com substituto) **só um** followup é
+vendido por KG (`29301909`, resina Sikaforce), e não é item nosso. Os dois
+tecidos trocados foram de KG para rolo porque não havia alternativa. Se
+aparecer versão em quilo desses biax, vale trocar de volta.

@@ -285,14 +285,19 @@ const FABRICS_DB = {
         // warehouse verification; keeping the official identity.
         'BIAX200':   { sap: '29238494',  desc: 'FABRIC BIAX 220 +45/-45 ST (roll 19m/5kg)',   unit: 'EA', kgPerUnit: 5 },
         'BIAX450':   { sap: '29219676',  desc: 'FGE806-A GE 450 +45/-45 HD (roll 35m/20kg)',  unit: 'EA', kgPerUnit: 20 },
-        'BIAX600':   { sap: 'S096476',   desc: 'BIAX 600G/M2 GLASS FABRIC',          unit: 'KG', kgPerUnit: 1 },
+        // Phase-out set/2026 (lista "Phased out - Sep 26", coluna Followup material):
+        // S096476 (KG) saiu de linha → 29219675, vendido em ROLO de 14 m / 5 kg
+        // (peso confirmado pelo time). qty = ceil(peso calculado ÷ 5).
+        'BIAX600':   { sap: '29219675',  desc: 'BIAX 600 G/M2 GLASS FABRIC (roll 14m/5kg)', unit: 'EA', kgPerUnit: 5 },
         // MX catalog (Formato_consumos_palas): sold as EA roll 18m/20kg (Feb-2026 list).
         // BR number was 29009736 (KG).
         'BIAX936':   { sap: '29238490',  desc: 'FABRIC,E-GLASS,BIAX 45,936 G/M2,1270 MM (roll 20kg)', unit: 'EA', kgPerUnit: 20 },
         'BIAX1000':  { sap: '29281859',  desc: 'FABRIC,E-GLASS,BIAX +/-45,1000 g/m2',unit: 'KG', kgPerUnit: 1 },
         // BIAX1200 E-glass (V136, Biax ±80° / T80). Distinct from the V150 HM
-        // BIAX1200 (SAP 29110146). SAP TBD until REV06.
-        'BIAX1200':  { sap: '29022487',  desc: 'BIAX +/-80 1200 g/m2 E-GLASS / T80', unit: 'KG', kgPerUnit: 1 },
+        // BIAX1200 (SAP 29110146).
+        // Phase-out set/2026: 29022487 (KG) saiu de linha → 29219674, vendido em
+        // ROLO de 13 m / 10,4 kg (peso confirmado pelo time).
+        'BIAX1200':  { sap: '29219674',  desc: 'BIAX +/-80 1200 g/m2 E-GLASS / T80 (roll 13m/10.4kg)', unit: 'EA', kgPerUnit: 10.4 },
         'UD600':     { sap: '29007004',  desc: 'FABRIC,E,UD 0 DEG,576 g/m2,1265 mm', unit: 'KG', kgPerUnit: 1 },
         'UD900':     { sap: '29017516',  desc: 'UD 0 900g S',                        unit: 'KG', kgPerUnit: 1 },
         // MX catalog: UD1140 consumed as S096486 (300mm winding, per KG). BR was 29017705.
@@ -348,7 +353,12 @@ const BLADE_FABRIC_OVERRIDES = {
 };
 
 const FABRICS_SPECIAL = {
-    'CFM50':     { sap: '29023582', desc: 'SURFACE VEIL GLASSTISSUE 50GSM',    unit: 'KG', kgPerUnit: 0.05 },
+    // Phase-out set/2026: a coluna Followup trouxe DOIS números para o veil
+    // ("29264730 & 29264731") em vez de um. Por decisão do time os dois vão na
+    // lista separados por " / " — quem compra escolhe o disponível. A unidade
+    // segue KG (a planilha diz EA, mas não veio tamanho de embalagem; não se
+    // inventa) — ver PENDING_REV06.md.
+    'CFM50':     { sap: '29264730 / 29264731', desc: 'SURFACE VEIL GLASSTISSUE 50GSM', unit: 'KG', kgPerUnit: 0.05 },
     // MX catalog: 10m patch (29180312) replaces the 5m one (BR 29180313).
     // rollArea = 10 × 1.15 = 11.5 m².
     'SPL':       { sap: '29180312', desc: 'SPL REPAIR PATCH 10000 x 1150 MM',  unit: 'EA', rollArea: 11.5 },

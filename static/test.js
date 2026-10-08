@@ -198,7 +198,10 @@
         console.group('Test 6: Standard (Vidro E) fabric SAPs match REV05');
         const b = bom(V90_MID_3D);
         const r = [
-            assertItemPresent('BIAX600 → S096476',  b.fabricItems, 'S096476'),
+            // Re-baseline set/2026: S096476 entrou na lista "Phased out - Sep 26"
+            // e a coluna Followup material aponta 29219675 (rolo 14 m / 5 kg).
+            assertItemPresent('BIAX600 → 29219675 (phase-out set/2026)', b.fabricItems, '29219675'),
+            assertItemAbsent('Phased-out BIAX600 S096476 absent', b.fabricItems, 'S096476'),
             // MX catalog: TRIAX1200 E now the 20kg roll 29250986 (BR was 29017700)
             assertItemPresent('TRIAX1200 → 29250986 (MX roll)', b.fabricItems, '29250986'),
             assertItemAbsent('Old BR TRIAX1200 29017700 absent', b.fabricItems, '29017700'),
@@ -957,6 +960,43 @@
         return tally(r);
     }
 
+    function testPhaseOutSep2026() {
+        console.group('Test 28: phase-out "Sep 26" — substituições da coluna Followup material');
+        const r = [];
+        // Dos 173 SAPs do catálogo, 5 apareceram na lista. Três ficaram de fora
+        // de propósito (sem ID único na coluna N) e dois foram trocados.
+        const F = FABRICS_DB.standard;
+        r.push(F.BIAX600.sap === '29219675' && F.BIAX600.unit === 'EA' && F.BIAX600.kgPerUnit === 5
+            ? pass('BIAX600 = 29219675, EA, 5 kg/roll (14 m)') : fail('BIAX600 wrong', JSON.stringify(F.BIAX600)));
+        r.push(F.BIAX1200.sap === '29219674' && F.BIAX1200.unit === 'EA' && F.BIAX1200.kgPerUnit === 10.4
+            ? pass('BIAX1200 = 29219674, EA, 10.4 kg/roll (13 m)') : fail('BIAX1200 wrong', JSON.stringify(F.BIAX1200)));
+        r.push(FABRICS_SPECIAL.CFM50.sap === '29264730 / 29264731' && FABRICS_SPECIAL.CFM50.unit === 'KG'
+            ? pass('CFM50 lists both followups, still KG') : fail('CFM50 wrong', JSON.stringify(FABRICS_SPECIAL.CFM50)));
+        // Os phased-out não podem reaparecer em lugar nenhum do catálogo.
+        const all = JSON.stringify([FABRICS_DB, FABRICS_SPECIAL]);
+        for (const dead of ['S096476', '29022487', '29023582']) {
+            r.push(!all.includes(`"${dead}"`) ? pass(`phased-out ${dead} gone from the catalog`)
+                : fail(`phased-out ${dead} still in the catalog`, ''));
+        }
+        // Sem ID único na coluna N → ficaram intocados de propósito.
+        r.push(FABRICS_DB.standard.UD600.sap === '29007004'
+            ? pass('UD600 untouched (followup was "Refer Md04 Text")') : fail('UD600 changed', F.UD600.sap));
+        r.push(FABRICS_DB.standard.UD1140.sap === 'S096486'
+            ? pass('UD1140 untouched (followup was "Refer Md04 Text")') : fail('UD1140 changed', F.UD1140.sap));
+        // Ponta a ponta: o rolo tem de virar quantidade inteira pelo peso certo.
+        const dmg = { rstart: 10000, rend: 12000, x1: 0, x2: 500, chordRef: 'LE' };
+        const steps = { Cleaning: 1, Grinding: 1, Bonding: 1, Lamination: 1, HLU: 1, Infusion: 1, Weighing: 1, Painting: 1, LEP: 0 };
+        const b = computeFullBOM(dmg, [{ layerName: 'L1', materialType: 'BIAX', gsm: '600' }], steps, 'V90', 'Middle', 3);
+        const biax = b.fabricItems.find(i => i.material === 'BIAX600');
+        const lay = computeLayup(dmg, [{ layerName: 'L1', materialType: 'BIAX', gsm: '600' }]);
+        const expected = Math.ceil(lay.totalFabricWeightKg * 1.2 / 5);
+        r.push(biax && biax.unit === 'EA' && biax.qty === expected
+            ? pass(`BIAX600 BOM = ${expected} roll(s) = ceil(kg × 1.2 ÷ 5)`)
+            : fail('BIAX600 roll qty', JSON.stringify(biax)));
+        console.groupEnd();
+        return tally(r);
+    }
+
     // ── Main runner ───────────────────────────────────────────────────────────
 
     window.runBOMTests = function () {
@@ -990,6 +1030,7 @@
             testInputSanityWarnings,
             testV112MissingLayers,
             testCoreGrades,
+            testPhaseOutSep2026,
         ];
         let total = { pass: 0, fail: 0 };
         for (const suite of suites) {
