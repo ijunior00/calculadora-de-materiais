@@ -458,6 +458,42 @@ Constantes em `REPAIR_DAY_RULES` (data.js). Interno/externo vem de um toggle exp
 ### Referências de desenho por versão de pá
 `BLADE_DOCUMENT_REFERENCES` (22 versões) — consulta independente do modelo do BOM. Aparece opcionalmente no relatório PDF/Excel.
 
+### Phase-out "Sep 26" — coluna Followup material
+
+A lista oficial de materiais em descontinuação (`Phased out - Sep 26`, aba
+`Ark1`) traz, por item, a coluna **Followup material** com o substituto. Dos
+**173 SAPs do nosso catálogo, 5** aparecem na lista — os outros 168 não foram
+afetados. Quatro itens, aliás, já estão no número novo: a migração MX anterior
+colocou o catálogo à frente da lista (`S096052`→`29232947` peel ply,
+`29009736`→`29238490` biax 936, `29302773`→`S096521` release film,
+`225262`→`60059753` saco de lixo).
+
+**Trocados** (peso do rolo confirmado pelo time, out/2026):
+
+| Material | De (phased out) | Para (Followup) | Unidade |
+|---|---|---|---|
+| BIAX 600 | `S096476` (KG) | **`29219675`** | EA — rolo 14 m / **5 kg** |
+| BIAX ±80 1200 / T80 | `29022487` (KG) | **`29219674`** | EA — rolo 13 m / **10,4 kg** |
+| Veil CFM50 | `29023582` (KG) | **`29264730 / 29264731`** | KG (inalterada) |
+
+O veil veio com **dois** números na coluna Followup; por decisão do time os
+dois vão na lista separados por `/` e quem compra usa o disponível.
+
+**Deixados de fora de propósito** — a coluna Followup não trouxe um ID, e a
+regra é não encher a lista de material sem número:
+
+| Material | SAP | Followup na planilha |
+|---|---|---|
+| UD 600 | `29007004` | "Refer Md04 Text" |
+| UD 1140 | `S096486` | "Refer Md04 Text" |
+
+> **Atenção à unidade.** Os dois tecidos trocados saíram de **KG para ROLO**.
+> A quantidade passa a ser `ceil(peso calculado ÷ peso do rolo)`, ou seja,
+> arredonda para rolo inteiro: um reparo que pedia *7 kg* de biax 600 agora
+> pede *2 rolos* (10 kg). Não havia alternativa em KG — na lista inteira
+> (133 itens com substituto) **só um** substituto é vendido por quilo, e não é
+> nenhum dos nossos.
+
 ### Catálogo México (Formato_consumos_palas.xlsx)
 
 A operação migrou do Brasil para o México; o log de consumo MX (2.223 linhas, 153 itens) foi cruzado com o catálogo e os números abaixo foram substituídos (preferindo o novo NUM ITEM do México e respeitando a unidade da coluna K). Nome em inglês prevalece quando o mesmo número tinha grafias diferentes.
