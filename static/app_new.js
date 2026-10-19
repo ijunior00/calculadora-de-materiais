@@ -406,7 +406,8 @@ function renderLayerTable() {
             const val = m.materialType + '|' + m.gsm;
             const currentVal = row.materialType + '|' + row.gsm;
             const sel = val === currentVal ? ' selected' : '';
-            matOpts += `<option value="${val}"${sel}>${m.label}</option>`;
+            const noItem = (typeof fabricSubstitutionFor === 'function') && fabricSubstitutionFor(m.materialType, m.gsm);
+            matOpts += `<option value="${val}"${sel}>${m.label}${noItem ? ` (no item no. → ${noItem.summary})` : ''}</option>`;
         }
 
         tr.innerHTML = `
@@ -476,6 +477,22 @@ function updateLayerMaterial(idx, combinedVal) {
         return;
     }
     const [matType, gsm] = combinedVal.split('|');
+    // Material sem número de item (UD 1140, depois do phase-out out/2026):
+    // avisa e, se o usuário confirmar, a linha vira as telas da substituição.
+    const sub = (typeof fabricSubstitutionFor === 'function') ? fabricSubstitutionFor(matType, gsm) : null;
+    if (sub) {
+        if (!confirm(sub.message)) { renderLayerTable(); return; }
+        const [first, ...rest] = sub.replaceWith;
+        layerRows[idx].materialType = first.materialType;
+        layerRows[idx].gsm = first.gsm;
+        layerRows.splice(idx + 1, 0, ...rest.map(p => ({
+            layerName: '', materialType: p.materialType, gsm: p.gsm, order: layerRows[idx].order,
+        })));
+        layerRows.forEach((l, i) => { if (!l.layerName) l.layerName = `Layer ${i + 1}`; });
+        renderLayerTable();
+        recalculateLayup();
+        return;
+    }
     layerRows[idx].materialType = matType;
     layerRows[idx].gsm = gsm;
     renderLayerTable();

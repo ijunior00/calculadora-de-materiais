@@ -240,6 +240,12 @@ function labelFor(l) {
 
 // Subtítulo da opção de material. O campo de variante guarda o gsm dos tecidos
 // e o grade dos cores (PET/PVC) — só o número leva "g/m²".
+// Marca no seletor o material que não tem número de item e vai virar outro.
+function subHint(m) {
+    const sub = (typeof fabricSubstitutionFor === 'function') ? fabricSubstitutionFor(m.materialType, m.gsm) : null;
+    return sub ? ` \u00b7 no item no. \u2192 ${sub.summary}` : '';
+}
+
 function gsmLabel(gsm) {
     const v = String(gsm || '');
     if (!v) return 'core / panel';
@@ -281,7 +287,7 @@ function openLayerSheet(replaceIdx) {
         <div class="mat-opt" onclick="addLayer(${i})">
             <div>
                 <div class="mo-name">${m.label}${alias ? ` <span class="mo-alias">${alias}</span>` : ''}</div>
-                <div class="mo-gsm">${gsmLabel(m.gsm)}</div>
+                <div class="mo-gsm">${gsmLabel(m.gsm)}${subHint(m)}</div>
             </div>
             <i class="bi bi-plus-circle" style="color:var(--vestas-blue);font-size:1.2rem"></i>
         </div>`;
@@ -322,14 +328,32 @@ function addLayer(allowedIdx) {
     const allowed = BLADE_MATERIAL_MAP[M.blade] || [];
     const m = allowed[allowedIdx];
     if (!m) return;
+    // Material sem número de item (UD 1140, depois do phase-out out/2026):
+    // avisa e, se o usuário confirmar, entram as telas da substituição.
+    const sub = (typeof fabricSubstitutionFor === 'function') ? fabricSubstitutionFor(m.materialType, m.gsm) : null;
+    let picks = [{ materialType: m.materialType, gsm: m.gsm }];
+    if (sub) {
+        if (!confirm(sub.message)) { _replaceIdx = null; closeLayerSheet(); return; }
+        picks = sub.replaceWith.map(x => ({ materialType: x.materialType, gsm: x.gsm }));
+    }
+    const what = sub ? sub.summary : m.label;
     if (_replaceIdx !== null) {
-        const layer = M.layers[_replaceIdx];
+        const at = _replaceIdx;
+        const layer = M.layers[at];
         if (layer) {
             // Mantém posição, nome e overrides de geometria (posições absolutas
             // que o usuário escolheu); só o material muda.
-            layer.materialType = m.materialType;
-            layer.gsm = m.gsm;
-            toast(`Layer ${_replaceIdx + 1} → ${m.label}.`, 'ok');
+            layer.materialType = picks[0].materialType;
+            layer.gsm = picks[0].gsm;
+            // Substituição com mais de uma tela: as demais entram logo abaixo,
+            // sem overrides (a geometria herdada era da camada trocada).
+            if (picks.length > 1) {
+                M.layers.splice(at + 1, 0, ...picks.slice(1).map((p, i) => ({
+                    layerName: `${layer.layerName || `Layer ${at + 1}`} (${i + 2})`,
+                    materialType: p.materialType, gsm: p.gsm,
+                })));
+            }
+            toast(`Layer ${at + 1} → ${what}.`, 'ok');
         }
         _replaceIdx = null;
         closeLayerSheet();
@@ -338,11 +362,13 @@ function addLayer(allowedIdx) {
     }
     const n = _layerQty;
     for (let k = 0; k < n; k++) {
-        M.layers.push({ layerName: `Layer ${M.layers.length + 1}`, materialType: m.materialType, gsm: m.gsm });
+        for (const p of picks) {
+            M.layers.push({ layerName: `Layer ${M.layers.length + 1}`, materialType: p.materialType, gsm: p.gsm });
+        }
     }
     closeLayerSheet();
     renderLayers();
-    if (n > 1) toast(`${n} layers of ${m.label} added.`, 'ok');
+    if (n > 1 || picks.length > 1) toast(`${n * picks.length} layers of ${what} added.`, 'ok');
 }
 function removeLayer(i) {
     M.layers.splice(i, 1);

@@ -942,6 +942,36 @@ const FIELD_RULES = [
 ];
 
 // Fiber substitution (945550 §9 Table 9.1).
+// ── Tecidos sem número de item: substituição guiada ──────────────────────────
+// A lista de phase-out de out/2026 (`phase_Out_to_new_material`) tirou o
+// UD 1140 (S096486) de linha, e o substituto que ela aponta (29238496) é um
+// UD de **600 g/m²** — gramatura diferente, então não é troca de número: o
+// reparo passa a levar DUAS telas de UD 600 no lugar de uma de 1140. É a
+// substituição que FIBER_SUBSTITUTIONS já documentava (2 × 576 = 1152 g/m²).
+// Decisão do time (out/2026): ao escolher UD 1140 a UI avisa que não há número
+// de item e, se o usuário confirmar, acrescenta as duas telas de UD 600.
+const FABRIC_ITEM_SUBSTITUTIONS = {
+    'UD1140': {
+        summary: '2× UD 600',
+        message: 'There is no item number for UD 1140 — it was phased out and the '
+               + 'follow-up is a 600 g/m2 fabric, not a 1140.\n\n'
+               + 'It can be replaced by 2x UD 600 (2 x 576 = 1152 g/m2), the substitution '
+               + 'already approved in the repair guide.\n\nAdd the two UD 600 layers instead?',
+        replaceWith: [
+            { materialType: 'UD', gsm: '600' },
+            { materialType: 'UD', gsm: '600' },
+        ],
+    },
+};
+
+/** Substituição guiada de um material sem número de item, ou null. */
+function fabricSubstitutionFor(materialType, gsm) {
+    if (!materialType) return null;
+    const key = (materialType === 'CORE' || materialType === 'SPL' || materialType === 'CFM50' || materialType === 'BALSA')
+        ? materialType : materialType + (gsm || '');
+    return FABRIC_ITEM_SUBSTITUTIONS[key] || null;
+}
+
 const FIBER_SUBSTITUTIONS = [
     { original: 'Biax 936 g/m²',   alternative: 'Biax 600 + Biax 300 g/m²',    notes: 'Sum = 900 g/m² (equivalent)' },
     { original: 'UD 1140 g/m²',    alternative: '2 × UD 600 g/m²',             notes: 'Sum = 1200 g/m² (slightly above)' },
