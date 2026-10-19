@@ -974,13 +974,15 @@
             ? pass('CFM50 lists both followups, still KG') : fail('CFM50 wrong', JSON.stringify(FABRICS_SPECIAL.CFM50)));
         // Os phased-out não podem reaparecer em lugar nenhum do catálogo.
         const all = JSON.stringify([FABRICS_DB, FABRICS_SPECIAL]);
-        for (const dead of ['S096476', '29022487', '29023582']) {
+        for (const dead of ['S096476', '29022487', '29023582', '29007004']) {
             r.push(!all.includes(`"${dead}"`) ? pass(`phased-out ${dead} gone from the catalog`)
                 : fail(`phased-out ${dead} still in the catalog`, ''));
         }
         // Sem ID único na coluna N → ficaram intocados de propósito.
-        r.push(FABRICS_DB.standard.UD600.sap === '29007004'
-            ? pass('UD600 untouched (followup was "Refer Md04 Text")') : fail('UD600 changed', F.UD600.sap));
+        // Re-baseline out/2026: o "Refer Md04 Text" da lista de set/26 foi
+        // resolvido — o time confirmou 29238496 (rolo 14 m / 6,17 kg).
+        r.push(F.UD600.sap === '29238496' && F.UD600.unit === 'EA' && F.UD600.kgPerUnit === 6.17
+            ? pass('UD600 = 29238496, EA, 6.17 kg/roll (14 m × 600 mm)') : fail('UD600 wrong', JSON.stringify(F.UD600)));
         r.push(FABRICS_DB.standard.UD1140.sap === 'S096486'
             ? pass('UD1140 untouched (followup was "Refer Md04 Text")') : fail('UD1140 changed', F.UD1140.sap));
         // Ponta a ponta: o rolo tem de virar quantidade inteira pelo peso certo.
@@ -1027,7 +1029,12 @@
         const b = computeFullBOM(dmg, [{ layerName: 'L1', materialType: 'UD', gsm: '600' },
                                        { layerName: 'L2', materialType: 'UD', gsm: '600' }], steps, 'V110', 'Middle', 3);
         const ud = b.fabricItems.find(i => i.material === 'UD600');
-        r.push(ud && ud.sap === '29007004' ? pass('substituted layers order UD600 29007004') : fail('UD600 SAP', ud && ud.sap));
+        // A substituição desemboca no UD 600 que ESTÁ em linha (29238496),
+        // não mais num número em phase-out — fechado em out/2026.
+        r.push(ud && ud.sap === '29238496' && ud.unit === 'EA'
+            ? pass('substituted layers order UD600 29238496 (in-line roll)') : fail('UD600 SAP', ud && ud.sap));
+        r.push(ud && ud.qty === Math.ceil(two600.totalFabricWeightKg * 1.2 / 6.17)
+            ? pass(`2× UD 600 = ${ud.qty} roll(s) = ceil(kg × 1.2 ÷ 6.17)`) : fail('UD600 roll qty', ud && ud.qty));
         // A substituição já era documentada no guia de reparo.
         r.push(FIBER_SUBSTITUTIONS.some(x => /UD 1140/.test(x.original) && /2 . UD 600/.test(x.alternative))
             ? pass('FIBER_SUBSTITUTIONS already documented it') : fail('guide row missing', ''));

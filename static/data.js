@@ -298,7 +298,12 @@ const FABRICS_DB = {
         // Phase-out set/2026: 29022487 (KG) saiu de linha → 29219674, vendido em
         // ROLO de 13 m / 10,4 kg (peso confirmado pelo time).
         'BIAX1200':  { sap: '29219674',  desc: 'BIAX +/-80 1200 g/m2 E-GLASS / T80 (roll 13m/10.4kg)', unit: 'EA', kgPerUnit: 10.4 },
-        'UD600':     { sap: '29007004',  desc: 'FABRIC,E,UD 0 DEG,576 g/m2,1265 mm', unit: 'KG', kgPerUnit: 1 },
+        // Phase-out out/2026: 29007004 (KG) saiu de linha → 29238496, vendido em
+        // ROLO de 14 m × 600 mm, peso líquido 6,17 kg (confirmado pelo time).
+        // qty = ceil(peso calculado ÷ 6.17). Nota: 14 m × 0,6 m × 600 g/m² daria
+        // 5,04 kg; o peso líquido informado é maior — usamos o número do time,
+        // não a conta, porque é ele que vale no pedido.
+        'UD600':     { sap: '29238496',  desc: 'FABRIC,E-GLASS,UD 0,600 g/m2,600 mm (roll 14m/6.17kg)', unit: 'EA', kgPerUnit: 6.17 },
         'UD900':     { sap: '29017516',  desc: 'UD 0 900g S',                        unit: 'KG', kgPerUnit: 1 },
         // MX catalog: UD1140 consumed as S096486 (300mm winding, per KG). BR was 29017705.
         'UD1140':    { sap: 'S096486',   desc: 'UD 1140GSM 300MM',                   unit: 'KG', kgPerUnit: 1 },

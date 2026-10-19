@@ -479,13 +479,14 @@ colocou o catálogo à frente da lista (`S096052`→`29232947` peel ply,
 O veil veio com **dois** números na coluna Followup; por decisão do time os
 dois vão na lista separados por `/` e quem compra usa o disponível.
 
-**Deixados de fora de propósito** — a coluna Followup não trouxe um ID, e a
-regra é não encher a lista de material sem número:
+**Deixados de fora na ocasião** — a coluna Followup não trouxe um ID, e a
+regra é não encher a lista de material sem número. **Ambos foram resolvidos
+depois**, em out/2026 (ver as seções seguintes):
 
-| Material | SAP | Followup na planilha |
-|---|---|---|
-| UD 600 | `29007004` | "Refer Md04 Text" |
-| UD 1140 | `S096486` | "Refer Md04 Text" |
+| Material | SAP | Followup na planilha | Desfecho |
+|---|---|---|---|
+| UD 600 | `29007004` | "Refer Md04 Text" | → `29238496` (rolo 14 m / 6,17 kg) |
+| UD 1140 | `S096486` | "Refer Md04 Text" | → substituição guiada por 2× UD 600 |
 
 > **Atenção à unidade.** Os dois tecidos trocados saíram de **KG para ROLO**.
 > A quantidade passa a ser `ceil(peso calculado ÷ peso do rolo)`, ou seja,
@@ -514,11 +515,24 @@ as duas telas entram automaticamente no lugar (no desktop, a linha vira duas).
 (2 × 576 = 1152 g/m², ligeiramente acima dos 1140). O mecanismo é genérico:
 `FABRIC_ITEM_SUBSTITUTIONS` em [`data.js`](static/data.js).
 
-> **Ressalva.** O UD 600 para onde a substituição aponta (`29007004`) também
-> consta como phased out na lista de set/26, e lá o substituto dele aparece
-> apenas como "Refer Md04 Text" — sem número. Ou seja, a substituição resolve o
-> UD 1140 mas cai num item que ainda precisa de definição. Registrado em
-> `PENDING_REV06.md`.
+**O UD 600 de destino também foi trocado (out/2026).** Ele próprio estava em
+phase-out (`29007004`), e o time confirmou o substituto: **`29238496`** —
+*FABRIC,E-GLASS,UD 0, 600 g/m², 600 mm*, vendido em **rolo de 14 m, peso
+líquido 6,17 kg**. Com isso a substituição do UD 1140 desemboca num item em
+linha, e não mais num número descontinuado.
+
+| Material | De | Para | Unidade | Pás |
+|---|---|---|---|---|
+| UD 600 | `29007004` (KG) | **`29238496`** | EA — rolo 14 m × 600 mm / **6,17 kg** | V82, V110, V136 |
+
+> **Atenção à unidade.** Mais um tecido saindo de KG para rolo: a quantidade
+> arredonda para rolo inteiro. Um reparo que pedia *2 kg* de UD 600 passa a
+> pedir *1 rolo* (6,17 kg). Vale também para as duas telas da substituição do
+> UD 1140 — as duas somadas ainda cabem em 1 rolo nos reparos médios.
+>
+> Nota de conferência: 14 m × 0,6 m × 600 g/m² daria 5,04 kg, enquanto o peso
+> líquido informado é 6,17 kg. O catálogo usa o número do time, não a conta,
+> porque é o peso líquido que vale no pedido.
 
 **Conflito entre as duas listas — veil CFM50 (`29023582`).** A lista de set/26
 aponta `29264730 & 29264731`; esta aponta `29227309`, que é **BREATEX** — o
