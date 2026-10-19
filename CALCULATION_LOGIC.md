@@ -494,6 +494,38 @@ regra é não encher a lista de material sem número:
 > (133 itens com substituto) **só um** substituto é vendido por quilo, e não é
 > nenhum dos nossos.
 
+### Phase-out "to new material" (out/2026) — UD 1140 sem número de item
+
+A segunda lista de descontinuação (`phase_Out_to_new_material`) tem 28 pares
+*phased out → novo*. Cruzada com o catálogo: **1** item nosso ainda estava no
+número velho, **10** já tinham migrado (o catálogo estava à frente da lista) e
+**17** não nos dizem respeito.
+
+O único atingido foi o **UD 1140 (`S096486`)**, usado em **V82 e V110** — e não
+deu para trocar o número, porque o substituto que a lista aponta (`29238496`)
+é um **UD de 600 g/m²**, não de 1140. Trocar só o SAP faria o app pedir um
+tecido de 600 calculando o peso a 1140.
+
+**Solução adotada (decisão do time, out/2026):** o UD 1140 continua no seletor,
+marcado com `no item no. → 2× UD 600`. Ao escolhê-lo a UI avisa que não existe
+número de item e pergunta se pode prosseguir com **2× UD 600**; confirmando,
+as duas telas entram automaticamente no lugar (no desktop, a linha vira duas).
+É a substituição que o guia de reparo já documentava em `FIBER_SUBSTITUTIONS`
+(2 × 576 = 1152 g/m², ligeiramente acima dos 1140). O mecanismo é genérico:
+`FABRIC_ITEM_SUBSTITUTIONS` em [`data.js`](static/data.js).
+
+> **Ressalva.** O UD 600 para onde a substituição aponta (`29007004`) também
+> consta como phased out na lista de set/26, e lá o substituto dele aparece
+> apenas como "Refer Md04 Text" — sem número. Ou seja, a substituição resolve o
+> UD 1140 mas cai num item que ainda precisa de definição. Registrado em
+> `PENDING_REV06.md`.
+
+**Conflito entre as duas listas — veil CFM50 (`29023582`).** A lista de set/26
+aponta `29264730 & 29264731`; esta aponta `29227309`, que é **BREATEX** — o
+respirador que já temos no catálogo como consumível, e que não cumpre a função
+de um veil de infusão. Por decisão do time o catálogo **mantém**
+`29264730 / 29264731`.
+
 ### Catálogo México (Formato_consumos_palas.xlsx)
 
 A operação migrou do Brasil para o México; o log de consumo MX (2.223 linhas, 153 itens) foi cruzado com o catálogo e os números abaixo foram substituídos (preferindo o novo NUM ITEM do México e respeitando a unidade da coluna K). Nome em inglês prevalece quando o mesmo número tinha grafias diferentes.

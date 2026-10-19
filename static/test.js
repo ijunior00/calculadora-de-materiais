@@ -997,6 +997,44 @@
         return tally(r);
     }
 
+    function testUD1140Substitution() {
+        console.group('Test 29: UD 1140 sem número de item → 2× UD 600 (phase-out out/2026)');
+        const r = [];
+        const sub = fabricSubstitutionFor('UD', '1140');
+        r.push(sub ? pass('UD 1140 has a guided substitution') : fail('no substitution for UD 1140', ''));
+        r.push(sub && sub.replaceWith.length === 2
+            && sub.replaceWith.every(p => p.materialType === 'UD' && p.gsm === '600')
+            ? pass('substitution is 2× UD 600') : fail('wrong substitution', JSON.stringify(sub && sub.replaceWith)));
+        r.push(sub && sub.summary === '2× UD 600' ? pass('summary shown in the picker') : fail('summary', sub && sub.summary));
+        // A mensagem precisa dizer o essencial: não há número de item.
+        r.push(sub && /no item number/i.test(sub.message)
+            ? pass('message states there is no item number') : fail('message text', sub && sub.message));
+        // Nenhum outro material pode ter caído na regra por engano.
+        for (const [t, g] of [['UD','600'], ['UD','1200'], ['BIAX','600'], ['TRIAX','1200'], ['CORE','']]) {
+            r.push(!fabricSubstitutionFor(t, g)
+                ? pass(`${t} ${g || '-'} has no substitution (unaffected)`) : fail(`${t}${g} wrongly substituted`, ''));
+        }
+        // 2 × UD 600 ≈ UD 1140: a substituição tem de ser equivalente em peso.
+        const dmg = { rstart: 10000, rend: 12000, x1: 0, x2: 500, chordRef: 'LE' };
+        const one1140 = computeLayup(dmg, [{ layerName: 'L1', materialType: 'UD', gsm: '1140' }]);
+        const two600 = computeLayup(dmg, [{ layerName: 'L1', materialType: 'UD', gsm: '600' },
+                                          { layerName: 'L2', materialType: 'UD', gsm: '600' }]);
+        r.push(two600.totalFabricWeightKg > one1140.totalFabricWeightKg
+            ? pass(`2× UD 600 weighs slightly more than UD 1140 (${two600.totalFabricWeightKg.toFixed(2)} vs ${one1140.totalFabricWeightKg.toFixed(2)} kg)`)
+            : fail('substitution lighter than the original', ''));
+        // E a troca sai no BOM como UD600, com o número que está em linha.
+        const steps = { Cleaning: 1, Grinding: 1, Bonding: 1, Lamination: 1, HLU: 1, Infusion: 1, Weighing: 1, Painting: 1, LEP: 0 };
+        const b = computeFullBOM(dmg, [{ layerName: 'L1', materialType: 'UD', gsm: '600' },
+                                       { layerName: 'L2', materialType: 'UD', gsm: '600' }], steps, 'V110', 'Middle', 3);
+        const ud = b.fabricItems.find(i => i.material === 'UD600');
+        r.push(ud && ud.sap === '29007004' ? pass('substituted layers order UD600 29007004') : fail('UD600 SAP', ud && ud.sap));
+        // A substituição já era documentada no guia de reparo.
+        r.push(FIBER_SUBSTITUTIONS.some(x => /UD 1140/.test(x.original) && /2 . UD 600/.test(x.alternative))
+            ? pass('FIBER_SUBSTITUTIONS already documented it') : fail('guide row missing', ''));
+        console.groupEnd();
+        return tally(r);
+    }
+
     // ── Main runner ───────────────────────────────────────────────────────────
 
     window.runBOMTests = function () {
@@ -1031,6 +1069,7 @@
             testV112MissingLayers,
             testCoreGrades,
             testPhaseOutSep2026,
+            testUD1140Substitution,
         ];
         let total = { pass: 0, fail: 0 };
         for (const suite of suites) {

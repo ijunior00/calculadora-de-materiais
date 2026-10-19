@@ -257,12 +257,24 @@ resina que 2 painéis maiores da mesma área total.
 A lista de descontinuação de set/2026 atingiu 5 itens do catálogo. Dois foram
 trocados e o veil ficou com os dois números. Sobraram três pendências:
 
-**1. UD 600 (`29007004`) e UD 1140 (`S096486`)** — a coluna *Followup material*
-diz apenas **"Refer Md04 Text"**, sem número, embora o status seja
-"Replacement Available / Proceed to replace". Ficaram **intocados de propósito**
-(regra: sem ID, não entra). Quando alguém consultar o texto MD04 no SAP e
-trouxer o número, é trocar em `FABRICS_DB.standard` — e, se o substituto vier
-em rolo, pedir também o peso do rolo.
+**1. UD 600 (`29007004`)** — a coluna *Followup material* diz apenas
+**"Refer Md04 Text"**, sem número, embora o status seja "Replacement Available
+/ Proceed to replace". Fica **intocado de propósito** (regra: sem ID, não
+entra). Quando alguém consultar o texto MD04 no SAP e trouxer o número, é
+trocar em `FABRICS_DB.standard` — e, se o substituto vier em rolo, pedir
+também o peso do rolo.
+
+> **Virou prioridade em out/2026:** a substituição do UD 1140 (ver abaixo)
+> passou a mandar o reparo para 2× UD 600, ou seja, o `29007004` agora é o
+> destino de duas camadas onde antes havia uma — e ele próprio está em
+> phase-out sem número de substituto.
+
+**1b. UD 1140 (`S096486`) — RESOLVIDO** por substituição guiada, não por troca
+de número. A lista `phase_Out_to_new_material` (out/2026) aponta `29238496`,
+que é um UD de **600 g/m²**, não de 1140. Por decisão do time, escolher UD 1140
+no seletor avisa que não há número de item e oferece **2× UD 600**; confirmando,
+as duas telas entram no lugar. Ver `FABRIC_ITEM_SUBSTITUTIONS` em `data.js` e a
+seção correspondente de `CALCULATION_LOGIC.md`.
 
 **2. Unidade do veil CFM50** — a planilha marca os substitutos
 (`29264730`/`29264731`) como **EA**, mas não veio tamanho de embalagem. O
@@ -274,3 +286,19 @@ por rolo. Na lista inteira (133 itens com substituto) **só um** followup é
 vendido por KG (`29301909`, resina Sikaforce), e não é item nosso. Os dois
 tecidos trocados foram de KG para rolo porque não havia alternativa. Se
 aparecer versão em quilo desses biax, vale trocar de volta.
+
+
+---
+
+## Veil CFM50 — as duas listas oficiais discordam
+
+- `Phased out - Sep 26` diz que o substituto de `29023582` é
+  **"29264730 & 29264731"** (dois IDs de veil).
+- `phase_Out_to_new_material` (out/2026) diz que é **`29227309`**, que é
+  **BREATEX 150 GSM** — o respirador que já temos no catálogo como consumível,
+  e que não cumpre a função de um veil de superfície na infusão.
+
+O catálogo **mantém `29264730 / 29264731`** (decisão do time, out/2026), por ser
+o que faz sentido funcionalmente. Se a área de materiais confirmar que o veil
+saiu de linha sem equivalente, a conversa muda: aí é decidir se o CFM50 some do
+BOM (afeta V110, V136, V150 e V162) em vez de apontar para um breatex.
