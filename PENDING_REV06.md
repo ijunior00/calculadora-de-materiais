@@ -257,17 +257,12 @@ resina que 2 painéis maiores da mesma área total.
 A lista de descontinuação de set/2026 atingiu 5 itens do catálogo. Dois foram
 trocados e o veil ficou com os dois números. Sobraram três pendências:
 
-**1. UD 600 (`29007004`)** — a coluna *Followup material* diz apenas
-**"Refer Md04 Text"**, sem número, embora o status seja "Replacement Available
-/ Proceed to replace". Fica **intocado de propósito** (regra: sem ID, não
-entra). Quando alguém consultar o texto MD04 no SAP e trouxer o número, é
-trocar em `FABRICS_DB.standard` — e, se o substituto vier em rolo, pedir
-também o peso do rolo.
-
-> **Virou prioridade em out/2026:** a substituição do UD 1140 (ver abaixo)
-> passou a mandar o reparo para 2× UD 600, ou seja, o `29007004` agora é o
-> destino de duas camadas onde antes havia uma — e ele próprio está em
-> phase-out sem número de substituto.
+**1. UD 600 (`29007004`) — RESOLVIDO (out/2026).** A coluna *Followup material*
+de set/26 dizia apenas "Refer Md04 Text", sem número, e o item ficou intocado.
+O time confirmou depois o substituto: **`29238496`** — *FABRIC,E-GLASS,UD 0,
+600 g/m², 600 mm*, rolo de 14 m com peso líquido **6,17 kg**, vendido por
+unidade. Já está no catálogo. Fecha também a ressalva da substituição do
+UD 1140, que agora desemboca num item em linha.
 
 **1b. UD 1140 (`S096486`) — RESOLVIDO** por substituição guiada, não por troca
 de número. A lista `phase_Out_to_new_material` (out/2026) aponta `29238496`,
