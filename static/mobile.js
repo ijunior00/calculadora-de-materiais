@@ -212,12 +212,20 @@ function renderLayers() {
             const ov = overlapFor(l);
             const ovTxt = ov ? `overlap ${ov.span}/${ov.chord} mm` : 'no overlap data';
             const gsm = l.gsm ? `${l.gsm} g/m²` : 'panel';
+            // CORE/SPL/CFM50/BALSA não são laminados: não levam a caixa.
+            const isPly = !['CORE', 'SPL', 'CFM50', 'BALSA'].includes(l.materialType);
+            const inf = isPly ? `
+                    <button class="l-inf${l.infusion ? ' on' : ''}" onclick="toggleLayerInfusion(${i})"
+                            aria-pressed="${!!l.infusion}" title="Mark this ply as laminated by infusion">
+                        <i class="bi ${l.infusion ? 'bi-check-square-fill' : 'bi-square'}"></i> Infusion
+                    </button>` : '';
             return `
             <div class="m-layer">
                 <div class="l-num">${i + 1}</div>
                 <div class="l-info" onclick="openLayerSheet(${i})" style="cursor:pointer" title="Tap to replace this layer's material">
                     <div class="l-name">${labelFor(l)} <i class="bi bi-arrow-repeat" style="font-size:0.72rem;color:var(--text-faint)"></i></div>
                     <div class="l-sub">${gsm} · ${ovTxt}</div>
+                    ${inf}
                 </div>
                 <div class="l-actions">
                     <button class="l-act" onclick="moveLayer(${i},-1)" ${i === 0 ? 'disabled' : ''} aria-label="Move up"><i class="bi bi-chevron-up"></i></button>
@@ -227,7 +235,30 @@ function renderLayers() {
             </div>`;
         }).join('');
     }
+    renderInfusionSummary();
     renderRefFabrics();
+}
+
+// Marca/desmarca uma tela como laminada por infusão.
+function toggleLayerInfusion(i) {
+    const l = M.layers[i];
+    if (!l) return;
+    l.infusion = !l.infusion;
+    renderLayers();
+}
+
+// Resumo de quantas telas vão por infusão — é o que decide qual resina molha
+// cada parte da pilha (out/2026).
+function renderInfusionSummary() {
+    const el = document.getElementById('m-infusion-summary');
+    if (!el) return;
+    const plies = M.layers.filter(l => l.materialType && !['CORE', 'SPL', 'CFM50', 'BALSA'].includes(l.materialType));
+    if (plies.length === 0) { el.innerHTML = ''; return; }
+    const n = plies.filter(l => l.infusion).length;
+    const txt = n === 0
+        ? `No ply marked for infusion — all ${plies.length} will use hand lay-up resin (AMPREG 30).`
+        : `${n} of ${plies.length} plies by infusion (PRIME 37); the other ${plies.length - n} by hand lay-up (AMPREG 30).`;
+    el.innerHTML = `<div class="m-info-box"><i class="bi bi-droplet-half"></i><span>${txt}</span></div>`;
 }
 
 function labelFor(l) {
@@ -336,6 +367,10 @@ function addLayer(allowedIdx) {
         if (!confirm(sub.message)) { _replaceIdx = null; closeLayerSheet(); return; }
         picks = sub.replaceWith.map(x => ({ materialType: x.materialType, gsm: x.gsm }));
     }
+    // Toda camada nova nasce com o método definido (false = laminação manual).
+    // É a presença desse booleano que faz o cálculo usar a marcação da pilha
+    // em vez da proporção dos ciclos de vácuo.
+    picks = picks.map(p => ({ ...p, infusion: false }));
     const what = sub ? sub.summary : m.label;
     if (_replaceIdx !== null) {
         const at = _replaceIdx;
@@ -345,12 +380,13 @@ function addLayer(allowedIdx) {
             // que o usuário escolheu); só o material muda.
             layer.materialType = picks[0].materialType;
             layer.gsm = picks[0].gsm;
+            if (typeof layer.infusion !== 'boolean') layer.infusion = false;
             // Substituição com mais de uma tela: as demais entram logo abaixo,
             // sem overrides (a geometria herdada era da camada trocada).
             if (picks.length > 1) {
                 M.layers.splice(at + 1, 0, ...picks.slice(1).map((p, i) => ({
                     layerName: `${layer.layerName || `Layer ${at + 1}`} (${i + 2})`,
-                    materialType: p.materialType, gsm: p.gsm,
+                    materialType: p.materialType, gsm: p.gsm, infusion: !!p.infusion,
                 })));
             }
             toast(`Layer ${at + 1} → ${what}.`, 'ok');
@@ -363,7 +399,7 @@ function addLayer(allowedIdx) {
     const n = _layerQty;
     for (let k = 0; k < n; k++) {
         for (const p of picks) {
-            M.layers.push({ layerName: `Layer ${M.layers.length + 1}`, materialType: p.materialType, gsm: p.gsm });
+            M.layers.push({ layerName: `Layer ${M.layers.length + 1}`, materialType: p.materialType, gsm: p.gsm, infusion: !!p.infusion });
         }
     }
     closeLayerSheet();
@@ -782,6 +818,7 @@ function buildPayload() {
             layers: M.layers.filter(l => l.materialType).map((l, idx) => ({
                 order: idx + 1, layerName: l.layerName || '',
                 materialType: l.materialType, gsm: l.gsm || '',
+                infusion: (typeof l.infusion === 'boolean') ? l.infusion : undefined,
                 ovR1: l.ovR1 ?? null, ovR2: l.ovR2 ?? null,
                 ovX1: l.ovX1 ?? null, ovX2: l.ovX2 ?? null,
             })),
@@ -920,6 +957,9 @@ async function importFromExcel(fileInput) {
         M.so = data.so || ''; M.cir = data.cir || ''; M.title = data.title || '';
         M.layers = (data.layers || []).map((l, i) => {
             const layer = { layerName: 'Layer ' + (i + 1), materialType: l.materialType, gsm: l.gsm || '' };
+            // Excel sem a coluna Infusion (anterior a out/2026) volta sem a
+            // marcação — a resina cai na divisão por ciclos, como antes.
+            if (typeof l.infusion === 'boolean') layer.infusion = l.infusion;
             for (const k of ['ovR1', 'ovR2', 'ovX1', 'ovX2']) {
                 if (l[k] !== null && l[k] !== undefined) layer[k] = l[k];
             }

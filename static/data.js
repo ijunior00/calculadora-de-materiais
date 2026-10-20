@@ -759,18 +759,31 @@ const RESIN_RATIOS = {
 const TECHNICIANS_PER_REPAIR = { internal: 4, external: 3 };
 
 /**
- * Divide o peso de tecido entre laminação manual e infusão, na proporção dos
- * ciclos de vácuo de cada tipo (as etapas HLU e Infusion). É o único sinal que
- * o modelo tem de qual método molha quais telas — não há método por camada.
- * Sem nenhum dos dois, tudo vai para HLU: é o comportamento histórico, porque
- * a fórmula REV05 do AMPREG não tinha condição de etapa.
+ * Divide o peso de tecido entre laminação manual e infusão.
+ *
+ * Duas fontes, nesta ordem:
+ *  1. MARCAÇÃO POR CAMADA (out/2026) — cada tela tem uma caixa "infusion" na
+ *     UI. Quando as camadas trazem essa informação, o peso vai exatamente para
+ *     onde o técnico marcou: nada de estimativa.
+ *  2. PROPORÇÃO DOS CICLOS — camada antiga ou Excel reaberto sem a coluna. Aí
+ *     o peso se reparte na proporção das etapas HLU e Infusion, que era o
+ *     único sinal disponível antes da caixa existir. Sem nenhuma das duas
+ *     etapas, tudo vai para HLU: comportamento histórico, porque a fórmula
+ *     REV05 do AMPREG não tinha condição de etapa.
+ *
+ * @param {Object} steps - etapas do reparo (HLU, Infusion)
+ * @param {number} totalFabricKg - peso total de tecido
+ * @param {Object} [byMethod] - layupResult.fabricWeightByMethod, quando houver
  */
-function fabricResinSplit(steps, totalFabricKg) {
+function fabricResinSplit(steps, totalFabricKg, byMethod) {
+    if (byMethod && byMethod.explicit) {
+        return { hluKg: byMethod.hluKg, infusionKg: byMethod.infusionKg, source: 'layers' };
+    }
     const hlu = (steps && steps.HLU) || 0;
     const inf = (steps && steps.Infusion) || 0;
     const cycles = hlu + inf;
-    if (cycles === 0) return { hluKg: totalFabricKg, infusionKg: 0 };
-    return { hluKg: totalFabricKg * hlu / cycles, infusionKg: totalFabricKg * inf / cycles };
+    if (cycles === 0) return { hluKg: totalFabricKg, infusionKg: 0, source: 'cycles' };
+    return { hluKg: totalFabricKg * hlu / cycles, infusionKg: totalFabricKg * inf / cycles, source: 'cycles' };
 }
 
 const CHEMICALS = [
@@ -781,7 +794,7 @@ const CHEMICALS = [
           // out/2026: só o tecido laminado À MÃO entra aqui — o que vai por
           // infusão é molhado pelo PRIME 37. Reparo sem infusão cai exatamente
           // na conta de antes (todo o tecido fica no HLU).
-          const w = fabricResinSplit(s, lay.totalFabricWeightKg).hluKg * RESIN_RATIOS.HLU;
+          const w = fabricResinSplit(s, lay.totalFabricWeightKg, lay.fabricWeightByMethod).hluKg * RESIN_RATIOS.HLU;
           const coreKitKg = reg === 'Root' ? 10 : 11; // Root uses CORE_ROOT (Grade F, 10 kg/kit)
           // H29 = CORE kits. O core PVC (set/2026) tem kit próprio (6,262 kg),
           // então entra com o divisor dele. Pilha sem PVC cai exatamente na
@@ -803,7 +816,7 @@ const CHEMICALS = [
           const veilKg = cfm50MassKg * s.Infusion * 1.3;
           // out/2026: o TECIDO infundido também passa a contar — era disso que
           // o cálculo sentia falta. 0,9:1 no laminado + 20% do sistema.
-          const laminateKg = fabricResinSplit(s, lay.totalFabricWeightKg).infusionKg
+          const laminateKg = fabricResinSplit(s, lay.totalFabricWeightKg, lay.fabricWeightByMethod).infusionKg
                            * RESIN_RATIOS.INFUSION_LAMINATE * RESIN_RATIOS.INFUSION_SYSTEM;
           // Each PRIME 37 kit = 4 kg.
           return Math.max(1, Math.ceil((veilKg + laminateKg) / 4));

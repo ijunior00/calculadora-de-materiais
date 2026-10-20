@@ -1116,6 +1116,84 @@
         return tally(r);
     }
 
+    function testPerLayerInfusion() {
+        console.group('Test 31: marcação de infusão por camada (out/2026)');
+        const r = [];
+        const dmg = { rstart: 10000, rend: 13000, x1: 0, x2: 1200, chordRef: 'LE' };
+        const ply = (i, inf) => ({ layerName: 'L' + i, materialType: 'BIAX', gsm: '600', infusion: inf });
+        const steps = { Cleaning: 1, Grinding: 1, Bonding: 1, Lamination: 1, HLU: 1, Infusion: 1, Weighing: 1, Painting: 1, LEP: 0 };
+        const ampreg = CHEMICALS.find(c => c.sap === '29157769');
+        const prime = CHEMICALS.find(c => c.sap === '29237987');
+
+        // 11 telas, 4 marcadas para infusão.
+        const marked = Array.from({ length: 11 }, (_, i) => ply(i + 1, i < 4));
+        const lay = computeLayup(dmg, marked);
+        const bm = lay.fabricWeightByMethod;
+        r.push(bm.explicit ? pass('layup reconhece a marcação por camada') : fail('marcação ignorada', ''));
+        r.push(assertEq('peso HLU + infusão = peso total', bm.hluKg + bm.infusionKg, lay.totalFabricWeightKg, 1e-9));
+        r.push(bm.infusionKg > 0 && bm.hluKg > 0
+            ? pass(`4 telas por infusão (${bm.infusionKg.toFixed(2)} kg) e 7 à mão (${bm.hluKg.toFixed(2)} kg)`)
+            : fail('divisão por camada errada', JSON.stringify(bm)));
+
+        // A marcação MANDA: as etapas HLU 1 / Infusion 1 dariam 50/50, mas
+        // aqui a divisão tem de seguir as telas, não os ciclos.
+        const sp = fabricResinSplit(steps, lay.totalFabricWeightKg, bm);
+        r.push(sp.source === 'layers' ? pass('divisão vem das camadas, não dos ciclos') : fail('fonte errada', sp.source));
+        r.push(Math.abs(sp.hluKg - lay.totalFabricWeightKg / 2) > 1e-6
+            ? pass('resultado difere do 50/50 que os ciclos dariam') : fail('caiu no fallback de ciclos', ''));
+
+        // Sem marcação nenhuma (camada antiga) → mantém a divisão por ciclos.
+        const legacy = Array.from({ length: 11 }, (_, i) => ({ layerName: 'L' + i, materialType: 'BIAX', gsm: '600' }));
+        const layLegacy = computeLayup(dmg, legacy);
+        r.push(!layLegacy.fabricWeightByMethod.explicit ? pass('camada sem a marcação não ativa o modo explícito') : fail('explicit indevido', ''));
+        const spLegacy = fabricResinSplit(steps, layLegacy.totalFabricWeightKg, layLegacy.fabricWeightByMethod);
+        r.push(assertEq('fallback: HLU 1 + Infusion 1 → metade', spLegacy.hluKg, layLegacy.totalFabricWeightKg / 2, 1e-9));
+        r.push(spLegacy.source === 'cycles' ? pass('fonte = ciclos de vácuo') : fail('fonte errada', spLegacy.source));
+
+        // Nenhuma tela marcada, mas a pilha TRAZ a informação → nada de infusão.
+        const noneMarked = Array.from({ length: 11 }, (_, i) => ply(i + 1, false));
+        const layNone = computeLayup(dmg, noneMarked);
+        r.push(layNone.fabricWeightByMethod.explicit && layNone.fabricWeightByMethod.infusionKg === 0
+            ? pass('nenhuma marcada → nada vai para a resina de infusão') : fail('infusão indevida', ''));
+        r.push(assertEq('AMPREG leva todo o tecido quando nada é marcado',
+            ampreg.calcQty(steps, 6, layNone, 'Middle'),
+            Math.ceil(layNone.totalFabricWeightKg * RESIN_RATIOS.HLU / 1.26)));
+
+        // Todas marcadas → AMPREG zera e o PRIME 37 leva tudo.
+        const allMarked = Array.from({ length: 11 }, (_, i) => ply(i + 1, true));
+        const layAll = computeLayup(dmg, allMarked);
+        r.push(assertEq('todas marcadas → AMPREG zera', ampreg.calcQty(steps, 6, layAll, 'Middle'), 0));
+        const veilKg = layAll.splAreaM2 * 1.5 * 0.05 * steps.Infusion * 1.3;
+        r.push(assertEq('todas marcadas → PRIME 37 leva todo o tecido',
+            prime.calcQty(steps, 6, layAll),
+            Math.ceil((veilKg + layAll.totalFabricWeightKg * 0.9 * 1.2) / 4)));
+
+        // Aviso: etapa de infusão ativa e nenhuma tela marcada.
+        let chk = checkRepairInputs(noneMarked, { HLU: 0, Infusion: 2 });
+        r.push(chk.warnings.some(w => w.code === 'INFUSION_WITHOUT_PLIES')
+            ? pass('avisa quando há infusão mas nenhuma tela marcada') : fail('sem aviso', JSON.stringify(chk.warnings)));
+        chk = checkRepairInputs(marked, { HLU: 1, Infusion: 1 });
+        r.push(!chk.warnings.some(w => w.code === 'INFUSION_WITHOUT_PLIES')
+            ? pass('com telas marcadas não avisa') : fail('aviso indevido', ''));
+        r.push(assertEq('conta as telas marcadas', chk.infusionPlies, 4));
+        chk = checkRepairInputs(noneMarked, { HLU: 2, Infusion: 0 });
+        r.push(!chk.warnings.some(w => w.code === 'INFUSION_WITHOUT_PLIES')
+            ? pass('sem etapa de infusão não avisa') : fail('aviso indevido sem infusão', ''));
+        // Pilha antiga (sem a marcação) não dispara o aviso — cai no fallback.
+        chk = checkRepairInputs(legacy, { HLU: 0, Infusion: 2 });
+        r.push(!chk.warnings.some(w => w.code === 'INFUSION_WITHOUT_PLIES')
+            ? pass('pilha sem marcação não avisa (usa a divisão por ciclos)') : fail('aviso em pilha legada', ''));
+
+        // CORE não é tela: não entra em nenhum dos dois lados.
+        const withCore = [ply(1, true), { layerName: 'C', materialType: 'CORE', gsm: '', infusion: false }, ply(2, true)];
+        const layCore = computeLayup(dmg, withCore);
+        r.push(assertEq('CORE fora da divisão de tecido',
+            layCore.fabricWeightByMethod.hluKg + layCore.fabricWeightByMethod.infusionKg,
+            layCore.totalFabricWeightKg, 1e-9));
+        console.groupEnd();
+        return tally(r);
+    }
+
     // ── Main runner ───────────────────────────────────────────────────────────
 
     window.runBOMTests = function () {
@@ -1152,6 +1230,7 @@
             testPhaseOutSep2026,
             testUD1140Substitution,
             testResinByLaminationMethod,
+            testPerLayerInfusion,
         ];
         let total = { pass: 0, fail: 0 };
         for (const suite of suites) {

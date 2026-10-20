@@ -500,3 +500,25 @@ table.sct { border-collapse: collapse; min-width: 780px; width: 100%; font-size:
 /* spinner */
 .m-spin { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* Caixa "Infusion" por camada (out/2026): marca quais telas vão por infusão,
+   o que define qual resina molha cada parte da pilha. */
+.l-inf {
+    margin-top: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--text-light);
+    font-size: 0.74rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.l-inf.on {
+    border-color: var(--vestas-blue);
+    background: #eef4fb;
+    color: var(--vestas-blue);
+}
