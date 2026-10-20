@@ -735,7 +735,7 @@ function calculateAndShow() {
     if (!bladeModel)                                         { alert('Please select a Blade Model in Step 1.'); goToStep(1); return; }
     if (damageData.rstart<=0 || damageData.rend<=0)          { alert('Please enter valid Rstart and Rend in Step 1.'); goToStep(1); return; }
 
-    lastBOM = computeFullBOM(damageData, layerRows.filter(l=>l.materialType), repairSteps, bladeModel, bladeRegion, daysOfRepair, currentPaintScheme());
+    lastBOM = computeFullBOM(damageData, layerRows.filter(l=>l.materialType), repairSteps, bladeModel, bladeRegion, daysOfRepair, currentPaintScheme(), isExternalRepair());
     goToStep(4);
     renderSummary();
     showResultTab('consumable_protection');

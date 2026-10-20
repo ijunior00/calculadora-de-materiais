@@ -415,7 +415,14 @@ function coreSpecFor(coreGrade, bladeRegion) {
 const PPE_ITEMS = [
     { sap: '237100', desc: 'Dust loops (3M mask paper)',      unit: 'EA',  calcQty: (s, d) => d > 0 ? Math.ceil(d * 0.8) : 0 },
     { sap: '218455', desc: 'Gloves, ansel, size XL, black',  unit: 'PAA', calcQty: (s, d) => d > 0 ? 3 : 0 },
-    { sap: '218173', desc: 'Gloves blue nitrile L',           unit: 'PAA', calcQty: (s, d) => d > 0 ? 1 : 0 },
+    // out/2026: a nitrílica é descartável e o item é por PAR, não por caixa —
+    // 6 pares por técnico por dia. Equipe: 4 técnicos no reparo interno, 3 no
+    // externo (confirmado pelo time). A Ansel XL preta é luva de trabalho
+    // reutilizável e segue na quantidade fixa da REV05 — ver PENDING_REV06.md.
+    { sap: '218173', desc: 'Gloves blue nitrile L',           unit: 'PAA', calcQty: (s, d, ext) => {
+          const techs = ext ? TECHNICIANS_PER_REPAIR.external : TECHNICIANS_PER_REPAIR.internal;
+          return d > 0 ? 6 * techs * d : 0;
+      } },
     { sap: '214445', desc: 'Suit F/Protec, Tyvec, size XL',  unit: 'EA',  calcQty: (s, d) => d > 0 ? Math.ceil(d * 1.5) : 0 },
     { sap: '210177', desc: 'creme plutect',                   unit: 'EA',  calcQty: (s, d) => d > 0 ? 3 : 0 },
 ];
@@ -732,12 +739,49 @@ const SPECIAL_REPAIRS = [
     },
 ];
 
+// ── Resina por método de laminação ───────────────────────────────────────────
+// Até out/2026 TODA a resina de tecido saía como AMPREG 30, mesmo num reparo
+// 100% por infusão, e o PRIME 37 era dimensionado só pela massa do véu de
+// superfície — um reparo de 11 telas (34,8 kg de tecido) saía com 34 pacotes
+// de AMPREG e 1 de PRIME 37. Faltava a ligação entre "estas telas vão por
+// infusão" e "qual resina molha estas telas".
+// Fatores confirmados pelo time (out/2026):
+//   HLU      → 1,2 × peso de tecido (fator REV05, inalterado)
+//   Infusão  → 0,9:1 no laminado + 20% do sistema de infusão (mangueiras,
+//              espiral, malha de fluxo, pote de captura) = 1,08 × o tecido
+const RESIN_RATIOS = {
+    HLU: 1.2,
+    INFUSION_LAMINATE: 0.9,
+    INFUSION_SYSTEM: 1.2,
+};
+
+// Equipe por tipo de reparo (confirmado pelo time, out/2026).
+const TECHNICIANS_PER_REPAIR = { internal: 4, external: 3 };
+
+/**
+ * Divide o peso de tecido entre laminação manual e infusão, na proporção dos
+ * ciclos de vácuo de cada tipo (as etapas HLU e Infusion). É o único sinal que
+ * o modelo tem de qual método molha quais telas — não há método por camada.
+ * Sem nenhum dos dois, tudo vai para HLU: é o comportamento histórico, porque
+ * a fórmula REV05 do AMPREG não tinha condição de etapa.
+ */
+function fabricResinSplit(steps, totalFabricKg) {
+    const hlu = (steps && steps.HLU) || 0;
+    const inf = (steps && steps.Infusion) || 0;
+    const cycles = hlu + inf;
+    if (cycles === 0) return { hluKg: totalFabricKg, infusionKg: 0 };
+    return { hluKg: totalFabricKg * hlu / cycles, infusionKg: totalFabricKg * inf / cycles };
+}
+
 const CHEMICALS = [
     { sap: '234900',   desc: 'ALCOHOL DENATURED 93% 1/2 LITRE',       unit: 'BTL', calcQty: (s) => s.Cleaning > 0 ? Math.ceil(s.Cleaning / 1.5) : 0 },
     { sap: '291574',   desc: 'CLOTH,CLEANING (Satwipes w/ ethanol)',  unit: 'TUB', calcQty: (s) => s.Cleaning > 0 ? 1 : 0 },
     { sap: '29157769', desc: 'AMPREG 30 1.26KG PACK STANDARD',        unit: 'EA',  calcQty: (s, d, lay, reg) => {
-          // Excel H43: ROUNDUP(SUM(Fabrics_aux!H17:H26, H29) / 1.26, 0) — no HLU condition
-          const w = lay.totalFabricWeightKg * 1.2; // Fabrics_aux H17:H26 already have 1.2 factor
+          // Excel H43: ROUNDUP(SUM(Fabrics_aux!H17:H26, H29) / 1.26, 0).
+          // out/2026: só o tecido laminado À MÃO entra aqui — o que vai por
+          // infusão é molhado pelo PRIME 37. Reparo sem infusão cai exatamente
+          // na conta de antes (todo o tecido fica no HLU).
+          const w = fabricResinSplit(s, lay.totalFabricWeightKg).hluKg * RESIN_RATIOS.HLU;
           const coreKitKg = reg === 'Root' ? 10 : 11; // Root uses CORE_ROOT (Grade F, 10 kg/kit)
           // H29 = CORE kits. O core PVC (set/2026) tem kit próprio (6,262 kg),
           // então entra com o divisor dele. Pilha sem PVC cai exatamente na
@@ -752,11 +796,17 @@ const CHEMICALS = [
     // MX catalog: 29237987 replaces BR 29276912 (same Prime 37 4kg std kit).
     { sap: '29237987', desc: 'PRIME 37 RESIN 4KG STD (Infusion)',     unit: 'EA',  calcQty: (s, d, lay) => {
           if (s.Infusion === 0) return 0;
-          // REV05 formula: ROUNDUP(cfm50_mass_kg * infusion * 1.3 / 4, 0)
+          // Véu de superfície — fórmula REV05, inalterada:
           // cfm50_mass_kg = splAreaM2 * 1.5 (area+50%) * 0.05 kg/m² (50g/m² CFM density)
-          // Each PRIME 37 kit = 4 kg. Factor 1.3 = 30% waste.
+          // Factor 1.3 = 30% waste.
           const cfm50MassKg = lay.splAreaM2 * 1.5 * 0.05;
-          return Math.max(1, Math.ceil(cfm50MassKg * s.Infusion * 1.3 / 4));
+          const veilKg = cfm50MassKg * s.Infusion * 1.3;
+          // out/2026: o TECIDO infundido também passa a contar — era disso que
+          // o cálculo sentia falta. 0,9:1 no laminado + 20% do sistema.
+          const laminateKg = fabricResinSplit(s, lay.totalFabricWeightKg).infusionKg
+                           * RESIN_RATIOS.INFUSION_LAMINATE * RESIN_RATIOS.INFUSION_SYSTEM;
+          // Each PRIME 37 kit = 4 kg.
+          return Math.max(1, Math.ceil((veilKg + laminateKg) / 4));
       } },
     // MX catalog: 29237701 (400 mL cartridge, 23 uses) replaces BR 29078542 (450 mL).
     { sap: '29237701', desc: 'ADHESIVE SIKAPOWER 1200 400 mL',        unit: 'EA',  calcQty: (s, d, lay) => s.Bonding > 0 ? Math.ceil(lay.maxLength * 120e-6 * 23.33 * s.Bonding) : 0 },

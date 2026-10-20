@@ -545,7 +545,7 @@ function checkRepairInputs(layers, repairSteps) {
 // paintScheme: { base: 'RAL7035'|'RAL9010', stripe: 'RAL3020'|'RAL2009'|null }
 // Opcional — omitido, usa DEFAULT_PAINT_SCHEME (cinza + faixa vermelha), que
 // era o comportamento fixo antes de a escolha de pintura existir.
-function computeFullBOM(damageData, layers, repairSteps, bladeModel, bladeRegion, daysOfRepair, paintScheme) {
+function computeFullBOM(damageData, layers, repairSteps, bladeModel, bladeRegion, daysOfRepair, paintScheme, isExternal) {
     // 1. Compute LAYUP
     const layupResult = computeLayup(damageData, layers);
 
@@ -571,7 +571,9 @@ function computeFullBOM(damageData, layers, repairSteps, bladeModel, bladeRegion
         sap: item.sap,
         desc: item.desc,
         unit: item.unit,
-        qty: item.calcQty(steps, daysOfRepair),
+        // isExternal define o tamanho da equipe (4 internos, 3 externos), que
+        // dimensiona as luvas descartáveis. Ausente = interno, o número maior.
+        qty: item.calcQty(steps, daysOfRepair, !!isExternal),
         materialUse: item.materialUse
     })).filter(i => i.qty > 0);
 
