@@ -297,3 +297,21 @@ O catálogo **mantém `29264730 / 29264731`** (decisão do time, out/2026), por 
 o que faz sentido funcionalmente. Se a área de materiais confirmar que o veil
 saiu de linha sem equivalente, a conversa muda: aí é decidir se o CFM50 some do
 BOM (afeta V110, V136, V150 e V162) em vez de apontar para um breatex.
+
+
+---
+
+## Luvas Ansel XL preta (`218455`) — consumo não definido
+
+Em out/2026 as luvas **nitrílicas descartáveis** (`218173`) passaram a ser
+calculadas por par: **6 pares por técnico por dia**, com 4 técnicos no reparo
+interno e 3 no externo. Antes saíam como quantidade fixa herdada da REV05.
+
+A **Ansel XL preta** (`218455`) ficou de fora dessa regra de propósito: é luva
+de trabalho reutilizável, e 6 pares por técnico por dia daria 144 pares num
+reparo de 6 dias — número sem sentido para luva que não é descartável. Ela
+segue na **quantidade fixa de 3** que vem da REV05.
+
+**O que falta:** quantos pares de Ansel por técnico (por reparo, ou a cada
+quantos dias). Com esse número, é trocar o `calcQty` dela em `PPE_ITEMS`
+([data.js](static/data.js)) no mesmo padrão da nitrílica.

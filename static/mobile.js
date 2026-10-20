@@ -609,7 +609,8 @@ function doCalculate() {
             M.blade,
             M.region,
             M.days,
-            M.paint
+            M.paint,
+            M.isExternal
         );
     } catch (e) {
         console.error(e);

@@ -206,10 +206,20 @@ Baseado nos **dias de reparo**:
 | Filtro de partículas (Grinding) | ROUNDUP(Dias / 2) |
 | Pré-filtro (Grinding) | Dias × 2 |
 | Dust loops | Dias × 2 |
-| Luvas ansel | 3 pares |
-| Luvas nitrile | 1 caixa |
+| Luvas ansel | 3 pares (fixo — ver `PENDING_REV06.md`) |
+| **Luvas nitrile (descartável)** | **6 pares × técnicos × dias** |
 | Macacão Tyvek | ROUNDUP(Dias × 1,5) |
 | Sapatilhas descartáveis | Dias × 2 |
+
+> **Luvas por par, não por caixa (out/2026).** O item `218173` é vendido por
+> **par**, e a equipe consome **6 pares por técnico por dia**. O tamanho da
+> equipe vem do tipo de reparo: **4 técnicos no interno, 3 no externo**
+> (`TECHNICIANS_PER_REPAIR`). Por isso `computeFullBOM` passou a receber
+> `isExternal` — antes o tipo de reparo só alimentava o estimador de prazo.
+> Reparo interno de 6 dias: 6 × 4 × 6 = **144 pares**.
+>
+> A Ansel XL preta (`218455`) é luva de trabalho reutilizável e **não** entra
+> nessa regra — segue na quantidade fixa da REV05 até o time definir o consumo.
 | Creme Plutect | 3 |
 | Lava-olhos | 1 |
 
@@ -246,8 +256,8 @@ Baseado nos **dias de reparo**:
 |----------|---------|----------|
 | Álcool desnaturado 0,5L | ROUNDUP(Cleaning / 1,5) | Cleaning |
 | Satwipes | 1 | Cleaning |
-| **AMPREG 30** (resina HLU) | ROUNDUP( (pesoTecidos×1,2 + kitsCore) / 1,26 ) | Sempre* |
-| **PRIME 37** (resina infusão) | ROUNDUP( splAreaM2 × Infusion × 1,3 ) | Infusion |
+| **AMPREG 30** (resina HLU) | ROUNDUP( (pesoTecidos**HLU**×1,2 + kitsCore) / 1,26 ) | Sempre* |
+| **PRIME 37** (resina infusão) | ROUNDUP( (véu×Infusion×1,3 + pesoTecidos**infusão**×0,9×1,2) / 4 ) | Infusion |
 | **Sikapower 1200** | ROUNDUP( maxLength × 0,120m × 23,33 × Bonding ) | Bonding |
 | SikaForce 7818 | 2 | Se houver CORE |
 | **SikaForce 7800** (filler) | ROUNDUP( splAreaM2 × 4 × Painting ) | Painting |
@@ -258,7 +268,36 @@ Baseado nos **dias de reparo**:
 | Endurecedor LEP | soma das 3 cores de LEP | LEP |
 
 > *fatorRegião = 3m/lata (Tip) ou 2m/lata (Middle) × número de etapas LEP*
-> *AMPREG: sem condição de HLU — calcula mesmo que HLU=0 se houver peso de tecido*
+> *AMPREG: sem condição de etapa — os kits de core entram mesmo sem HLU*
+
+#### A resina segue o método de laminação (out/2026)
+
+Até out/2026 **toda** a resina de tecido saía como AMPREG, mesmo num reparo
+100% por infusão, e o PRIME 37 era dimensionado **só pela massa do véu de
+superfície**. Um reparo real de 11 telas (34,8 kg de tecido) saía com **34
+pacotes de AMPREG e 1 de PRIME 37** — faltava a ligação entre *"estas telas vão
+por infusão"* e *"qual resina molha estas telas"*.
+
+`fabricResinSplit(steps, pesoTecidos)` divide o peso entre os dois métodos na
+proporção dos **ciclos de vácuo** de cada tipo (etapas HLU e Infusion) — é o
+único sinal que o modelo tem, já que não existe método por camada:
+
+| Etapas | Vai para AMPREG | Vai para PRIME 37 |
+|---|---|---|
+| HLU 2 / Infusion 0 | 100% | — |
+| HLU 1 / Infusion 1 | 50% | 50% |
+| HLU 0 / Infusion 2 | — | 100% |
+| nenhuma das duas | 100% | — (comportamento histórico) |
+
+Fatores de resina:tecido confirmados pelo time:
+
+| Método | Fator | Origem |
+|---|---|---|
+| Laminação manual | **1,2** | fator REV05, inalterado |
+| Infusão | **0,9 × 1,2 = 1,08** | 0,9:1 no laminado + 20% do sistema de infusão (mangueiras, espiral, malha de fluxo, pote de captura) |
+
+Efeito no caso relatado (11 telas, HLU 0 / Infusion 2): AMPREG **34 → 0**,
+PRIME 37 **1 → 10**. Reparo só com laminação manual **não muda nada**.
 
 ### Consumables
 

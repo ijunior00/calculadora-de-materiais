@@ -110,7 +110,9 @@
             // Dust loops: ceil(5 * 0.8) = 4  (old formula was d*2 = 10)
             assertItemQty('Dust loops qty=4',       b.ppeItems, '237100', 4),
             assertItemQty('Gloves ansel qty=3',     b.ppeItems, '218455', 3),
-            assertItemQty('Gloves nitrile qty=1',   b.ppeItems, '218173', 1),
+            // Re-baseline out/2026: a nitrílica é descartável e o item é por PAR
+            // — 6 pares/técnico/dia, 4 técnicos no interno. 5 dias → 120 pares.
+            assertItemQty('Gloves nitrile = 120 pairs (6 × 4 téc × 5 d)', b.ppeItems, '218173', 120),
             assertItemQty('Suit Tyvec qty=8',       b.ppeItems, '214445', 8),
             assertItemQty('Creme plutect qty=3',    b.ppeItems, '210177', 3),
         ];
@@ -946,10 +948,15 @@
         r.push(mixed.some(i => i.sap === '29114395') && mixed.some(i => i.sap === '78000056')
             ? pass('mixed stack lists both SAPs') : fail('mixed stack SAPs', JSON.stringify(mixed.map(i => i.sap))));
 
-        // AMPREG 30: pilha sem PVC tem de bater exatamente com a conta antiga.
+        // AMPREG 30: pilha sem PVC tem de bater exatamente com a conta do core
+        // de sempre. Re-baseline out/2026: o tecido agora se divide entre HLU e
+        // infusão (estas etapas têm HLU 1 + Infusion 1 → metade para cada), e é
+        // essa metade que entra no AMPREG. O que o teste afirma segue sendo o
+        // mesmo: o grade PET não muda o resultado.
         const lay = computeLayup(dmg, [ply(), petCore, ply()]);
         const ampreg = CHEMICALS.find(c => c.sap === '29157769');
-        const legacy = Math.ceil((lay.totalFabricWeightKg * 1.2 + Math.ceil(lay.coreWeightKg / 11)) / 1.26);
+        const hluKg = fabricResinSplit(steps, lay.totalFabricWeightKg).hluKg;
+        const legacy = Math.ceil((hluKg * 1.2 + Math.ceil(lay.coreWeightKg / 11)) / 1.26);
         r.push(assertEq('AMPREG unchanged for a PET stack', ampreg.calcQty(steps, 3, lay, 'Middle'), legacy));
         // E o grade viaja sem afetar geometria: mesmo layup com PET e com PVC.
         const layPvc = computeLayup(dmg, [ply(), pvcCore, ply()]);
@@ -1042,6 +1049,73 @@
         return tally(r);
     }
 
+    function testResinByLaminationMethod() {
+        console.group('Test 30: resina segue o método de laminação + luvas por par (out/2026)');
+        const r = [];
+        const dmg = { rstart: 10000, rend: 13000, x1: 0, x2: 1200, chordRef: 'LE' };
+        const plies = (n) => Array.from({ length: n }, (_, i) => ({ layerName: 'L' + (i + 1), materialType: 'BIAX', gsm: '600' }));
+        const base = { Cleaning: 1, Grinding: 1, Bonding: 1, Lamination: 1, Weighing: 1, Painting: 1, LEP: 0 };
+        const ampreg = CHEMICALS.find(c => c.sap === '29157769');
+        const prime = CHEMICALS.find(c => c.sap === '29237987');
+        const lay = computeLayup(dmg, plies(11));
+        const kg = lay.totalFabricWeightKg;
+
+        // Divisão do tecido entre os dois métodos.
+        let sp = fabricResinSplit({ HLU: 0, Infusion: 2 }, kg);
+        r.push(assertEq('Infusion only → todo o tecido na infusão', sp.infusionKg, kg, 1e-9));
+        r.push(assertEq('Infusion only → nada no HLU', sp.hluKg, 0, 1e-9));
+        sp = fabricResinSplit({ HLU: 2, Infusion: 0 }, kg);
+        r.push(assertEq('HLU only → todo o tecido no HLU', sp.hluKg, kg, 1e-9));
+        sp = fabricResinSplit({ HLU: 1, Infusion: 1 }, kg);
+        r.push(assertEq('HLU 1 + Infusion 1 → metade para cada', sp.hluKg, kg / 2, 1e-9));
+        sp = fabricResinSplit({ HLU: 3, Infusion: 1 }, kg);
+        r.push(assertEq('HLU 3 + Infusion 1 → 3/4 no HLU', sp.hluKg, kg * 0.75, 1e-9));
+        // Sem etapa nenhuma, o comportamento histórico se mantém.
+        sp = fabricResinSplit({ HLU: 0, Infusion: 0 }, kg);
+        r.push(assertEq('sem HLU nem Infusion → tudo no HLU (comportamento histórico)', sp.hluKg, kg, 1e-9));
+
+        // O caso relatado: 11 telas, HLU 0 / Infusion 2.
+        const infOnly = { ...base, HLU: 0, Infusion: 2 };
+        const primeQty = prime.calcQty(infOnly, 6, lay);
+        const veilKg = lay.splAreaM2 * 1.5 * 0.05 * 2 * 1.3;
+        const expected = Math.ceil((veilKg + kg * 0.9 * 1.2) / 4);
+        r.push(assertEq('PRIME 37 passa a contar o tecido infundido', primeQty, expected));
+        r.push(primeQty > 1 ? pass(`PRIME 37 = ${primeQty} pacotes (antes saía 1, só pelo véu)`)
+            : fail('PRIME 37 ainda dimensionado só pelo véu', primeQty));
+        r.push(assertEq('AMPREG zera quando não há laminação manual', ampreg.calcQty(infOnly, 6, lay, 'Middle'), 0));
+
+        // Espelho: só HLU mantém a conta de sempre e não pede resina de infusão.
+        const hluOnly = { ...base, HLU: 2, Infusion: 0 };
+        r.push(assertEq('AMPREG com só HLU = conta de sempre',
+            ampreg.calcQty(hluOnly, 6, lay, 'Middle'), Math.ceil(kg * 1.2 / 1.26)));
+        r.push(assertEq('PRIME 37 não entra sem infusão', prime.calcQty(hluOnly, 6, lay), 0));
+
+        // Fator da infusão: 0,9 no laminado × 1,2 do sistema = 1,08.
+        r.push(assertEq('fator do laminado = 0.9', RESIN_RATIOS.INFUSION_LAMINATE, 0.9));
+        r.push(assertEq('acréscimo do sistema = 1.2', RESIN_RATIOS.INFUSION_SYSTEM, 1.2));
+        r.push(assertEq('fator do HLU segue 1.2 (REV05)', RESIN_RATIOS.HLU, 1.2));
+
+        // Luvas nitrílicas: 6 pares × técnicos × dias.
+        const nitrile = PPE_ITEMS.find(i => i.sap === '218173');
+        r.push(assertEq('interno: 6 × 4 téc × 6 d = 144 pares', nitrile.calcQty(base, 6, false), 144));
+        r.push(assertEq('externo: 6 × 3 téc × 6 d = 108 pares', nitrile.calcQty(base, 6, true), 108));
+        r.push(assertEq('sem dias de reparo → sem luvas', nitrile.calcQty(base, 0, false), 0));
+        r.push(assertEq('equipe interna = 4 técnicos', TECHNICIANS_PER_REPAIR.internal, 4));
+        r.push(assertEq('equipe externa = 3 técnicos', TECHNICIANS_PER_REPAIR.external, 3));
+        // A Ansel reutilizável NÃO entra na regra — segue a quantidade da REV05.
+        const ansel = PPE_ITEMS.find(i => i.sap === '218455');
+        r.push(assertEq('Ansel XL segue fixa em 3 (pendente)', ansel.calcQty(base, 6, false), 3));
+
+        // computeFullBOM precisa repassar o tipo de reparo até o PPE.
+        const bomInt = computeFullBOM(dmg, plies(11), infOnly, 'V136', 'Middle', 6, null, false);
+        const bomExt = computeFullBOM(dmg, plies(11), infOnly, 'V136', 'Middle', 6, null, true);
+        const g = b => (b.ppeItems.find(i => i.sap === '218173') || {}).qty;
+        r.push(assertEq('BOM interno → 144 pares', g(bomInt), 144));
+        r.push(assertEq('BOM externo → 108 pares', g(bomExt), 108));
+        console.groupEnd();
+        return tally(r);
+    }
+
     // ── Main runner ───────────────────────────────────────────────────────────
 
     window.runBOMTests = function () {
@@ -1077,6 +1151,7 @@
             testCoreGrades,
             testPhaseOutSep2026,
             testUD1140Substitution,
+            testResinByLaminationMethod,
         ];
         let total = { pass: 0, fail: 0 };
         for (const suite of suites) {
