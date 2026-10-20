@@ -126,6 +126,10 @@ function computeLayup(damageData, layers) {
             layer: layer.layerName || '',
             materialType: layer.materialType,
             gsm: layer.gsm || '',
+            // Marcação por camada: esta tela vai ser laminada por infusão?
+            // (out/2026 — antes o método só era inferido da proporção dos
+            // ciclos de vácuo, sem saber QUAIS telas iam por infusão.)
+            infusion: !!layer.infusion,
             fabricKey,
             r1, r2, length,
             h1, h2, width,
@@ -155,6 +159,11 @@ function computeLayup(damageData, layers) {
     // Total fabric weight: sum of LAYUP N column for rows with valid GSM
     // Excludes CORE (has no GSM weight) and SPL (has no GSM weight)
     let totalFabricWeightKg = 0;
+    // Peso de tecido separado por método de laminação. "explicit" diz se as
+    // camadas trazem a marcação (UI nova) ou não (camada antiga / Excel
+    // reaberto sem a coluna) — nesse caso a resina cai na divisão por ciclos.
+    let fabricHluKg = 0, fabricInfusionKg = 0;
+    const methodMarked = (layers || []).some(l => l && typeof l.infusion === 'boolean');
     let coreWeightKg = 0;
     let coreAreaM2 = 0;
     const coreAreaByGrade = {};    // { '': m² de PET, 'PVC': m² de PVC }
@@ -163,6 +172,8 @@ function computeLayup(damageData, layers) {
     for (const row of dataRows) {
         if (row.weight !== null && row.materialType !== 'CORE' && row.materialType !== 'SPL') {
             totalFabricWeightKg += row.weight;
+            if (row.infusion) fabricInfusionKg += row.weight;
+            else fabricHluKg += row.weight;
         }
         if (row.materialType === 'CORE') {
             const rowAreaM2 = row.area * 1e-6;
@@ -207,6 +218,7 @@ function computeLayup(damageData, layers) {
         maxWidth,
         maxAreaM2,
         totalFabricWeightKg,
+        fabricWeightByMethod: { hluKg: fabricHluKg, infusionKg: fabricInfusionKg, explicit: methodMarked },
         coreWeightKg,
         coreAreaM2,
         coreAreaByGrade,
@@ -536,7 +548,22 @@ function checkRepairInputs(layers, repairSteps) {
                 `Every vacuum consumable is multiplied by ${vacuum} — check the repair steps.`,
         });
     }
-    return { plies, laminationCycles, vacuum, warnings };
+    // Etapa de infusão ativa mas nenhuma tela marcada: a resina do tecido sairia
+    // toda como AMPREG e o PRIME 37 ficaria só com o véu — exatamente o defeito
+    // que a marcação por camada veio corrigir (out/2026). Avisa em vez de
+    // deixar passar em silêncio.
+    const fabricPlies = stack.filter(l => !['CORE', 'SPL', 'CFM50', 'BALSA'].includes(l.materialType));
+    const marked = fabricPlies.filter(l => l.infusion).length;
+    const hasMethodInfo = fabricPlies.some(l => typeof l.infusion === 'boolean');
+    if (infusion > 0 && hasMethodInfo && marked === 0 && fabricPlies.length > 0) {
+        warnings.push({
+            code: 'INFUSION_WITHOUT_PLIES',
+            message: `Infusion ${infusion} is active but no ply is marked for infusion. ` +
+                `All ${fabricPlies.length} plies will be ordered with hand lay-up resin (AMPREG 30) and ` +
+                `PRIME 37 will only cover the surface veil — tick the plies that are infused.`,
+        });
+    }
+    return { plies, laminationCycles, vacuum, infusionPlies: marked, warnings };
 }
 
 /**

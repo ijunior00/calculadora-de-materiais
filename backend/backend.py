@@ -589,11 +589,17 @@ async def import_bom_excel(request: Request):
             def _num(c):
                 v = ws.cell(r, c).value
                 return None if v is None or str(v).strip() == "" else float(v)
-            layers.append({
+            _inf = str(ws.cell(r, 8).value or "").strip().lower()
+            layer = {
                 "materialType": str(ws.cell(r, 2).value or "").strip(),
                 "gsm": str(ws.cell(r, 3).value or "").strip(),
                 "ovR1": _num(4), "ovR2": _num(5), "ovX1": _num(6), "ovX2": _num(7),
-            })
+            }
+            # Coluna ausente (Excel anterior a out/2026) → não inventa método:
+            # a camada volta sem a marcação e a resina cai na divisão por ciclos.
+            if _inf in ("yes", "no"):
+                layer["infusion"] = (_inf == "yes")
+            layers.append(layer)
         elif section == "steps_header":
             section = "steps"  # pula a linha Step | Qty
         elif section == "steps":
@@ -831,7 +837,7 @@ async def generate_excel(data: BOMPayload):
         r2 += 1
         ws2.cell(r2, 1, "[LAYERS]").font = bold
         r2 += 1
-        for j, h in enumerate(["#", "Material", "GSM", "ovR1", "ovR2", "ovX1", "ovX2"], 1):
+        for j, h in enumerate(["#", "Material", "GSM", "ovR1", "ovR2", "ovX1", "ovX2", "Infusion"], 1):
             ws2.cell(r2, j, h).font = bold
         r2 += 1
         for ly in (ai.get("layers") or []):
@@ -842,6 +848,11 @@ async def generate_excel(data: BOMPayload):
                 v = ly.get(k)
                 if v is not None and v != "":
                     ws2.cell(r2, j, v)
+            # Qual tela vai por infusão (out/2026) — define qual resina a molha.
+            # Só gravado quando a camada traz a marcação; Excel antigo não tem a
+            # coluna e cai na divisão por ciclos de vácuo ao ser reaberto.
+            if isinstance(ly.get("infusion"), bool):
+                ws2.cell(r2, 8, "yes" if ly["infusion"] else "no")
             r2 += 1
         r2 += 1
         ws2.cell(r2, 1, "[STEPS]").font = bold

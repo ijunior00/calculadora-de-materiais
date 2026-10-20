@@ -278,9 +278,19 @@ superfície**. Um reparo real de 11 telas (34,8 kg de tecido) saía com **34
 pacotes de AMPREG e 1 de PRIME 37** — faltava a ligação entre *"estas telas vão
 por infusão"* e *"qual resina molha estas telas"*.
 
-`fabricResinSplit(steps, pesoTecidos)` divide o peso entre os dois métodos na
-proporção dos **ciclos de vácuo** de cada tipo (etapas HLU e Infusion) — é o
-único sinal que o modelo tem, já que não existe método por camada:
+`fabricResinSplit()` divide o peso entre os dois métodos, usando **duas
+fontes, nesta ordem**:
+
+**1. Marcação por camada (out/2026).** Cada tela tem uma caixa **Infusion** na
+UI — chip na lista do mobile, checkbox na tabela do desktop. Quando a pilha traz
+essa informação, o peso vai exatamente para onde o técnico marcou: nada de
+estimativa. As duas UIs mostram um resumo ("4 of 11 plies by infusion…") e a
+marcação viaja no Excel (coluna `Infusion` da aba INPUTS), sobrevivendo à
+reabertura. CORE, SPL, CFM50 e BALSA não são laminados e não levam a caixa.
+
+**2. Proporção dos ciclos (fallback).** Pilha antiga ou Excel reaberto sem a
+coluna — aí o peso se reparte na proporção das etapas HLU e Infusion, que era o
+único sinal disponível antes da caixa existir:
 
 | Etapas | Vai para AMPREG | Vai para PRIME 37 |
 |---|---|---|
@@ -288,6 +298,12 @@ proporção dos **ciclos de vácuo** de cada tipo (etapas HLU e Infusion) — é
 | HLU 1 / Infusion 1 | 50% | 50% |
 | HLU 0 / Infusion 2 | — | 100% |
 | nenhuma das duas | 100% | — (comportamento histórico) |
+
+> **Aviso `INFUSION_WITHOUT_PLIES`.** Com a marcação por camada, esquecer de
+> ticar as telas faria a resina voltar a sair toda como AMPREG — o defeito que
+> a caixa veio corrigir. Por isso, etapa de infusão ativa + nenhuma tela marcada
+> dispara aviso no Step 3 e no resultado. Pilha sem a marcação **não** dispara:
+> ela cai no fallback de ciclos de propósito.
 
 Fatores de resina:tecido confirmados pelo time:
 

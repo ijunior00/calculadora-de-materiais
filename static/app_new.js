@@ -378,6 +378,7 @@ function initLayerTable() {
     const defaults = allowed.slice(0, Math.min(3, allowed.length));
     defaults.forEach((m, i) => {
         layerRows.push({
+            infusion: false,
             layerName: `Layer ${i+1}`,
             materialType: m.materialType,
             gsm: m.gsm,
@@ -389,6 +390,8 @@ function initLayerTable() {
 }
 
 function renderLayerTable() {
+    // O resumo de infusão é redesenhado junto com a tabela.
+    setTimeout(renderInfusionSummary, 0);
     const tbody = document.getElementById('layerTableBody');
     if (!tbody) return;
     tbody.innerHTML = '';
@@ -419,6 +422,9 @@ function renderLayerTable() {
                 </select>
             </td>
             <td style="text-align:center;font-weight:500;color:#334155">${isNaN(String(row.gsm || '')) ? '—' : (row.gsm || '—')}</td>
+            <td style="text-align:center">${['CORE','SPL','CFM50','BALSA'].includes(row.materialType) ? '—'
+                : `<input type="checkbox" ${row.infusion ? 'checked' : ''} ${isLocked ? 'disabled' : ''}
+                     onchange="updateLayerInfusion(${idx}, this.checked)" title="Mark this ply as laminated by infusion">`}</td>
             <td><input type="text" value="${row.order}" ${isLocked ? 'disabled' : ''} onchange="updateLayer(${idx},'order',this.value)"></td>
             <td>
                 <div class="move-btns">
@@ -487,6 +493,7 @@ function updateLayerMaterial(idx, combinedVal) {
         layerRows[idx].gsm = first.gsm;
         layerRows.splice(idx + 1, 0, ...rest.map(p => ({
             layerName: '', materialType: p.materialType, gsm: p.gsm, order: layerRows[idx].order,
+            infusion: !!layerRows[idx].infusion,
         })));
         layerRows.forEach((l, i) => { if (!l.layerName) l.layerName = `Layer ${i + 1}`; });
         renderLayerTable();
@@ -496,6 +503,27 @@ function updateLayerMaterial(idx, combinedVal) {
     layerRows[idx].materialType = matType;
     layerRows[idx].gsm = gsm;
     renderLayerTable();
+}
+
+/** Marca/desmarca uma tela como laminada por infusão (out/2026). */
+function updateLayerInfusion(idx, checked) {
+    if (!layerRows[idx]) return;
+    layerRows[idx].infusion = !!checked;
+    renderInfusionSummary();
+    recalculateLayup();
+}
+
+// Resumo de quantas telas vão por infusão — decide qual resina molha cada
+// parte da pilha.
+function renderInfusionSummary() {
+    const el = document.getElementById('infusionSummary');
+    if (!el) return;
+    const plies = layerRows.filter(l => l.materialType && !['CORE', 'SPL', 'CFM50', 'BALSA'].includes(l.materialType));
+    if (plies.length === 0) { el.textContent = ''; return; }
+    const n = plies.filter(l => l.infusion).length;
+    el.textContent = n === 0
+        ? `No ply marked for infusion — all ${plies.length} will use hand lay-up resin (AMPREG 30).`
+        : `${n} of ${plies.length} plies by infusion (PRIME 37); the other ${plies.length - n} by hand lay-up (AMPREG 30).`;
 }
 
 // How many rows Add Layer / duplicate insert at once (the ×N field).
@@ -508,7 +536,7 @@ function addLayerRow() {
     if (layerDataLocked) return;
     const n = _layerAddQty();
     for (let k = 0; k < n; k++) {
-        layerRows.push({layerName: `Layer ${layerRows.length+1}`, materialType:'', gsm:'', order:''});
+        layerRows.push({layerName: `Layer ${layerRows.length+1}`, materialType:'', gsm:'', order:'', infusion:false});
     }
     renderLayerTable();
     recalculateLayup();
@@ -522,6 +550,7 @@ function duplicateLayerRow(idx) {
     const n = _layerAddQty();
     const copies = Array.from({length: n}, () => ({
         layerName: '', materialType: src.materialType, gsm: src.gsm, order: src.order,
+        infusion: !!src.infusion,
     }));
     layerRows.splice(idx + 1, 0, ...copies);
     layerRows.forEach((l, i) => { if (!l.layerName) l.layerName = `Layer ${i + 1}`; });
@@ -918,6 +947,7 @@ function buildDesktopPayload() {
                     layerName:    l.layerName || '',
                     materialType: l.materialType,
                     gsm:          l.gsm || '',
+                    infusion:     (typeof l.infusion === 'boolean') ? l.infusion : undefined,
                 })),
         },
         audit_outputs: {
