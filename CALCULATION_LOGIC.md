@@ -225,6 +225,14 @@ Baseado nos **dias de reparo**:
 > O macacão dura mais que a luva — daí 2 contra 6. Antes saíam
 > `ROUNDUP(dias × 1,5)` e `1`, as duas sem olhar o tamanho da equipe.
 >
+> **Nos kits fixos** (painel Kits, `SPECIAL_REPAIRS`) vale a mesma regra, com o
+> painel tendo seu próprio seletor Internal/External. Lá não existe campo de
+> dias: **uma pá equivale a um dia de trabalho da equipe**, então o consumo é
+> `taxa × técnicos × nº de pás` — 1 pá num reparo interno dá 24 pares de luva e
+> 8 macacões. Se um trabalho de kit levar mais de um dia por pá, o painel
+> precisa ganhar um campo de dias. Dust loops e os demais consumíveis seguem
+> multiplicando por pá, como antes; ferramenta continua sem multiplicar.
+>
 > A Ansel XL preta (`218455`) é luva de trabalho reutilizável e **não** entra
 > nessa regra — segue na quantidade fixa da REV05 até o time definir o consumo.
 | Creme Plutect | 3 |

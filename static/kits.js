@@ -16,7 +16,12 @@ const KITS_CAT_TO_PHASE = {
 };
 const KITS_CAT_ORDER = ['Kit', 'Chemicals', 'Consumable tools', 'Consumables', 'Tools', 'PPE'];
 
-const KITS = { repair: null, variant: null, blades: 1, radius: '' };
+const KITS = { repair: null, variant: null, blades: 1, radius: '', isExternal: false };
+
+/** Técnicos na equipe, pelo tipo de reparo (mesma regra do cálculo principal). */
+function kitsTechnicians() {
+    return KITS.isExternal ? TECHNICIANS_PER_REPAIR.external : TECHNICIANS_PER_REPAIR.internal;
+}
 
 function openSpecialKits() {
     if (typeof SPECIAL_REPAIRS === 'undefined' || !SPECIAL_REPAIRS.length) return;
@@ -59,8 +64,13 @@ function kitsRows() {
     } else {
         rows.push({ cat: 'Kit', sap: variant.kit.sap, desc: variant.kit.desc, unit: variant.kit.unit, qty: variant.kit.qty * n });
     }
+    const techs = kitsTechnicians();
     for (const it of rep.items) {
-        rows.push({ cat: it.cat, sap: it.sap, desc: it.desc, unit: it.unit, qty: it.perBlade === false ? it.qty : it.qty * n });
+        // EPI que segue a equipe (out/2026): consumo por técnico × equipe × pás.
+        // Ferramenta é reutilizável e não multiplica; o resto multiplica por pá.
+        const qty = it.perTechnician ? it.perTechnician * techs * n
+                  : (it.perBlade === false ? it.qty : it.qty * n);
+        rows.push({ cat: it.cat, sap: it.sap, desc: it.desc, unit: it.unit, qty });
     }
     return rows;
 }
@@ -99,13 +109,18 @@ function renderKitsPanel() {
             <label style="font-size:0.78rem;font-weight:600">No. of blades<br>
                 <input type="number" min="1" max="999" value="${Math.max(1, KITS.blades | 0)}" onchange="kitsSetBlades(this.value)"
                     style="padding:7px;border:1px solid #cbd5e1;border-radius:8px;width:80px;text-align:center"></label>
+            <label style="font-size:0.78rem;font-weight:600">Repair type<br>
+                <select onchange="kitsSetExternal(this.value)" style="padding:7px;border:1px solid #cbd5e1;border-radius:8px;min-width:150px">
+                    <option value="internal"${KITS.isExternal ? '' : ' selected'}>Internal (4 technicians)</option>
+                    <option value="external"${KITS.isExternal ? ' selected' : ''}>External (3 technicians)</option>
+                </select></label>
             <div style="flex:1"></div>
             <button onclick="exportSpecialKit('excel')" style="padding:9px 14px;border:none;border-radius:8px;background:#16a34a;color:#fff;font-weight:700;cursor:pointer">Excel</button>
             <button onclick="exportSpecialKit('pdf')" style="padding:9px 14px;border:none;border-radius:8px;background:#143A5F;color:#fff;font-weight:700;cursor:pointer">PDF</button>
         </div>
         ${rep.note ? `<div style="font-size:0.72rem;color:#92400e;background:#fef3c7;margin:0 18px 8px;padding:7px 10px;border-radius:8px">${esc(rep.note)}</div>` : ''}
         ${kitsRadiusBox(variant)}
-        <div style="font-size:0.72rem;color:#64748b;padding:0 18px 8px">Consumables and PPE multiply by the number of blades; tools are reusable and stay fixed.</div>
+        <div style="font-size:0.72rem;color:#64748b;padding:0 18px 8px">Consumables multiply by the number of blades; tools are reusable and stay fixed. Disposable gloves and Tyvek suits follow the team: 6 pairs and 2 suits per technician per blade (${kitsTechnicians()} technicians).</div>
         <div style="max-height:52vh;overflow:auto;border-top:1px solid #e2e8f0">
             <table style="border-collapse:collapse;width:100%;font-size:0.78rem">
                 <thead><tr style="background:#f8fafc;text-align:left">
@@ -122,6 +137,7 @@ function renderKitsPanel() {
 function kitsSetRepair(id) { KITS.repair = id; KITS.variant = null; KITS.radius = ''; renderKitsPanel(); }
 function kitsSetVariant(id) { KITS.variant = id; KITS.radius = ''; renderKitsPanel(); }
 function kitsSetBlades(v) { KITS.blades = Math.max(1, Math.min(999, parseInt(v) || 1)); renderKitsPanel(); }
+function kitsSetExternal(v) { KITS.isExternal = (v === 'external'); renderKitsPanel(); }
 
 async function exportSpecialKit(kind) {
     const { rep, variant } = kitsCurrent();
@@ -136,6 +152,7 @@ async function exportSpecialKit(kind) {
     const payload = {
         turbine_model: variant.label, blade_type: '', damage_cat: rep.label, blade_zone: '-',
         rstart: 0, rend: 0, length: 0, width: 0, days: 1,
+        is_external: KITS.isExternal,
         report_title: `${rep.label} — ${variant.label} — ${n} blade(s) — WI ${rep.doc}`,
         include_field_rules: false, total_brl: 0, total_eur: 0,
         blade_sn: '', service_order: '', cir_number: '',

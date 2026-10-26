@@ -705,8 +705,11 @@ const SPECIAL_REPAIRS = [
             { cat: 'Tools', sap: 'VT181637',   desc: 'TAPEMEASURE 50m C1',                     unit: 'EA', qty: 1, perBlade: false },
             // EPI (prática de campo da lista REYNOSA)
             { cat: 'PPE', sap: '237100', desc: 'Dust loops (3M mask paper)',      unit: 'EA',  qty: 3 },
-            { cat: 'PPE', sap: '218173', desc: 'Gloves blue nitrile L',           unit: 'PAA', qty: 1 },
-            { cat: 'PPE', sap: '214445', desc: 'Suit F/Protec, Tyvec, size XL',   unit: 'EA',  qty: 3 },
+            // out/2026: seguem a equipe, como no cálculo principal. `perTechnician`
+            // é o consumo por técnico POR PÁ — no painel de kits uma pá equivale a
+            // um dia de trabalho da equipe (não há campo de dias ali).
+            { cat: 'PPE', sap: '218173', desc: 'Gloves blue nitrile L',           unit: 'PAA', perTechnician: 6 },
+            { cat: 'PPE', sap: '214445', desc: 'Suit F/Protec, Tyvec, size XL',   unit: 'EA',  perTechnician: 2 },
         ],
     },
     {
@@ -740,8 +743,11 @@ const SPECIAL_REPAIRS = [
             { cat: 'Tools', sap: '-',        desc: 'Plastic red/white tape (as necessary)',    unit: 'ROL', qty: 1, perBlade: false },
             // EPI (prática de campo — mesma base da serration; ajustar se preciso)
             { cat: 'PPE', sap: '237100', desc: 'Dust loops (3M mask paper)',      unit: 'EA',  qty: 3 },
-            { cat: 'PPE', sap: '218173', desc: 'Gloves blue nitrile L',           unit: 'PAA', qty: 1 },
-            { cat: 'PPE', sap: '214445', desc: 'Suit F/Protec, Tyvec, size XL',   unit: 'EA',  qty: 3 },
+            // out/2026: seguem a equipe, como no cálculo principal. `perTechnician`
+            // é o consumo por técnico POR PÁ — no painel de kits uma pá equivale a
+            // um dia de trabalho da equipe (não há campo de dias ali).
+            { cat: 'PPE', sap: '218173', desc: 'Gloves blue nitrile L',           unit: 'PAA', perTechnician: 6 },
+            { cat: 'PPE', sap: '214445', desc: 'Suit F/Protec, Tyvec, size XL',   unit: 'EA',  perTechnician: 2 },
         ],
     },
 ];
