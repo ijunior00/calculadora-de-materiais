@@ -113,7 +113,9 @@
             // Re-baseline out/2026: a nitrílica é descartável e o item é por PAR
             // — 6 pares/técnico/dia, 4 técnicos no interno. 5 dias → 120 pares.
             assertItemQty('Gloves nitrile = 120 pairs (6 × 4 téc × 5 d)', b.ppeItems, '218173', 120),
-            assertItemQty('Suit Tyvec qty=8',       b.ppeItems, '214445', 8),
+            // Re-baseline out/2026: o Tyvek passou a seguir a equipe, como as
+            // luvas — 2 por técnico por dia, 4 técnicos no interno. 5 dias → 40.
+            assertItemQty('Suit Tyvec = 40 (2 × 4 téc × 5 d)', b.ppeItems, '214445', 40),
             assertItemQty('Creme plutect qty=3',    b.ppeItems, '210177', 3),
         ];
         console.groupEnd();
@@ -1105,6 +1107,15 @@
         // A Ansel reutilizável NÃO entra na regra — segue a quantidade da REV05.
         const ansel = PPE_ITEMS.find(i => i.sap === '218455');
         r.push(assertEq('Ansel XL segue fixa em 3 (pendente)', ansel.calcQty(base, 6, false), 3));
+
+        // Tyvek: mesma lógica, consumo menor — 2 por técnico por dia.
+        const tyvek = PPE_ITEMS.find(i => i.sap === '214445');
+        r.push(assertEq('Tyvek interno: 2 × 4 téc × 6 d = 48', tyvek.calcQty(base, 6, false), 48));
+        r.push(assertEq('Tyvek externo: 2 × 3 téc × 6 d = 36', tyvek.calcQty(base, 6, true), 36));
+        r.push(assertEq('Tyvek sem dias de reparo → 0', tyvek.calcQty(base, 0, false), 0));
+        r.push(tyvek.calcQty(base, 6, false) * 3 === nitrile.calcQty(base, 6, false)
+            ? pass('Tyvek é 1/3 do consumo de luva (2 contra 6 por técnico/dia)')
+            : fail('proporção Tyvek × luva', ''));
 
         // computeFullBOM precisa repassar o tipo de reparo até o PPE.
         const bomInt = computeFullBOM(dmg, plies(11), infOnly, 'V136', 'Middle', 6, null, false);
