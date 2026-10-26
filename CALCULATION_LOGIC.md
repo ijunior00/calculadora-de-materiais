@@ -451,12 +451,18 @@ Cada modelo de pá tem um conjunto específico de materiais disponíveis no LAYU
 | Modelo | Materiais Disponíveis (REV05 — calculados) |
 |--------|----------------------------------------------|
 | V82 | BIAX936, UD600, UD1140, BALSA, CORE |
-| V90 | TRIAX1200, BIAX600, UD1200, CORE |
-| V100 | TRIAX1200, BIAX600, UD1200, CORE |
-| V112 | TRIAX1200, BIAX600, **BIAX450**, **BIAX1800**, UD1200, CORE |
+| V90 | TRIAX1200, BIAX600, UD1200, **UD600**, CORE |
+| V100 | TRIAX1200, BIAX600, UD1200, **UD600**, CORE |
+| V112 | TRIAX1200, BIAX600, **BIAX450**, **BIAX1800**, UD1200, **UD600**, CORE |
 | V110 | TRIAX1500, BIAX600, BIAX936, UD600, UD900, UD1140, CORE, BALSA, SPL, CFM |
 | V136 | TRIAX1200, BIAX1000, BIAX600, UD1200, UD600, CORE, BALSA, SPL, CFM |
 | V150 (HM) | HM BIAX600, HM BIAX1000, HM BIAX1200, HM UD1200, HM TRIAX1200, CORE, BALSA, SPL, CFM |
+
+> **UD 600 em mais três modelos (out/2026).** A pedido do time, o UD 600
+> (`29238496`, rolo 14 m / 6,17 kg) passou a ser oferecido também em **V90,
+> V100 e V112** — V82 e V110 já o tinham. Nada mais mudou: o item já estava no
+> catálogo e o overlap sai da regra da norma (span 10% e chord 2% do gsm =
+> 60/12 mm). As pás HM (V150/V162) seguem sem ele.
 
 > **V112 — BIAX 450 e BIAX 1800 (set/2026).** As duas camadas faltavam no
 > dropdown da V112 e foram informadas pelo time com **número de item próprio da

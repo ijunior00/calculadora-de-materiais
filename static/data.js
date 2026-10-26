@@ -83,6 +83,9 @@ const BLADE_MATERIAL_MAP = {
         { materialType: 'TRIAX', gsm: '1200', label: 'TRIAX 1200' },
         { materialType: 'BIAX',  gsm: '600',  label: 'BIAX 600' },
         { materialType: 'UD',    gsm: '1200', label: 'UD 1200' },
+        // UD 600 liberado para este modelo em out/2026 (pedido do time). Item
+        // 29238496, já no catálogo; overlap vem da regra da norma (60/12 mm).
+        { materialType: 'UD',    gsm: '600',  label: 'UD 600' },
         { materialType: 'CORE',  gsm: '',     label: 'CORE PET' },
         { materialType: 'CORE',  gsm: 'PVC',     label: 'CORE PVC (Grade A)' },
     ],
@@ -90,6 +93,9 @@ const BLADE_MATERIAL_MAP = {
         { materialType: 'TRIAX', gsm: '1200', label: 'TRIAX 1200' },
         { materialType: 'BIAX',  gsm: '600',  label: 'BIAX 600' },
         { materialType: 'UD',    gsm: '1200', label: 'UD 1200' },
+        // UD 600 liberado para este modelo em out/2026 (pedido do time). Item
+        // 29238496, já no catálogo; overlap vem da regra da norma (60/12 mm).
+        { materialType: 'UD',    gsm: '600',  label: 'UD 600' },
         { materialType: 'CORE',  gsm: '',     label: 'CORE PET' },
         { materialType: 'CORE',  gsm: 'PVC',     label: 'CORE PVC (Grade A)' },
     ],
@@ -97,6 +103,9 @@ const BLADE_MATERIAL_MAP = {
         { materialType: 'TRIAX', gsm: '1200', label: 'TRIAX 1200' },
         { materialType: 'BIAX',  gsm: '600',  label: 'BIAX 600' },
         { materialType: 'UD',    gsm: '1200', label: 'UD 1200' },
+        // UD 600 liberado para este modelo em out/2026 (pedido do time). Item
+        // 29238496, já no catálogo; overlap vem da regra da norma (60/12 mm).
+        { materialType: 'UD',    gsm: '600',  label: 'UD 600' },
         // Camadas que faltavam na V112 (informadas pelo usuário, set/2026). As
         // duas usam número de item próprio da V112 — ver BLADE_FABRIC_OVERRIDES.
         // O overlap sai da regra da norma (biax = 5% do gsm), não de valor

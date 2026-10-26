@@ -1234,6 +1234,41 @@
         return tally(r);
     }
 
+    function testUD600AcrossModels() {
+        console.group('Test 33: UD 600 (29238496) disponível em V82, V90, V100, V110 e V112');
+        const r = [];
+        const models = ['V82', 'V90', 'V100', 'V110', 'V112'];
+        const dmg = { rstart: 10000, rend: 12000, x1: 0, x2: 500, chordRef: 'LE' };
+        const steps = { Cleaning: 1, Grinding: 1, Bonding: 1, Lamination: 1, HLU: 1, Infusion: 0, Weighing: 1, Painting: 1, LEP: 0 };
+        for (const model of models) {
+            const opts = BLADE_MATERIAL_MAP[model] || [];
+            r.push(opts.some(m => m.materialType === 'UD' && String(m.gsm) === '600')
+                ? pass(`${model}: UD 600 no seletor`) : fail(`${model}: UD 600 ausente`, ''));
+            // Ponta a ponta: tem de sair com o item em linha, em rolo.
+            const b = computeFullBOM(dmg, [{ layerName: 'L1', materialType: 'UD', gsm: '600' }], steps, model, 'Middle', 3);
+            const ud = b.fabricItems.find(i => i.material === 'UD600');
+            r.push(ud && ud.sap === '29238496' && ud.unit === 'EA'
+                ? pass(`${model}: BOM emite 29238496 em rolo`) : fail(`${model}: BOM do UD 600`, JSON.stringify(ud)));
+            // A primeira fabric do mapa não pode ter mudado (Test 14 usa ela).
+            r.push(opts[0] && opts[0].materialType !== 'UD'
+                ? pass(`${model}: primeira fabric inalterada (${opts[0].label})`) : fail(`${model}: primeira fabric virou UD`, ''));
+        }
+        // Modelos que NÃO pediram UD 600 seguem sem ele.
+        for (const model of ['V136', 'V150', 'V162']) {
+            const has = (BLADE_MATERIAL_MAP[model] || []).some(m => m.materialType === 'UD' && String(m.gsm) === '600');
+            if (model === 'V136') {
+                r.push(has ? pass('V136 mantém o UD 600 que já tinha') : fail('V136 perdeu o UD 600', ''));
+            } else {
+                r.push(!has ? pass(`${model} (HM) segue sem UD 600`) : fail(`${model} ganhou UD 600 indevidamente`, ''));
+            }
+        }
+        // Overlap do UD 600 vem da norma: span 10% e chord 2% do gsm.
+        r.push(STANDARD_OVERLAPS.UD600.span === 60 && STANDARD_OVERLAPS.UD600.chord === 12
+            ? pass('overlap UD600 = 60/12 mm (norma)') : fail('overlap UD600', JSON.stringify(STANDARD_OVERLAPS.UD600)));
+        console.groupEnd();
+        return tally(r);
+    }
+
     // ── Main runner ───────────────────────────────────────────────────────────
 
     window.runBOMTests = function () {
@@ -1272,6 +1307,7 @@
             testResinByLaminationMethod,
             testPerLayerInfusion,
             testKitPpeFollowsTeam,
+            testUD600AcrossModels,
         ];
         let total = { pass: 0, fail: 0 };
         for (const suite of suites) {
