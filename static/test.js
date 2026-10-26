@@ -722,9 +722,10 @@
             r.push(assertEq('collar: kit Mk11 = 29110316', col.variants[1].kit.sap === '29110316' ? 1 : 0, 1));
             r.push(col.items.some(i => i.sap === '149751') ? pass('Sikaflex 521UV presente') : fail('Sikaflex ausente', ''));
         }
-        // Estrutura: todo item com cat/desc/unit e qty > 0; ferramentas com perBlade:false
+        // Estrutura: todo item com cat/desc/unit e uma quantidade — fixa (qty) ou
+        // por técnico (perTechnician, EPI que segue a equipe desde out/2026).
         for (const rep of SPECIAL_REPAIRS) {
-            const ruins = rep.items.filter(i => !i.cat || !i.desc || !i.unit || !(i.qty > 0));
+            const ruins = rep.items.filter(i => !i.cat || !i.desc || !i.unit || !(i.qty > 0 || i.perTechnician > 0));
             r.push(ruins.length === 0 ? pass(`${rep.id}: ${rep.items.length} itens válidos`) : fail(`${rep.id}: itens inválidos`, String(ruins.length)));
             const ferrSemFlag = rep.items.filter(i => i.cat === 'Tools' && i.perBlade !== false);
             r.push(ferrSemFlag.length === 0 ? pass(`${rep.id}: ferramentas todas perBlade:false`) : fail(`${rep.id}: ferramenta multiplicando por pá`, ferrSemFlag.map(i=>i.sap).join(',')));
@@ -1205,6 +1206,34 @@
         return tally(r);
     }
 
+    function testKitPpeFollowsTeam() {
+        console.group('Test 32: EPI dos kits fixos segue a equipe (out/2026)');
+        const r = [];
+        // Os dois reparos de kit trazem as duas linhas por técnico.
+        for (const rep of SPECIAL_REPAIRS) {
+            const gloves = rep.items.find(i => i.sap === '218173');
+            const tyvek = rep.items.find(i => i.sap === '214445');
+            r.push(gloves && gloves.perTechnician === 6
+                ? pass(`${rep.id}: luva = 6 pares/técnico/pá`) : fail(`${rep.id}: luva`, JSON.stringify(gloves)));
+            r.push(tyvek && tyvek.perTechnician === 2
+                ? pass(`${rep.id}: Tyvek = 2/técnico/pá`) : fail(`${rep.id}: Tyvek`, JSON.stringify(tyvek)));
+            // Dust loops segue fixo por pá — não entra na regra.
+            const dust = rep.items.find(i => i.sap === '237100');
+            r.push(dust && dust.qty === 3 && !dust.perTechnician
+                ? pass(`${rep.id}: dust loops seguem fixos por pá`) : fail(`${rep.id}: dust loops`, JSON.stringify(dust)));
+            // Ferramenta não pode ter virado por técnico.
+            r.push(!rep.items.some(i => i.cat === 'Tools' && i.perTechnician)
+                ? pass(`${rep.id}: ferramentas fora da regra`) : fail(`${rep.id}: ferramenta por técnico`, ''));
+        }
+        // A conta: consumo × equipe × pás.
+        const mk = (perTech, techs, blades) => perTech * techs * blades;
+        r.push(assertEq('1 pá, interno: 2 × 4 = 8 Tyvek', mk(2, TECHNICIANS_PER_REPAIR.internal, 1), 8));
+        r.push(assertEq('1 pá, externo: 2 × 3 = 6 Tyvek', mk(2, TECHNICIANS_PER_REPAIR.external, 1), 6));
+        r.push(assertEq('3 pás, interno: 6 × 4 × 3 = 72 pares', mk(6, TECHNICIANS_PER_REPAIR.internal, 3), 72));
+        console.groupEnd();
+        return tally(r);
+    }
+
     // ── Main runner ───────────────────────────────────────────────────────────
 
     window.runBOMTests = function () {
@@ -1242,6 +1271,7 @@
             testUD1140Substitution,
             testResinByLaminationMethod,
             testPerLayerInfusion,
+            testKitPpeFollowsTeam,
         ];
         let total = { pass: 0, fail: 0 };
         for (const suite of suites) {
