@@ -423,7 +423,14 @@ const PPE_ITEMS = [
           const techs = ext ? TECHNICIANS_PER_REPAIR.external : TECHNICIANS_PER_REPAIR.internal;
           return d > 0 ? 6 * techs * d : 0;
       } },
-    { sap: '214445', desc: 'Suit F/Protec, Tyvec, size XL',  unit: 'EA',  calcQty: (s, d) => d > 0 ? Math.ceil(d * 1.5) : 0 },
+    // out/2026: mesma lógica das luvas nitrílicas — consumo por técnico, não
+    // quantidade fixa. O macacão dura mais que a luva, então são 2 por técnico
+    // por dia (contra 6 pares de luva). Equipe: 4 técnicos no interno, 3 no
+    // externo. Antes: ROUNDUP(dias × 1,5), sem olhar o tamanho da equipe.
+    { sap: '214445', desc: 'Suit F/Protec, Tyvec, size XL',  unit: 'EA',  calcQty: (s, d, ext) => {
+          const techs = ext ? TECHNICIANS_PER_REPAIR.external : TECHNICIANS_PER_REPAIR.internal;
+          return d > 0 ? 2 * techs * d : 0;
+      } },
     { sap: '210177', desc: 'creme plutect',                   unit: 'EA',  calcQty: (s, d) => d > 0 ? 3 : 0 },
 ];
 

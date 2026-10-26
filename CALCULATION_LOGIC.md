@@ -208,15 +208,22 @@ Baseado nos **dias de reparo**:
 | Dust loops | Dias × 2 |
 | Luvas ansel | 3 pares (fixo — ver `PENDING_REV06.md`) |
 | **Luvas nitrile (descartável)** | **6 pares × técnicos × dias** |
-| Macacão Tyvek | ROUNDUP(Dias × 1,5) |
+| **Macacão Tyvek** | **2 × técnicos × dias** |
 | Sapatilhas descartáveis | Dias × 2 |
 
-> **Luvas por par, não por caixa (out/2026).** O item `218173` é vendido por
-> **par**, e a equipe consome **6 pares por técnico por dia**. O tamanho da
-> equipe vem do tipo de reparo: **4 técnicos no interno, 3 no externo**
-> (`TECHNICIANS_PER_REPAIR`). Por isso `computeFullBOM` passou a receber
-> `isExternal` — antes o tipo de reparo só alimentava o estimador de prazo.
-> Reparo interno de 6 dias: 6 × 4 × 6 = **144 pares**.
+> **Consumo por técnico (out/2026).** Dois itens de PPE deixaram de sair em
+> quantidade fixa e passaram a acompanhar o tamanho da equipe, que vem do tipo
+> de reparo: **4 técnicos no interno, 3 no externo** (`TECHNICIANS_PER_REPAIR`).
+> Por isso `computeFullBOM` passou a receber `isExternal` — antes o tipo de
+> reparo só alimentava o estimador de prazo.
+>
+> | Item | Consumo | Reparo interno de 6 dias |
+> |---|---|---|
+> | Luva nitrílica `218173` (descartável, por **par**) | 6 pares/técnico/dia | **144 pares** |
+> | Macacão Tyvek `214445` | 2/técnico/dia | **48** |
+>
+> O macacão dura mais que a luva — daí 2 contra 6. Antes saíam
+> `ROUNDUP(dias × 1,5)` e `1`, as duas sem olhar o tamanho da equipe.
 >
 > A Ansel XL preta (`218455`) é luva de trabalho reutilizável e **não** entra
 > nessa regra — segue na quantidade fixa da REV05 até o time definir o consumo.
